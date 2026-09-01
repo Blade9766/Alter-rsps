@@ -14,12 +14,18 @@ object Looks {
     }
 
     val MALE_JAWS = arrayOf(*(10..13).toArray(), *(15..17).toArray(), *(111..117).toArray(), 14) // 10-13, 15-17, 111-117, 14
-    val FEMALE_JAWS = arrayOf(-1) // no bearded ladies
 
     /**
-     * Allows for [Gender.FEMALE] however this shouldn't be utilized
-     * in that capacity unless bearded ladies are desired.
+     * Body part 8 in the cache. Despite the name, the jaw kit is not just a beard: it
+     * carries the chin/lower-face geometry, which is why the clean-shaven entries (male
+     * 14, female 296) still have a model even though they have no chathead model. Leaving
+     * this slot empty leaves a hole in the front of the head.
+     *
+     * Index 0 is deliberately the clean-shaven kit so appearances saved before this slot
+     * existed (six-entry female look arrays) resolve to a beardless jaw.
      */
+    val FEMALE_JAWS = arrayOf(296, *(292..295).toArray(), *(297..306).toArray()) // 296, 292-295, 297-306
+
     fun getJaws(gender: Gender): Array<Int> {
         return when (gender) {
             Gender.MALE -> MALE_JAWS
