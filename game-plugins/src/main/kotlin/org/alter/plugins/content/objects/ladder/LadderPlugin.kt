@@ -61,6 +61,15 @@ class LadderPlugin(
                 "object.ladder_12966",
                 "object.ladder_16679",
                 "object.ladder_16684",
+                // Lumber Yard, north-east of Varrock: 11794 climbs up from the yard floor
+                // (3310,3509) and 11795 climbs back down from the floor above. 11802 is the
+                // matching climb-down in the sawmill operator's hut at (3304,3494). All three are
+                // plain vertical ladders with no quest logic of their own; they were simply never
+                // in this list, which left the Lumber Yard's first floor - and Gertrude's cat -
+                // unreachable. Ids from a location dump of region 13110.
+                "object.ladder_11794",
+                "object.ladder_11795",
+                "object.ladder_11802",
             )
 
         ladders.forEach { ladder ->
