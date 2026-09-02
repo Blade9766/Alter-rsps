@@ -1,6 +1,7 @@
 package org.alter.plugins.diag
 
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.filestore.loadLocations
 import org.alter.api.cfg.Varp
 import org.alter.plugins.content.quests.Quest
 import org.alter.plugins.content.quests.Quests
@@ -35,6 +36,12 @@ class GertrudesCatVerify {
             CacheManager.init(Paths.get("../data", "cache"), 228)
             RSCM.init()
         }
+
+        /** Loc types that occupy a whole tile and block it. */
+        val SOLID_TYPES = setOf(10, 11)
+
+        /** Floor decoration - what the Lumber Yard's upper walkway is made of. */
+        const val FLOOR_DECOR_TYPE = 22
     }
 
     private val itemKeys =
@@ -190,9 +197,96 @@ class GertrudesCatVerify {
     @Test
     fun `Fluffs is upstairs`() {
         assertEquals(3310, GertrudesCat.FLUFFS_TILE.x)
-        assertEquals(3506, GertrudesCat.FLUFFS_TILE.z)
+        assertEquals(3508, GertrudesCat.FLUFFS_TILE.z)
         assertEquals(1, GertrudesCat.FLUFFS_TILE.height, "Fluffs must be on the Lumber Yard's first floor")
     }
+
+    /**
+     * She shipped hovering in mid-air once, on the wiki's pin (3310,3506), because that tile is off
+     * the southern edge of the walkway.
+     *
+     * The trap: the Lumber Yard's first floor has **no terrain floor at all** - every tile at height
+     * 1 in region 13110 has zero overlay and underlay - so the usual "does this tile have a floor"
+     * check answers no everywhere and is useless. The walkway is built from type-22 floor-decoration
+     * locs. This asserts there is one under her, which is the only thing that actually keeps her off
+     * the skybox.
+     */
+    @Test
+    fun `Fluffs is standing on the walkway, not thin air`() {
+        val tile = GertrudesCat.FLUFFS_TILE
+        val locs = locsAt(13110, tile.x, tile.z, tile.height)
+
+        assertTrue(
+            locs.any { it.type == FLOOR_DECOR_TYPE },
+            "no floor-decoration loc under Fluffs at (${tile.x},${tile.z},${tile.height}) - she will float [locs=$locs]",
+        )
+        assertTrue(
+            locs.none { it.type in SOLID_TYPES },
+            "Fluffs is inside solid scenery [locs=${locs.filter { it.type in SOLID_TYPES }}]",
+        )
+    }
+
+    /**
+     * Gertrude shipped standing inside her own kitchen table, because her wiki marker is
+     * `mtype=square|r=3` - an area - and its centre (3151,3409) is the eastern half of Table 2998
+     * (2x1, impenetrable, anchored at 3150,3409).
+     *
+     * Asserts both halves of the lesson: the table really does cover the old tile, and the tile she
+     * actually stands on carries no solid scenery.
+     */
+    @Test
+    fun `Gertrude is not standing in the furniture`() {
+        val table = locsAt(12597, 3150, 3409, 0).firstOrNull { it.id == 2998 }
+        assertNotNull(table, "Table 2998 is no longer at (3150,3409) - re-check Gertrude's tile")
+        assertEquals(2, table.sizeX, "Table 2998 is 2x1; if that changed, its footprint changed too")
+
+        // The old tile, still covered by that 2x1 table - kept as the reason this test exists.
+        assertTrue(
+            3151 in table.x until (table.x + table.sizeX),
+            "(3151,3409) should be under the table - that was the original bug",
+        )
+
+        val gertrude = locsAt(12597, 3151, 3410, 0)
+        assertTrue(
+            gertrude.none { it.type in SOLID_TYPES },
+            "Gertrude's tile (3151,3410) has solid scenery on it [locs=${gertrude.filter { it.type in SOLID_TYPES }}]",
+        )
+    }
+
+    private data class LocInfo(val id: Int, val type: Int, val x: Int, val z: Int, val sizeX: Int, val sizeY: Int)
+
+    /**
+     * Every loc on one tile, taking each object's rotated footprint into account so a multi-tile
+     * object is reported on all the tiles it actually covers.
+     */
+    private fun locsAt(
+        region: Int,
+        x: Int,
+        z: Int,
+        height: Int,
+    ): List<LocInfo> {
+        val rx = region shr 8
+        val ry = region and 0xFF
+        val baseX = rx shl 6
+        val baseZ = ry shl 6
+        val found = mutableListOf<LocInfo>()
+
+        val land = CacheManager.cache.data(5, "l${rx}_$ry") ?: return found
+        loadLocations(land) { loc ->
+            if (loc.height != height) return@loadLocations
+            val def = runCatching { CacheManager.getObject(loc.id) }.getOrNull() ?: return@loadLocations
+            val rotated = loc.orientation == 1 || loc.orientation == 3
+            val sx = if (rotated) def.sizeY else def.sizeX
+            val sy = if (rotated) def.sizeX else def.sizeY
+            val ox = baseX + loc.localX
+            val oz = baseZ + loc.localY
+            if (x in ox until (ox + sx) && z in oz until (oz + sy)) {
+                found += LocInfo(loc.id, loc.type, ox, oz, sx, sy)
+            }
+        }
+        return found
+    }
+
 
     /**
      * The six kitten colours, in the wiki's order. These are the *items* (1555-1560), not the

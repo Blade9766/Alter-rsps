@@ -140,6 +140,22 @@ object GertrudesCat {
             "item.pet_kitten_1560",
         )
 
-    /** Fluffs' tile on the Lumber Yard's first floor. */
-    val FLUFFS_TILE = Tile(3310, 3506, 1)
+    /**
+     * Fluffs' tile on the Lumber Yard's first floor.
+     *
+     * **Not the wiki's pin.** Her page marks (3310,3506) with `mtype=square|r=4`, which is an *area*
+     * rather than a tile, and that centre point is off the edge of the platform - the cat rendered
+     * hovering in mid-air there.
+     *
+     * The first floor has **no terrain floor at all**: every tile at height 1 in region 13110 has a
+     * zero overlay and underlay, and the walkway is built entirely from type-22 floor-decoration
+     * objects (ids 521/522/523). So "is there a floor here" has to be asked of the *locs* at that
+     * height, not the terrain, which is the trap this walked into. The deck's southern edge is
+     * z=3507; z=3506 has no deck object whatsoever.
+     *
+     * (3310,3508) is a real deck tile (522), carries no solid scenery, and sits one square south of
+     * where the ladder (11795) puts the player down at (3310,3509) - so she is directly in front of
+     * anyone who climbs up.
+     */
+    val FLUFFS_TILE = Tile(3310, 3508, 1)
 }

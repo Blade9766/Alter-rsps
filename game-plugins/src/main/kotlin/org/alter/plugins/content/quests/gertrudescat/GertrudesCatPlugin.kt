@@ -74,7 +74,17 @@ class GertrudesCatPlugin(
      * [gertrudeAfterQuest].
      */
     private fun spawns() {
-        spawnNpc(npc = "npc.gertrude", x = 3151, z = 3409, walkRadius = 0, direction = Direction.SOUTH)
+        /*
+         * (3151,3410), not the wiki's (3151,3409). Her page marks the house with
+         * `mtype=square|r=3` - an area, not a tile - and its centre lands squarely inside the
+         * kitchen Table (object 2998 at 3150,3409, size 2x1, impenetrable), which covers both
+         * (3150,3409) and (3151,3409). She stood in the furniture.
+         *
+         * (3151,3410) is the tile directly north of that table: floored, free of solid scenery (the
+         * only loc on it is 11664, a type-22 floor decoration), and on the straight line in from her
+         * north door at (3151,3412), so she faces anyone who walks in.
+         */
+        spawnNpc(npc = "npc.gertrude", x = 3151, z = 3410, walkRadius = 0, direction = Direction.SOUTH)
 
         /*
          * Wilough and Shilop are pinned on the wiki with a *square* marker - centre (3220,3435),
