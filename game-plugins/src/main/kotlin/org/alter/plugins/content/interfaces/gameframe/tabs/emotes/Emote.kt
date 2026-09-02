@@ -58,13 +58,16 @@ enum class Emote(
     HYPERMOBILE_DRINKER(slot = 42, anim = 7131, varbit = Varbit.HYPERMOBILE_DRINKER_EMOTE_VARBIT),
     SKILLCAPE(slot = 43, anim = -1), // @TODO
     AIR_GUITAR(slot = 44, anim = 4751, gfx = 1239, varbit = Varbit.AIR_GUITAR_EMOTE_VARBIT),
-    URI_TRANSFORM(slot = 45, anim = -1, gfx = -1, varbit = Varbit.URI_TRANSFORM_EMOTE_VARBIT), // @TODO
+    // anim/gfx are unused here - the full transform sequence is special-cased in EmotesTab.performEmote.
+    URI_TRANSFORM(slot = 45, anim = -1, gfx = -1, varbit = Varbit.URI_TRANSFORM_EMOTE_VARBIT),
     SMOOTH_DANCE(slot = 46, anim = 7533, varbit = Varbit.SMOOTH_DANCE_EMOTE_VARBIT),
     CRAZY_DANCE(slot = 47, anim = 7536, varbit = Varbit.CRAZY_DANCE_EMOTE_VARBIT),
 
     // bronze, silver, and gold shield, referencing the 3, 6, and 12 month packages from the Premier Club.
     PREMIER_SHIELD(slot = 48, anim = 7751, gfx = 1412, varbit = Varbit.PREMIER_SHIELD_EMOTE_VARBIT),
-    EXPLORE(slot = 49, anim = 8541, varbit = Varbit.EXPLORE_VARBIT), // @TODO
+    // Plays the animation, but not the real Trailblazer behavior of showing a different
+    // symbol depending on which league area the player is standing in.
+    EXPLORE(slot = 49, anim = 8541, varbit = Varbit.EXPLORE_VARBIT),
 
     // Twisted gfx: 1749 | TrailBlazer gfx: 1835
     // Varbit: 11757 -> 3 for Twisted, 6 for trailblazer, 9 for shattered

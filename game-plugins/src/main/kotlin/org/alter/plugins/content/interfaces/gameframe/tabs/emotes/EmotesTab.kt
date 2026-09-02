@@ -13,6 +13,12 @@ import org.alter.rscm.RSCM.getRSCM
 object EmotesTab {
     const val COMPONENT_ID = 216
 
+    /**
+     * Sourced from community RSPS references (no OSRS wiki page lists animation ids) -
+     * verify in-game and adjust if it doesn't look right.
+     */
+    private const val FLARED_TROUSERS_DANCE_ANIM = 5316
+
     fun unlockAll(p: Player) {
         p.setVarbit(Varbit.GOBLIN_EMOTES_VARBIT, 7)
         p.setVarbit(Varbit.GLASS_BOX_EMOTE_VARBIT, 1)
@@ -192,7 +198,21 @@ object EmotesTab {
                     p.animate(4751)
                     p.graphic(1239)
                 }
+                else -> p.message("You need a cape of accomplishment to use this emote.")
             }
+        }
+
+        /**
+         * Flared trousers (item.flared_trousers) turn the Dance emote into a disco
+         * move followed by a split, instead of the default dance animation.
+         */
+        if (emote == Emote.DANCE && p.equipment[EquipmentType.LEGS.id]?.id == getRSCM("item.flared_trousers")) {
+            p.queue(TaskPriority.STANDARD) {
+                p.animate(-1)
+                p.animate(FLARED_TROUSERS_DANCE_ANIM, 1)
+                p.unlock()
+            }
+            return
         }
 
         if (emote == Emote.RELIC_UNLOCKED) {
