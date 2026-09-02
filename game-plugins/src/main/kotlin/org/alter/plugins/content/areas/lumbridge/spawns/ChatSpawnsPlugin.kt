@@ -27,7 +27,10 @@ class ChatSpawnsPlugin(
         spawnNpc("npc.perdu", 3230, 3215, 0, 10, Direction.SOUTH)
 
         // Castle - inside
-        spawnNpc("npc.banker_2897", 3209, 3222, 2, 0, Direction.SOUTH)
+        // The Lumbridge banker used to be spawned here, as npc.banker_2897 - a *Varrock* banker,
+        // and on a tile picked by hand. It now comes out of org.alter.plugins.content.npcs.banker
+        // with the rest of them, on the tile behind its booth and with the generic Banker id
+        // Lumbridge actually uses.
         spawnNpc("npc.duke_horacio", 3212, 3220, 1, 4, Direction.SOUTH)
 
         // Tutors

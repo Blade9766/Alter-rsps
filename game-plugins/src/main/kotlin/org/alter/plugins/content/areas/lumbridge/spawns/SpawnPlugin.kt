@@ -39,22 +39,137 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.ram_1265", x = 3201, z = 3263, walkRadius = 10, direction = Direction.NORTH)
         spawnNpc(npc = "npc.ram_1265", x = 3207, z = 3271, walkRadius = 10, direction = Direction.SOUTH)
         spawnNpc(npc = "npc.ram_1265", x = 3195, z = 3271, walkRadius = 10, direction = Direction.EAST)
-        spawnNpc(npc = "npc.huge_spider_134", x = 3168, z = 3243, walkRadius = 7, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.giant_spider", x = 3165, z = 3251, walkRadius = 7, direction = Direction.EAST)
-        spawnNpc(npc = "npc.giant_spider_3018", x = 3246, z = 3248, walkRadius = 7, direction = Direction.EAST)
-        spawnNpc(npc = "npc.giant_spider_3017", x = 3241, z = 3245, walkRadius = 7, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.giant_spider_3017", x = 3253, z = 3243, walkRadius = 7, direction = Direction.WEST)
-        spawnNpc(npc = "npc.giant_spider_3017", x = 3245, z = 3235, walkRadius = 7, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.giant_spider_3017", x = 3253, z = 3234, walkRadius = 7, direction = Direction.WEST)
-        spawnNpc(npc = "npc.goblin_3028", x = 3264, z = 3232, walkRadius = 8, direction = Direction.WEST)
-        spawnNpc(npc = "npc.goblin_2246", x = 3247, z = 3244, walkRadius = 8, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.goblin_2248", x = 3244, z = 3244, walkRadius = 8, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.goblin_2484", x = 3241, z = 3242, walkRadius = 8, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.goblin_3028", x = 3253, z = 3245, walkRadius = 8, direction = Direction.WEST)
-        spawnNpc(npc = "npc.goblin_3039", x = 3255, z = 3236, walkRadius = 8, direction = Direction.WEST)
-        spawnNpc(npc = "npc.goblin_3054", x = 3256, z = 3230, walkRadius = 8, direction = Direction.WEST)
-        spawnNpc(npc = "npc.goblin_3028", x = 3221, z = 3271, walkRadius = 8, direction = Direction.WEST)
-        // TODO: Add more goblin spawns
+        // Giant spiders. All 16 tiles the OSRS Wiki places around Lumbridge, across its
+        // four Lumbridge-area LocLines, and every one of them level 2 (id 3017). Combat
+        // stats and drops live in org.alter.plugins.content.npcs.critters.
+        //
+        // This block used to be seven hand-placed tiles naming three different monsters,
+        // all wrong, and all harmless only because spiders had no combat defs:
+        //
+        // - "npc.huge_spider_134" was the **Huge spider**, a combat level 81 Player-Owned
+        //   House dungeon monster - 90 hitpoints, 59/70/69, max hit 8, aggressive. Its wiki
+        //   page has no Locations section at all, because it does not exist in the world;
+        //   it only ever appears inside someone's POH combat room.
+        // - "npc.giant_spider" is id 2477, the level 50 Stronghold of Security spider.
+        // - "npc.giant_spider_3018" is the level 27.
+        //
+        // Giant spiders are aggressive at every level, so with real stats those three would
+        // have hunted down the players they were standing among.
+
+        // West of Lumbridge, on the swamp road (3).
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3159, z = 3223, walkRadius = 7, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3162, z = 3225, walkRadius = 7, direction = Direction.EAST)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3163, z = 3222, walkRadius = 7, direction = Direction.SOUTH)
+
+        // Around the H.A.M. Hideout trapdoor (5).
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3165, z = 3249, walkRadius = 7, direction = Direction.WEST)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3166, z = 3242, walkRadius = 7, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3167, z = 3247, walkRadius = 7, direction = Direction.EAST)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3170, z = 3245, walkRadius = 7, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3170, z = 3248, walkRadius = 7, direction = Direction.WEST)
+
+        // Lumbridge proper, west of the castle (2).
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3200, z = 3238, walkRadius = 7, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3203, z = 3239, walkRadius = 7, direction = Direction.EAST)
+
+        // East side of Lumbridge, across the river (6).
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3239, z = 3256, walkRadius = 7, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3241, z = 3241, walkRadius = 7, direction = Direction.WEST)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3241, z = 3249, walkRadius = 7, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3243, z = 3236, walkRadius = 7, direction = Direction.EAST)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3245, z = 3232, walkRadius = 7, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.giant_spider_3017", x = 3247, z = 3236, walkRadius = 7, direction = Direction.WEST)
+
+        // Goblins. Tiles, levels and npc ids are the OSRS Wiki Goblin page's own published
+        // spawn pins for Lumbridge (its "Lumbridge" LocLine, all level 2) plus the single
+        // level 5 in Lumbridge Swamp. Combat stats and drops for every id below live in
+        // org.alter.plugins.content.npcs.goblin.
+        //
+        // That LocLine is one flat list of 121 pins that runs the whole way west past
+        // Draynor Manor. Only the 65 that actually stand in Lumbridge are here; the other
+        // 56 are in areas/draynor/spawns, split by where they stand rather than by which
+        // LocLine happens to carry them.
+        //
+        // Which of the thirty level 2 ids stands on which tile is not published - the pins
+        // carry coordinates only - so they are dealt round-robin over the tiles in the
+        // wiki's own listing order. That is a stable assignment, not an observed fact, but
+        // it does reproduce the thing that actually reads as right in game: a field of
+        // goblins in a mix of mail colours rather than thirty clones of one id.
+
+        // East of Lumbridge - both banks of the river, south to the Al Kharid border (50).
+        spawnNpc(npc = "npc.goblin_3028", x = 3241, z = 3244, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3029", x = 3241, z = 3251, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3030", x = 3242, z = 3242, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3031", x = 3244, z = 3245, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3032", x = 3244, z = 3247, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3033", x = 3244, z = 3251, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3034", x = 3246, z = 3235, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3035", x = 3246, z = 3236, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3036", x = 3246, z = 3241, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3037", x = 3246, z = 3244, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3038", x = 3246, z = 3245, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3039", x = 3247, z = 3240, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3040", x = 3247, z = 3245, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3041", x = 3247, z = 3247, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3042", x = 3248, z = 3229, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3043", x = 3248, z = 3241, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3044", x = 3249, z = 3243, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3051", x = 3249, z = 3252, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3052", x = 3249, z = 3256, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3053", x = 3250, z = 3227, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3054", x = 3250, z = 3228, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_5195", x = 3250, z = 3238, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_5196", x = 3250, z = 3256, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_5197", x = 3251, z = 3243, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_5198", x = 3251, z = 3252, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_5199", x = 3252, z = 3228, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_5200", x = 3252, z = 3246, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_5201", x = 3253, z = 3234, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_5202", x = 3253, z = 3241, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_5203", x = 3253, z = 3250, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3028", x = 3255, z = 3222, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3029", x = 3255, z = 3245, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3030", x = 3255, z = 3247, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3031", x = 3255, z = 3249, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3032", x = 3255, z = 3252, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3033", x = 3256, z = 3226, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3034", x = 3258, z = 3220, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3035", x = 3258, z = 3228, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3036", x = 3258, z = 3245, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3037", x = 3258, z = 3249, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3038", x = 3259, z = 3223, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3039", x = 3259, z = 3230, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3040", x = 3260, z = 3229, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3041", x = 3260, z = 3233, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3042", x = 3260, z = 3237, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3043", x = 3260, z = 3240, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_3044", x = 3262, z = 3218, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3051", x = 3263, z = 3220, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3052", x = 3263, z = 3228, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3053", x = 3263, z = 3243, walkRadius = 8, direction = Direction.EAST)
+
+        // West of Lumbridge castle, along the Draynor road (12).
+        spawnNpc(npc = "npc.goblin_3054", x = 3183, z = 3244, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_5195", x = 3183, z = 3246, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_5196", x = 3185, z = 3244, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_5197", x = 3185, z = 3246, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_5198", x = 3187, z = 3244, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_5199", x = 3187, z = 3246, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_5200", x = 3192, z = 3245, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_5201", x = 3194, z = 3248, walkRadius = 8, direction = Direction.EAST)
+        spawnNpc(npc = "npc.goblin_5202", x = 3197, z = 3250, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_5203", x = 3198, z = 3255, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3028", x = 3202, z = 3253, walkRadius = 8, direction = Direction.NORTH)
+        spawnNpc(npc = "npc.goblin_3029", x = 3206, z = 3252, walkRadius = 8, direction = Direction.EAST)
+
+        // North of Lumbridge, by the cow and sheep fields (3).
+        spawnNpc(npc = "npc.goblin_3030", x = 3215, z = 3276, walkRadius = 8, direction = Direction.SOUTH)
+        spawnNpc(npc = "npc.goblin_3031", x = 3217, z = 3278, walkRadius = 8, direction = Direction.WEST)
+        spawnNpc(npc = "npc.goblin_3032", x = 3224, z = 3262, walkRadius = 8, direction = Direction.NORTH)
+
+        // Lumbridge Swamp (1). The only non-level-2 goblin anywhere near Lumbridge:
+        // 12 hitpoints, stab, and the better of the two drop tables.
+        spawnNpc(npc = "npc.goblin_3045", x = 3167, z = 3205, walkRadius = 8, direction = Direction.SOUTH)
         spawnNpc(npc = "npc.drunken_man", x = 3230, z = 3241, walkRadius = 3, direction = Direction.EAST)
         spawnNpc(npc = "npc.man_3109", x = 3228, z = 3239, walkRadius = 3, direction = Direction.WEST)
         spawnNpc(npc = "npc.woman_3112", x = 3229, z = 3238, walkRadius = 3, direction = Direction.SOUTH)
@@ -76,6 +191,5 @@ class SpawnPlugin(
         spawnItem(item = "item.bowl", amount = 1, x = 3208, z = 3214)
         spawnItem(item = "item.jug", amount = 1, x = 3211, z = 3212)
 
-        spawnObj(obj = "object.altar_409", x = 3222, z = 3215, rot = 6)
     }
 }
