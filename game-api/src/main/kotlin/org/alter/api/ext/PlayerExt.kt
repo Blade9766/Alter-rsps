@@ -585,7 +585,7 @@ fun Player.playSound(
 }
 
 fun Player.playSong(id: Int) {
-    write(MidiSongV2(id = 0,
+    write(MidiSongV2(id = id,
             fadeOutDelay = 0,
             fadeOutSpeed = 0,
             fadeInDelay = 0,

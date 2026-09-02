@@ -1,6 +1,7 @@
 package org.alter.game.action
 
-import dev.openrune.cache.CacheManager.getAnim
+import dev.openrune.cache.CacheManager.getAnimOrDefault
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.alter.game.action.NpcDeathAction.reset
 import org.alter.game.info.NpcInfo
 import org.alter.game.model.LockState
@@ -24,6 +25,8 @@ import java.lang.ref.WeakReference
  * @author Tom <rspsmods@gmail.com>
  */
 object NpcDeathAction {
+    private val logger = KotlinLogging.logger {}
+
     var deathPlugin: Plugin.() -> Unit = {
         val npc = ctx as Npc
         if (!npc.world.plugins.executeNpcFullDeath(npc)) {
@@ -52,19 +55,41 @@ object NpcDeathAction {
         NpcInfo(npc).setAllOpsInvisible()
         world.plugins.executeNpcPreDeath(npc)
         npc.resetFacePawn()
-        if (npc.combatDef.defaultDeathSoundArea) {
-            world.spawn(AreaSound(npc.tile, deathSound, npc.combatDef.defaultDeathSoundRadius, npc.combatDef.defaultDeathSoundVolume))
-        } else {
-            (killer as? Player)?.playSound(deathSound, npc.combatDef.defaultDeathSoundVolume)
+        if (deathSound > 0) {
+            if (npc.combatDef.defaultDeathSoundArea) {
+                world.spawn(AreaSound(npc.tile, deathSound, npc.combatDef.defaultDeathSoundRadius, npc.combatDef.defaultDeathSoundVolume))
+            } else {
+                (killer as? Player)?.playSound(deathSound, npc.combatDef.defaultDeathSoundVolume)
+            }
         }
 
         /**
          * @TODO add interruption for this block if we would want to execute a plugin during it's death animation
+         *
+         * This loop sits between [NpcInfo.setAllOpsInvisible] above and
+         * [org.alter.game.plugin.PluginRepository.executeNpcDeath] below, so anything that
+         * throws here strands the npc mid-death: its options stay hidden, its drop plugin
+         * never runs, and it never respawns. It had two ways to do that, both fixed here:
+         *
+         * 1. `getAnim` **throws** when an id is not in the cache. It is now
+         *    [getAnimOrDefault], which returns a [dev.openrune.cache.filestore.definition.data.SequenceType]
+         *    with `id = -1` instead; a missing animation is skipped and logged rather than
+         *    killing the monster.
+         * 2. [QueueTask.wait] **throws** on a non-positive argument
+         *    (`check(cycles > 0)`), and a sequence with no computed length reports
+         *    `cycleLength = 0`. That applied to real, present animations too, not just
+         *    missing ones - hence the explicit guard rather than only the null-safe lookup.
          */
         deathAnimation.forEach { anim ->
-            val def = getAnim(anim)
+            val def = getAnimOrDefault(anim)
+            if (def.id < 0) {
+                logger.warn { "Npc ${npc.id} has an unknown death animation and will skip it: $anim" }
+                return@forEach
+            }
             npc.animate(def.id, def.cycleLength)
-            wait(def.cycleLength)
+            if (def.cycleLength > 0) {
+                wait(def.cycleLength)
+            }
         }
         world.plugins.executeNpcDeath(npc)
         world.plugins.anyNpcDeath.forEach {

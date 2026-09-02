@@ -145,10 +145,27 @@ class GameService : Service {
         gameThreadJobs.offer(job)
     }
 
+    /**
+     * The entry point handed to [executor]'s `scheduleAtFixedRate`, which silently
+     * cancels every future execution as soon as the task throws - the throwable is
+     * captured in the returned future, so the thread's uncaught-exception handler
+     * never sees it either. One escaped [Throwable] would therefore kill the game
+     * loop permanently without printing anything: the server keeps its port open and
+     * keeps accepting logins, but goes mute afterwards, which from the client's side
+     * is indistinguishable from "cannot log in". Nothing is allowed to escape here.
+     */
     private fun cycle() {
         if (pause) {
             return
         }
+        try {
+            gameCycle()
+        } catch (t: Throwable) {
+            logger.error(t) { "Error during game cycle." }
+        }
+    }
+
+    private fun gameCycle() {
         val start = System.currentTimeMillis()
 
         /*
@@ -159,18 +176,20 @@ class GameService : Service {
 
         /*
          * Execute any logic jobs that were submitted.
+         *
+         * Drained rather than iterated and then cleared: jobs are offered from other
+         * threads - logins, most notably - and any job that landed in the queue while
+         * this loop was running used to be thrown away unexecuted by the [clear] call,
+         * which silently dropped that player's login.
          */
-        gameThreadJobs.forEach { job ->
+        while (true) {
+            val job = gameThreadJobs.poll() ?: break
             try {
                 job()
-            } catch (e: Exception) {
-                logger.error(e) { "Error executing game-thread job." }
+            } catch (t: Throwable) {
+                logger.error(t) { "Error executing game-thread job." }
             }
         }
-        /*
-         * Reset the logic jobs as they have been completed.
-         */
-        gameThreadJobs.clear()
 
         /*
          * Go over the [tasks] and execute their logic. Log the time it took
@@ -182,12 +201,16 @@ class GameService : Service {
             val taskStart = System.currentTimeMillis()
             try {
                 task.execute(world, this)
-            } catch (e: Exception) {
-                logger.error(e) { "Error with task ${task.javaClass.simpleName}." }
+            } catch (t: Throwable) {
+                logger.error(t) { "Error with task ${task.javaClass.simpleName}." }
             }
             taskTimes[task.javaClass] = System.currentTimeMillis() - taskStart
         }
-        world.cycle()
+        try {
+            world.cycle()
+        } catch (t: Throwable) {
+            logger.error(t) { "Error during world cycle." }
+        }
 
         /*
          * Calculate the time, in milliseconds, it took for this cycle to complete

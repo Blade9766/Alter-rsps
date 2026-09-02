@@ -637,7 +637,36 @@ class World(val gameContext: GameContext, val devContext: DevContext) {
         npc.combatDef = combatDef
         npc.combatDef.bonuses.forEachIndexed { index, bonus -> npc.equipmentBonuses[index] = bonus }
         npc.respawns = combatDef.respawnDelay > 0
+        npc.combatClass = combatDef.combatClass
         npc.setCurrentHp(npc.combatDef.hitpoints)
+        setNpcStats(npc, combatDef)
+    }
+
+    /**
+     * Copies the combat levels declared in an npc's `stats { }` block onto its live
+     * [Npc.Stats].
+     *
+     * These were never copied anywhere, so `Npc.stats` stayed at its `Array(nStats) { 1 }`
+     * initial value for every npc in the game. Every combat formula reads it - melee,
+     * ranged and magic all resolve an npc's attack, strength, defence, ranged and magic
+     * levels through it, and `Combat.getNpcXpMultiplier` reads the max levels - so every
+     * monster was fighting and defending as though it had 1 in all five stats regardless
+     * of what its plugin declared.
+     *
+     * Indices match `org.alter.api.NpcSkills`, which can't be imported here: it lives in
+     * game-api, which already depends on this module.
+     */
+    private fun setNpcStats(
+        npc: Npc,
+        def: NpcCombatDef,
+    ) {
+        val levels = intArrayOf(def.attack, def.strength, def.defence, def.magic, def.ranged)
+        levels.forEachIndexed { skill, level ->
+            if (skill < npc.stats.nStats) {
+                npc.stats.setMaxLevel(skill, level)
+                npc.stats.setCurrentLevel(skill, level)
+            }
+        }
     }
 
     /**
