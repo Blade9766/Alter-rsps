@@ -100,10 +100,20 @@ object NpcCombatDsl {
                 magicDefence = builder.build()
             }
         }
+        /**
+         * Only the magic sub-block's [ElementalWeakness] is actually wired to
+         * [combatBuilder] - [DefenceBuilder.meleeDefence]/[DefenceBuilder.rangeDefence]
+         * (and a flat magic defence level, which [bonuses] already covers via
+         * [BonusBuilder.defenceMagic]) are built but never consumed by anything, same
+         * as this whole block was before this fix (it built a [DefenceBuilder] and
+         * discarded it without ever touching [combatBuilder]).
+         */
         fun defence(init: DefenceBuilder.() -> Unit) {
             val builder = DefenceBuilder()
             builder.init()
-
+            builder.magicDefence?.elementsWeakness?.let { weakness ->
+                combatBuilder.setElementalWeakness(weakness.element, weakness.percent)
+            }
         }
 
         @CombatDslMarker
@@ -120,6 +130,54 @@ object NpcCombatDsl {
             combatBuilder.setVenomImmunity(builder.venom)
             combatBuilder.setCannonImmunity(builder.cannon)
             combatBuilder.setThrallsImmunity(builder.thralls)
+        }
+
+        /**
+         * Declares this npc as a ranged attacker and describes the projectile it fires.
+         *
+         * Without this block an npc is a melee attacker, which is what every npc in the
+         * codebase used to be: [org.alter.game.model.entity.Npc.combatClass] defaulted
+         * to MELEE and nothing ever set it, so the only way to build a monster that
+         * shot at you was a bespoke per-monster attack loop.
+         *
+         * ```
+         * ranged {
+         *     projectile = 10          // bronze arrow
+         *     drawback = 19
+         *     type = ProjectileType.ARROW
+         * }
+         * ```
+         */
+        @CombatDslMarker
+        class RangedBuilder {
+            /** Spotanim of the projectile in flight. Required. */
+            var projectile = -1
+
+            /** Flight profile - heights, delay and angle. */
+            var type = ProjectileType.ARROW
+
+            /** Spotanim played on the npc as it fires. -1 for none. */
+            var drawback = -1
+            var drawbackHeight = 96
+
+            /** Spotanim played on the target as the projectile lands. -1 for none. */
+            var impact = -1
+            var impactHeight = 0
+        }
+
+        fun ranged(init: RangedBuilder.() -> Unit) {
+            val builder = RangedBuilder()
+            init(builder)
+
+            check(builder.projectile != -1) { "A ranged npc must set a projectile spotanim." }
+            combatBuilder.setRangedProjectile(
+                gfx = builder.projectile,
+                type = builder.type,
+                drawbackGfx = builder.drawback,
+                drawbackHeight = builder.drawbackHeight,
+                impactGfx = builder.impact,
+                impactHeight = builder.impactHeight,
+            )
         }
 
         fun aggro(init: AggressivenessBuilder.() -> Unit) {

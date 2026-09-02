@@ -451,6 +451,20 @@ abstract class KotlinPlugin(
     }
 
     /**
+     * Raw-id variant of [onItemOnObj], for plugins that discover their object ids by
+     * scanning the cache at world-init rather than naming them one at a time - the same
+     * reason [onObjOption] has an int overload.
+     */
+    fun onItemOnObj(
+        obj: Int,
+        item: Int,
+        lineOfSightDistance: Int = -1,
+        logic: (Plugin).() -> Unit,
+    ) {
+        r.bindItemOnObject(obj, item, lineOfSightDistance, logic)
+    }
+
+    /**
      * Invoke [plugin] when [item1] is used on [item2] or vise-versa.
      */
     fun onItemOnItem(
@@ -458,6 +472,16 @@ abstract class KotlinPlugin(
         item2: String,
         plugin: Plugin.() -> Unit,
     ) = r.bindItemOnItem(getRSCM(item1), getRSCM(item2), plugin)
+
+    /**
+     * Raw-id variant of [onItemOnItem], for plugins whose pairs come out of a config file
+     * already resolved rather than being named one at a time.
+     */
+    fun onItemOnItem(
+        item1: Int,
+        item2: Int,
+        plugin: Plugin.() -> Unit,
+    ) = r.bindItemOnItem(item1, item2, plugin)
 
     /**
      * Invoke [plugin] when [item] in inventory is used on [groundItem] on ground.

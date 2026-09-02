@@ -44,7 +44,38 @@ data class NpcCombatDef(
     val immunePoison: Boolean,
     val immuneVenom: Boolean,
     val immuneCannons: Boolean,
-    val immuneThralls: Boolean
+    val immuneThralls: Boolean,
+    /**
+     * Ordinal of [org.alter.api.Elements] this npc is weak to, or -1 for no weakness.
+     * Stored as a plain ordinal rather than the enum itself since game-api (where
+     * [org.alter.api.Elements] lives) already depends on this module, so this module
+     * can't depend back on it.
+     */
+    val elementalWeaknessElement: Int = -1,
+    val elementalWeaknessPercent: Int = 0,
+    /**
+     * Which combat strategy this npc attacks with. Copied onto [org.alter.game.model.entity.Npc.combatClass]
+     * at spawn; before this existed every npc was hard-wired to MELEE and the only way
+     * to make one shoot or cast was a bespoke per-monster attack loop.
+     */
+    val combatClass: CombatClass = CombatClass.MELEE,
+    /**
+     * Spotanim of the projectile a [CombatClass.RANGED] npc fires, or -1 for none.
+     */
+    val rangedProjectileGfx: Int = -1,
+    /**
+     * Ordinal of the [org.alter.api.ProjectileType] governing that projectile's flight
+     * (start/end height, delay, angle). Stored as a plain ordinal for the same reason
+     * as [elementalWeaknessElement]: the enum lives in game-api, which already depends
+     * on this module, so this module can't depend back on it. -1 means "arrow".
+     */
+    val rangedProjectileType: Int = -1,
+    /** Spotanim played on the npc as it fires, or -1 for none. */
+    val rangedDrawbackGfx: Int = -1,
+    val rangedDrawbackHeight: Int = 96,
+    /** Spotanim played on the target as the projectile lands, or -1 for none. */
+    val rangedImpactGfx: Int = -1,
+    val rangedImpactHeight: Int = 0,
 ) {
     companion object {
         private const val DEFAULT_HITPOINTS = 10

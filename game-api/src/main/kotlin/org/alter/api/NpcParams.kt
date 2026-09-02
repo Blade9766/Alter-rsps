@@ -1,6 +1,7 @@
 package org.alter.api
 
 import org.alter.api.ext.enumSetOf
+import org.alter.game.model.combat.CombatClass
 import org.alter.game.model.combat.NpcCombatDef
 import org.alter.game.model.weightedTableBuilder.LootTable
 
@@ -117,6 +118,17 @@ class NpcCombatBuilder {
     private var immuneVenom = false
     private var immuneCannons = false
     private var immuneThralls = false
+    private var elementalWeaknessElement = -1
+    private var elementalWeaknessPercent = 0
+
+    private var combatClass = CombatClass.MELEE
+    private var rangedProjectileGfx = -1
+    private var rangedProjectileType = -1
+    private var rangedDrawbackGfx = -1
+    private var rangedDrawbackHeight = 96
+    private var rangedImpactGfx = -1
+    private var rangedImpactHeight = 0
+
     var LootTable: MutableSet<LootTable> = mutableSetOf()
 
     fun build(): NpcCombatDef {
@@ -174,8 +186,53 @@ class NpcCombatBuilder {
             immunePoison = immunePoison,
             immuneVenom = immuneVenom,
             immuneCannons = immuneCannons,
-            immuneThralls = immuneThralls
+            immuneThralls = immuneThralls,
+            elementalWeaknessElement = elementalWeaknessElement,
+            elementalWeaknessPercent = elementalWeaknessPercent,
+            combatClass = combatClass,
+            rangedProjectileGfx = rangedProjectileGfx,
+            rangedProjectileType = rangedProjectileType,
+            rangedDrawbackGfx = rangedDrawbackGfx,
+            rangedDrawbackHeight = rangedDrawbackHeight,
+            rangedImpactGfx = rangedImpactGfx,
+            rangedImpactHeight = rangedImpactHeight,
         )
+    }
+
+    fun setCombatClass(combatClass: CombatClass): NpcCombatBuilder {
+        this.combatClass = combatClass
+        return this
+    }
+
+    /**
+     * Configures the projectile a ranged npc fires. Setting it also marks the npc as a
+     * ranged attacker, since a projectile is only meaningful for one.
+     */
+    fun setRangedProjectile(
+        gfx: Int,
+        type: ProjectileType,
+        drawbackGfx: Int,
+        drawbackHeight: Int,
+        impactGfx: Int,
+        impactHeight: Int,
+    ): NpcCombatBuilder {
+        combatClass = CombatClass.RANGED
+        rangedProjectileGfx = gfx
+        rangedProjectileType = type.ordinal
+        rangedDrawbackGfx = drawbackGfx
+        rangedDrawbackHeight = drawbackHeight
+        rangedImpactGfx = impactGfx
+        rangedImpactHeight = impactHeight
+        return this
+    }
+
+    fun setElementalWeakness(
+        element: Elements,
+        percent: Int,
+    ): NpcCombatBuilder {
+        elementalWeaknessElement = element.ordinal
+        elementalWeaknessPercent = percent
+        return this
     }
 
     fun setAttackSoundArea(attackSoundArea: Boolean) {
