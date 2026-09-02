@@ -190,3 +190,39 @@ publishing {
         }
     }
 }
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("itemOptDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.ItemOptDiag")
+    workingDir = rootDir
+}
+
+// Resolves the cache libraries' own runtime dependencies without dragging in :game-plugins.
+val locDumpRuntime: Configuration by configurations.creating
+
+dependencies {
+    locDumpRuntime(rootProject.projects.plugins.filestore)
+    locDumpRuntime(rootProject.projects.plugins.rscm)
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("agilityLocDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    // compileClasspath + own output rather than runtimeClasspath: the dump only reads the cache, and
+    // runtimeClasspath would drag in :game-plugins, coupling this diagnostic to content compiling.
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.AgilityLocDump")
+    workingDir = rootDir
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("agilityMapDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.AgilityMapDump")
+    workingDir = rootDir
+}
