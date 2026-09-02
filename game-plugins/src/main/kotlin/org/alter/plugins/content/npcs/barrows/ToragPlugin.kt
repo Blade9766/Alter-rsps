@@ -31,19 +31,41 @@ class ToragPlugin(
 
         setCombatDef("npc.torag_the_corrupted") {
             configs {
-                attackSpeed = 6
+                attackSpeed = 5
                 respawnDelay = 50
             }
 
             stats {
                 hitpoints = 100
-                magic = 100
+                attack = 100
+                strength = 100
                 defence = 100
+                // Melee brother: Magic 1, not 100. This stats block was a copy of
+                // Ahrim's - the only mage of the six - which also left attack and
+                // strength at the DSL default of 1 instead of 100.
+                magic = 1
+            }
+
+            // Equipment bonuses from the monster infobox. There was no bonuses
+            // block at all before, so every one of these sat at 0 - the brothers
+            // wear full Barrows armour and defended like they were naked.
+            bonuses {
+                attackMagic = -33
+                attackRanged = -11
+                strengthBonus = 72
+                defenceStab = 221
+                defenceSlash = 235
+                defenceCrush = 222
+                defenceMagic = 0
+                defenceRanged = 221
             }
 
             anims {
-                attack = 729
-                block = 2079
+                // Was 729 (STUN_SPELL_CAST) with block 2079 - and 2079 is
+                // HUMAN_AHRIMS_STAFF_DEFEND, i.e. this brother was animating as
+                // Ahrim. No named hammers defend exists, so the generic HUMAN_DEFEND is used.
+                attack = Animation.HUMAN_TORAGS_HAMMERS_SWING
+                block = Animation.HUMAN_DEFEND
                 death = 2925
             }
         }

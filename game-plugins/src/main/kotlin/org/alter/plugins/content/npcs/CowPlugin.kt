@@ -16,6 +16,7 @@ import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
 import org.alter.plugins.content.combat.isBeingAttacked
+import org.alter.rscm.RSCM.getRSCM
 
 /**
  *  @author <a href="https://github.com/CloudS3c">Cl0ud</a>
@@ -27,16 +28,45 @@ class CowPlugin(
     world: World,
     server: Server
 ) : KotlinPlugin(r, world, server) {
-        
+
     init {
-        val cow_npc_list =
+        val cows = listOf("npc.cow")
+
+        val lumbridgeCowSpawns =
             listOf(
-                "npc.cow",
+                3255 to 3259,
+                3257 to 3262,
+                3259 to 3259,
+                3262 to 3261,
+                3263 to 3265,
+                3260 to 3270,
+                3258 to 3274,
+                3261 to 3277,
+                3256 to 3280,
+                3262 to 3285,
+                3261 to 3291,
+                3256 to 3292,
+                3253 to 3288,
+                3248 to 3290,
+                3248 to 3284,
+                3253 to 3282,
             )
+
+        lumbridgeCowSpawns.forEach { (x, z) ->
+            spawnNpc(
+                npc = "npc.cow",
+                x = x,
+                z = z,
+                // Keep random destinations close to the spawn tile so cows
+                // cannot select tiles on the far side of the pasture fence.
+                walkRadius = 1,
+                direction = Direction.SOUTH,
+            )
+        }
 
         val COW_YELL_DELAY = TimerKey()
 
-        cow_npc_list.forEach { cow ->
+        cows.forEach { cow ->
             onNpcSpawn(npc = cow) {
                 val npc = npc
                 npc.timers[COW_YELL_DELAY] = world.random(100..200)
@@ -51,10 +81,10 @@ class CowPlugin(
             npc.timers[COW_YELL_DELAY] = world.random(100..200)
         }
 
-        cow_npc_list.forEach {
-            setCombatDef(it) {
+        cows.forEach { cow ->
+            setCombatDef(cow) {
                 configs {
-                    attackSpeed = 6
+                    attackSpeed = 4
                     respawnDelay = 45
                     poisonChance = 0.0
                     venomChance = 0.0
@@ -86,6 +116,22 @@ class CowPlugin(
                     attackSound = Sound.COW_ATTACK
                     blockSound = Sound.COW_HIT
                     deathSound = Sound.COW_DEATH
+                }
+            }
+
+            onNpcDeath(cow) {
+                val npc = npc
+                val killer = npc.attr[KILLER_ATTR]?.get() as? Player ?: return@onNpcDeath
+
+                listOf("item.bones", "item.cowhide", "item.raw_beef").forEach { item ->
+                    world.spawn(
+                        GroundItem(
+                            item = getRSCM(item),
+                            amount = 1,
+                            tile = npc.tile,
+                            owner = killer,
+                        ),
+                    )
                 }
             }
         }

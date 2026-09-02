@@ -10,18 +10,40 @@ import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.interfaces.bank.openBank
 
+/**
+ * The bankers of every town and city: where they stand, and what they do when talked to.
+ *
+ * Spawns and ids come from [Banks]; this file is the wiring.
+ *
+ * Bankers are spawned with `walkRadius = 0` on purpose. That is the flag
+ * [org.alter.plugins.content.mechanics.npcwalk.NpcRandomWalkPlugin] gates random walking on
+ * (`if (npc.walkRadius > 0)`), so a zero keeps every banker planted on its own tile behind its own
+ * booth instead of wandering off through the counter. Each one is turned to face across the booth
+ * at the players rather than at the wall behind it.
+ *
+ * The npc option handlers are registered per id rather than once, because "talk-to", "bank" and
+ * "collect" are per-npc registrations - a banker id that is spawned but not registered here is a
+ * banker you cannot click.
+ */
 class BankerPlugin(
     r: PluginRepository, world: World, server: Server
 ) : KotlinPlugin(r, world, server) {
 
-    private val bankers = listOf(
-        "npc.banker_1479",
-        "npc.banker_1480",
-        "npc.banker_2897",
-    )
-
     init {
-        bankers.forEach { banker ->
+        Banks.ALL.forEach { bank ->
+            bank.spawns.forEach { spawn ->
+                spawnNpc(
+                    npc = spawn.npcKey,
+                    x = spawn.x,
+                    z = spawn.z,
+                    height = spawn.height,
+                    walkRadius = 0,
+                    direction = spawn.facing,
+                )
+            }
+        }
+
+        Banks.NPC_KEYS.forEach { banker ->
             onNpcOption(npc = banker, option = "talk-to", lineOfSightDistance = 2) {
                 player.queue {
                     dialog(player, this)

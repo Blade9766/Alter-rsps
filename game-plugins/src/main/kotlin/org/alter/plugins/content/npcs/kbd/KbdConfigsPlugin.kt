@@ -34,7 +34,7 @@ class KbdConfigsPlugin(
             }
 
             configs {
-                attackSpeed = 3
+                attackSpeed = 4
                 respawnDelay = 50
             }
 
@@ -52,7 +52,9 @@ class KbdConfigsPlugin(
             }
 
             bonuses {
-                defenceStab = 70
+                // Wiki gives dstab 40 - the KBD is notably weaker to stab than to
+                // slash/crush (both 90). This read 70.
+                defenceStab = 40
                 defenceSlash = 90
                 defenceCrush = 90
                 defenceMagic = 80

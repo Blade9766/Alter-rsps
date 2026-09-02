@@ -42,9 +42,24 @@ class DharokPlugin(
                 defence = 100
             }
 
+            // Equipment bonuses from the monster infobox. There was no bonuses
+            // block at all before, so every one of these sat at 0 - the brothers
+            // wear full Barrows armour and defended like they were naked.
+            bonuses {
+                attackMagic = -58
+                attackRanged = -18
+                strengthBonus = 105
+                defenceStab = 252
+                defenceSlash = 250
+                defenceCrush = 244
+                defenceMagic = -11
+                defenceRanged = 249
+            }
+
             anims {
-                attack = 2067
-                block = 424
+                // Already correct - 2067 is HUMAN_DHAROKS_GREATAXE_SWING. Named for clarity.
+                attack = Animation.HUMAN_DHAROKS_GREATAXE_SWING
+                block = Animation.HUMAN_DEFEND
                 death = 2925
             }
         }
