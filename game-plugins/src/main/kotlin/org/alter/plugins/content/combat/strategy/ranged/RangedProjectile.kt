@@ -51,9 +51,17 @@ enum class RangedProjectile(
     BOLTS(
         gfx = 27,
         type = ProjectileType.BOLT,
+        /*
+         * Every bolt in the game, so none of them fires invisibly. The gem bolts, broad
+         * bolts and bolt racks were all missing, which meant enchanted bolts - and
+         * Karil's crossbow - drew no projectile at all.
+         */
         items =
             Bolts.BRONZE_BOLTS + Bolts.IRON_BOLTS + Bolts.STEEL_BOLTS + Bolts.MITHRIL_BOLTS +
-                Bolts.ADAMANT_BOLTS + Bolts.RUNITE_BOLTS + Bolts.DRAGON_BOLTS + Bolts.BLURITE_BOLTS + Bolts.KEBBIT_BOLTS + Bolts.BONE_BOLTS,
+                Bolts.ADAMANT_BOLTS + Bolts.RUNITE_BOLTS + Bolts.DRAGON_BOLTS + Bolts.BLURITE_BOLTS + Bolts.KEBBIT_BOLTS +
+                Bolts.BONE_BOLTS + Bolts.BROAD_BOLTS + Bolts.BOLT_RACKS + Bolts.DRAGON_GEM_BOLTS +
+                Bolts.OPAL_BOLTS + Bolts.JADE_BOLTS + Bolts.PEARL_BOLTS + Bolts.TOPAZ_BOLTS + Bolts.SAPPHIRE_BOLTS +
+                Bolts.EMERALD_BOLTS + Bolts.RUBY_BOLTS + Bolts.DIAMOND_BOLTS + Bolts.DRAGONSTONE_BOLTS + Bolts.ONYX_BOLTS,
     ),
 
     BRONZE_ARROW(gfx = 10, drawback = Graphic(id = 19, height = 96), type = ProjectileType.ARROW, items = BRONZE_ARROWS),

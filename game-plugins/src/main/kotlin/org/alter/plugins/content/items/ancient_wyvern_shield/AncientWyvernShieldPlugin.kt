@@ -21,18 +21,19 @@ class AncientWyvernShieldPlugin(
     world: World,
     server: Server
 ) : KotlinPlugin(r, world, server) {
-        
+
     init {
-        
+        onItemEquip("item.ancient_wyvern_shield") {
+            player.queue {
+                player.animate(-1)
+                player.graphic(-1)
+
+                player.animate(3996, 3)
+                player.graphic(1395, 98, 3)
+            }
+        }
     }
-    //on_item_equip(Items.ANCIENT_WYVERN_SHIELD) {
-//    player.animate(3996)
-//    player.queue {
-//        wait(1)
-//        player.graphic(1395, 98)
-//    }
-//}
-///**
+    ///**
 // When using bottoms components on anvil it will throw out another message
 // If using on anvile => "Perhaps some of the magical apparatus on Fossil Island can help join these two items."
 // Theres animation of anvil + hammer , and teleportation purple gfx , and some animation in the end.

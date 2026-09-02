@@ -15,6 +15,7 @@ import org.alter.game.model.entity.Player
 import org.alter.game.model.move.MovementQueue.StepType
 import org.alter.game.model.move.hasMoveDestination
 import org.alter.game.model.move.stopMovement
+import org.alter.game.model.move.walkTo
 import org.alter.game.model.move.walkRoute
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.plugin.KotlinPlugin
@@ -57,10 +58,34 @@ class CombatPlugin(
      */
     suspend fun cycle(pawn: Pawn, queue: QueueTask): Boolean {
         val target = pawn.getCombatTarget() ?: return false
+        if (pawn is Npc &&
+            (pawn.spawnTile.getDistance(target.tile) > NPC_COMBAT_LEASH_DISTANCE ||
+                pawn.spawnTile.getDistance(pawn.tile) > NPC_COMBAT_LEASH_DISTANCE)
+        ) {
+            Combat.reset(pawn)
+            if (target.getCombatTarget() == pawn) {
+                Combat.reset(target)
+                target.resetFacePawn()
+            }
+            pawn.resetFacePawn()
+            pawn.stopMovement()
+            pawn.walkTo(pawn.spawnTile)
+            return false
+        }
         val strategy = CombatConfigs.getCombatStrategy(pawn)
         val attackRange = strategy.getAttackRange(pawn)
         var routeLogic = 1
+        /*
+         * The pawn stopped facing its target - e.g. the player clicked elsewhere,
+         * which runs resetInteractions() and clears the facing attribute. Combat ends
+         * here, but it has to end *cleanly*: returning false on its own left
+         * COMBAT_TARGET_FOCUS_ATTR set with no combat loop still running, so the pawn
+         * counted as "already in combat" from then on. For an NPC that also made
+         * retaliation skip it (see Combat.postDamage), leaving it permanently refusing
+         * to fight back - one of the "sometimes they just do not engage" cases.
+         */
         if (target != pawn.attr[FACING_PAWN_ATTR]?.get()) {
+            Combat.reset(pawn)
             return false
         }
         if (pawn.entityType.isNpc) {
@@ -163,6 +188,7 @@ class CombatPlugin(
             }
         }
         if (target != pawn.attr[FACING_PAWN_ATTR]?.get()) {
+            Combat.reset(pawn)
             return false
         }
         if (Combat.isAttackDelayReady(pawn)) {
@@ -183,5 +209,9 @@ class CombatPlugin(
             }
         }
         return true
+    }
+
+    private companion object {
+        const val NPC_COMBAT_LEASH_DISTANCE = 16
     }
 }

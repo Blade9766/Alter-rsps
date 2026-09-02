@@ -3,6 +3,7 @@ package org.alter.plugins.content.combat.strategy
 import org.alter.api.ProjectileType
 import org.alter.api.Skills
 import org.alter.api.ext.getVarbit
+import org.alter.api.ext.landed
 import org.alter.api.ext.playSound
 import org.alter.game.model.Graphic
 import org.alter.game.model.Tile
@@ -16,7 +17,33 @@ import org.alter.plugins.content.combat.createProjectile
 import org.alter.plugins.content.combat.dealHit
 import org.alter.plugins.content.combat.formula.MagicCombatFormula
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
+import org.alter.plugins.content.combat.strategy.magic.CurseEffect
 import org.alter.plugins.content.magic.MagicSpells
+
+/**
+ * Plays a spell's cast or impact sound to the humans involved.
+ *
+ * [org.alter.game.model.entity.Npc]s have no client to send a sound to, so an NPC-cast
+ * spell has to be heard through the player on the other end of it - which is why this
+ * plays to the caster *and* the target rather than just the caster. Shared with
+ * [org.alter.plugins.content.npcs.darkwizard.DarkWizardCombatPlugin], whose casts were
+ * silent for the same reason.
+ *
+ * Ids of `-1` (or 0) mean "no sound defined" and are skipped.
+ */
+fun playSpellSound(
+    caster: Pawn,
+    target: Pawn,
+    sound: Int,
+) {
+    if (sound <= 0) {
+        return
+    }
+    (caster as? Player)?.playSound(sound)
+    if (target !== caster) {
+        (target as? Player)?.playSound(sound)
+    }
+}
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -60,10 +87,12 @@ object MagicCombatStrategy : CombatStrategy {
             world.spawn(projectile)
         }
 
+        // The cast sound used to sit inside the `pawn is Player` block below, so a
+        // spell cast by an NPC was completely silent. It is the spell making the
+        // noise, not the caster, so it now plays either way.
+        playSpellSound(pawn, target, spell.castSound)
+
         if (pawn is Player) {
-            if (spell.castSound != -1) {
-                pawn.playSound(id = spell.castSound, volume = 1, delay = 0)
-            }
             MagicSpells.getMetadata(spell.id)?.let { requirement -> MagicSpells.removeRunes(pawn, requirement.items) }
         }
 
@@ -73,10 +102,43 @@ object MagicCombatStrategy : CombatStrategy {
         val landHit = accuracy >= world.randomDouble()
 
         val hitDelay = getHitDelay(pawn.getCentreTile(), target.getCentreTile())
-        val damage = pawn.dealHit(target = target, maxHit = maxHit, landHit = landHit, delay = hitDelay).hit.hitmarks.sumOf { it.damage }
+        val damage =
+            pawn
+                .dealHit(target = target, maxHit = maxHit, landHit = landHit, delay = hitDelay) { hit ->
+                    // Runs when the hit actually applies, so the impact lands with
+                    // the projectile rather than needing a guessed sound delay.
+                    if (hit.landed()) {
+                        playSpellSound(pawn, target, spell.impactSound)
+                    }
+                    val curseEffect = spell.curseEffect
+                    if (hit.landed() && curseEffect != null) {
+                        applyCurseEffect(target, curseEffect)
+                    }
+                }.hit.hitmarks
+                .sumOf { it.damage }
 
         if (damage >= 0 && pawn.entityType.isPlayer) {
             addCombatXp(pawn as Player, target, damage, spell)
+        }
+    }
+
+    /** Drains [effect.drainedSkill] by [effect.drainPercent] of its current level (floored, min 1). */
+    private fun applyCurseEffect(
+        target: Pawn,
+        effect: CurseEffect,
+    ) {
+        when (target) {
+            is Player -> {
+                val current = target.getSkills().getCurrentLevel(effect.drainedSkill)
+                val reduction = (current * effect.drainPercent).toInt().coerceAtLeast(1)
+                target.getSkills().alterCurrentLevel(effect.drainedSkill, -reduction)
+            }
+            is Npc -> {
+                val current = target.stats.getCurrentLevel(effect.drainedSkill)
+                val reduction = (current * effect.drainPercent).toInt().coerceAtLeast(1)
+                target.stats.alterCurrentLevel(effect.drainedSkill, -reduction)
+            }
+            else -> {}
         }
     }
 

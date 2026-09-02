@@ -41,23 +41,19 @@ object MeleeCombatStrategy : CombatStrategy {
         val world = pawn.world
         val animation = CombatConfigs.getAttackAnimation(pawn)
         pawn.animate(animation)
-        if (target is Player) {
-            when (pawn) {
-                is Npc -> {
-                    CombatConfigs.getCombatDef(pawn)!!.let {
-                        if (it.defaultAttackSoundArea) {
-                            world.spawn(
-                                AreaSound(pawn.tile, it.defaultAttackSound, it.defaultAttackSoundRadius, it.defaultAttackSoundVolume),
-                            )
-                        } else {
-                            target.playSound(pawn.combatDef.defaultAttackSound, pawn.combatDef.defaultAttackSoundVolume)
-                        }
-                    }
-                }
-                is Player -> {
-                    // @TODO Later
+        if (pawn is Npc) {
+            val def = pawn.combatDef
+            if (def.defaultAttackSound > 0) {
+                if (def.defaultAttackSoundArea) {
+                    world.spawn(
+                        AreaSound(pawn.tile, def.defaultAttackSound, def.defaultAttackSoundRadius, def.defaultAttackSoundVolume),
+                    )
+                } else if (target is Player) {
+                    target.playSound(def.defaultAttackSound, def.defaultAttackSoundVolume)
                 }
             }
+        } else if (pawn is Player) {
+            world.spawn(AreaSound(pawn.tile, CombatConfigs.getWeaponAttackSound(pawn), 5, 1))
         }
         val formula = MeleeCombatFormula
         val accuracy = formula.getAccuracy(pawn, target)

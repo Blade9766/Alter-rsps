@@ -9,6 +9,10 @@ import org.alter.game.model.entity.Player
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
+import org.alter.plugins.content.combat.strategy.magic.elementOf
+import org.alter.plugins.content.combat.strategy.magic.groupOf
+import org.alter.plugins.content.combat.strategy.magic.spellsInGroup
+import org.alter.plugins.content.magic.MagicSpells
 import org.alter.plugins.content.mechanics.prayer.Prayer
 import org.alter.plugins.content.mechanics.prayer.Prayers
 
@@ -70,7 +74,10 @@ object MagicCombatFormula : CombatFormula {
         target: Pawn,
         specialAttackMultiplier: Double,
     ): Double {
-        val attack = getAttackRoll(pawn)
+        var attack = getAttackRoll(pawn).toDouble()
+        if (pawn is Player && target is Npc) {
+            attack *= elementalWeaknessMultiplier(pawn, target)
+        }
         val defence =
             if (target is Player) {
                 getDefenceRoll(target)
@@ -96,7 +103,12 @@ object MagicCombatFormula : CombatFormula {
         specialPassiveMultiplier: Double,
     ): Int {
         val spell = pawn.attr[Combat.CASTING_SPELL]
-        var hit = spell?.maxHit?.toDouble() ?: 1.0
+        var hit =
+            if (pawn is Player && spell != null) {
+                effectiveMaxHit(pawn, spell).toDouble()
+            } else {
+                spell?.maxHit?.toDouble() ?: 1.0
+            }
         if (pawn is Player) {
             val magic = pawn.getSkills().getCurrentLevel(Skills.MAGIC)
             if (pawn.hasEquipped(
@@ -167,10 +179,54 @@ object MagicCombatFormula : CombatFormula {
             hit = Math.floor(hit)
         }
 
+        if (pawn is Player && target is Npc) {
+            hit *= elementalWeaknessMultiplier(pawn, target)
+            hit = Math.floor(hit)
+        }
+
         hit *= getDamageDealMultiplier(pawn)
         hit = Math.floor(hit)
 
         return hit.toInt()
+    }
+
+    /**
+     * Within [group], every element's effective max hit is the max hit of the
+     * highest-level spell in that group [player]'s current Magic level reaches - e.g.
+     * once a player can cast Fire Bolt, Wind/Water/Earth Bolt all hit as hard as Fire
+     * Bolt too, not their own individually lower max hits. Level requirements come from
+     * the cache via [MagicSpells] rather than being re-hardcoded here.
+     */
+    private fun effectiveMaxHit(
+        player: Player,
+        spell: CombatSpell,
+    ): Int {
+        val group = groupOf(spell) ?: return spell.maxHit
+        val magicLevel = player.getSkills().getCurrentLevel(Skills.MAGIC)
+        val reachable = spellsInGroup(group).filter { levelReqOf(it) <= magicLevel }
+        return reachable.maxByOrNull { levelReqOf(it) }?.maxHit ?: spell.maxHit
+    }
+
+    private fun levelReqOf(spell: CombatSpell): Int = MagicSpells.getMetadata(spell.id)?.lvl ?: 0
+
+    /**
+     * 1.0 (no change) unless [target] has a real elemental weakness (wired via
+     * [org.alter.api.dsl.NpcCombatDsl.Builder.defence]'s `magic { elementWeakness =
+     * ... }` block) matching [player]'s currently cast spell's element - e.g. a
+     * monster 100% weak to fire returns 2.0, doubling both accuracy and damage against
+     * it when casting a fire spell, per the wiki's "1% per 1%" wording.
+     */
+    private fun elementalWeaknessMultiplier(
+        player: Player,
+        target: Npc,
+    ): Double {
+        val spell = player.attr[Combat.CASTING_SPELL] ?: return 1.0
+        val element = elementOf(spell) ?: return 1.0
+        val def = target.combatDef
+        if (def.elementalWeaknessPercent <= 0 || def.elementalWeaknessElement != element.ordinal) {
+            return 1.0
+        }
+        return 1.0 + def.elementalWeaknessPercent / 100.0
     }
 
     private fun getAttackRoll(pawn: Pawn): Int {
@@ -195,14 +251,13 @@ object MagicCombatFormula : CombatFormula {
         pawn: Pawn,
         target: Npc,
     ): Int {
-        val a =
-            if (pawn is Player) {
-                getEffectiveDefenceLevel(pawn)
-            } else if (pawn is Npc) {
-                getEffectiveDefenceLevel(pawn)
-            } else {
-                0.0
-            }
+        // Same attacker/defender mix-up as the melee and ranged formulas: this read
+        // `pawn`, the caster, so a spell cast at an NPC was rolled against the
+        // caster's own Defence level. `target` is already typed Npc here.
+        //
+        // Note the Player overload below is unaffected and was always correct - it is
+        // the one that implements the wiki's 30%-Defence / 70%-Magic split.
+        val a = getEffectiveDefenceLevel(target)
         val b = getEquipmentDefenceBonus(target)
 
         val maxRoll = a * (b + 64.0)
@@ -253,7 +308,11 @@ object MagicCombatFormula : CombatFormula {
             effectiveLevel +=
                 when (CombatConfigs.getAttackStyle(player)) {
                     AttackStyle.ACCURATE -> 3.0
-                    AttackStyle.CONTROLLED -> 1.0
+                    // Longrange on a powered staff gives +1 Magic (its +3 Defence is
+                    // handled in getEffectiveDefenceLevel). That branch was missing, so
+                    // Longrange gave no Magic bonus at all. CONTROLLED is kept alongside
+                    // it defensively - getAttackStyle never yields it for a TRIDENT.
+                    AttackStyle.LONG_RANGE, AttackStyle.CONTROLLED -> 1.0
                     else -> 0.0
                 }
         }
@@ -286,15 +345,24 @@ object MagicCombatFormula : CombatFormula {
 
     private fun getEffectiveAttackLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.MAGIC).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which under-rated every NPC's accuracy and damage slightly -
+        // enough to make Guthan's derived max hit 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
-    private fun getEffectiveDefenceLevel(npc: Npc): Double {
-        var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.DEFENCE).toDouble()
-        effectiveLevel += 8
-        return effectiveLevel
-    }
+    /**
+     * A monster defends against spells with its **Magic** level, not its Defence level.
+     * The wiki gives the roll as `(9 + NPC magic level) * (NPC magic defence + 64)`, so
+     * both the stat and the constant were wrong here: this read `NpcSkills.DEFENCE` and
+     * added 8.
+     *
+     * Only the magic formula works this way - melee and ranged keep their own
+     * Defence-level rolls in their own formula classes, which are untouched.
+     */
+    private fun getEffectiveDefenceLevel(npc: Npc): Double = npc.stats.getCurrentLevel(NpcSkills.MAGIC).toDouble() + 9.0
 
     private fun getEquipmentAttackBonus(pawn: Pawn): Double {
         return pawn.getBonus(BonusSlot.ATTACK_MAGIC).toDouble()

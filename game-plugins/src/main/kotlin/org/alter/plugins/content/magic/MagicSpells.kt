@@ -71,6 +71,9 @@ object MagicSpells {
         }
         if (p.getVarbit(INF_RUNES_VARBIT) == 0) {
             for (item in items) {
+                if (ElementalStaves.providesUnlimited(p, item.id)) {
+                    continue
+                }
                 if (p.inventory.getItemCount(item.id) < item.amount && p.equipment.getItemCount(item.id) < item.amount) {
                     p.message("You do not have enough ${item.getDef().name}s to cast this spell.")
                     return false
@@ -90,6 +93,9 @@ object MagicSpells {
                  * Do not remove staff item requirements.
                  */
                 if (item.id in getRSCM(STAFF_ITEMS)) {
+                    continue
+                }
+                if (ElementalStaves.providesUnlimited(p, item.id)) {
                     continue
                 }
                 p.inventory.remove(item)

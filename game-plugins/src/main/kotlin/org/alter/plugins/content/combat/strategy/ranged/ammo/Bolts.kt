@@ -17,4 +17,32 @@ object Bolts {
     val BONE_BOLTS = arrayOf(getRSCM("item.bone_bolts"))
     val KEBBIT_BOLTS = arrayOf(getRSCM("item.kebbit_bolts"), getRSCM("item.long_kebbit_bolts"))
     val BOLT_RACKS = arrayOf(getRSCM("item.bolt_rack"))
+
+    /**
+     * A gem bolt's regular ids - the plain tipped bolt and its enchanted `(e)` form.
+     * Only the `(e)` form carries an effect (see [EnchantedBolt]); both are valid ammo.
+     */
+    private fun gem(gem: String) = arrayOf(getRSCM("item.${gem}_bolts"), getRSCM("item.${gem}_bolts_e"))
+
+    /** The dragon-tier equivalents of [gem], which need a dragon crossbow to fire. */
+    private fun dragonGem(gem: String) = arrayOf(getRSCM("item.${gem}_dragon_bolts"), getRSCM("item.${gem}_dragon_bolts_e"))
+
+    val OPAL_BOLTS = gem("opal")
+    val JADE_BOLTS = gem("jade")
+    val PEARL_BOLTS = gem("pearl")
+    val TOPAZ_BOLTS = gem("topaz")
+    val SAPPHIRE_BOLTS = gem("sapphire")
+    val EMERALD_BOLTS = gem("emerald")
+    val RUBY_BOLTS = gem("ruby")
+    val DIAMOND_BOLTS = gem("diamond")
+    val DRAGONSTONE_BOLTS = gem("dragonstone")
+    val ONYX_BOLTS = gem("onyx")
+
+    /**
+     * Every dragon gem bolt. Grouped as one array because they all share the same
+     * crossbow requirement as plain dragon bolts.
+     */
+    val DRAGON_GEM_BOLTS =
+        dragonGem("opal") + dragonGem("jade") + dragonGem("pearl") + dragonGem("topaz") + dragonGem("sapphire") +
+            dragonGem("emerald") + dragonGem("ruby") + dragonGem("diamond") + dragonGem("dragonstone") + dragonGem("onyx")
 }

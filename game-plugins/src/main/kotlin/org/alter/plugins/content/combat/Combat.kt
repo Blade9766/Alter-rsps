@@ -21,6 +21,7 @@ import org.alter.plugins.content.combat.strategy.MagicCombatStrategy
 import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
 import org.alter.plugins.content.combat.strategy.RangedCombatStrategy
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
+import org.alter.plugins.content.interfaces.attack.AttackTab
 import java.lang.ref.WeakReference
 
 /**
@@ -30,7 +31,25 @@ object Combat {
     val CASTING_SPELL = AttributeKey<CombatSpell>()
     val DAMAGE_DEAL_MULTIPLIER = AttributeKey<Double>()
     val DAMAGE_TAKE_MULTIPLIER = AttributeKey<Double>()
-    val BOLT_ENCHANTMENT_EFFECT = AttributeKey<Boolean>()
+
+    /**
+     * Set by a special attack that grants an immediate follow-up attack rather than
+     * waiting out the weapon's speed - the dragon thrownaxe's Momentum Throw. Consumed
+     * by [postAttack], which runs after the special resolves and would otherwise
+     * overwrite any attack delay the special set for itself.
+     */
+    val INSTANT_NEXT_ATTACK = AttributeKey<Boolean>()
+
+    /**
+     * Set (to the pending defensive flag) while the player has clicked
+     * Autocast/Defensive Autocast and the spellbook is showing waiting for them to pick
+     * a spell - see [org.alter.plugins.content.interfaces.gameframe.tabs.combat_options.AttackTabPlugin]
+     * (sets it, opens the spellbook) and
+     * [org.alter.plugins.content.combat.strategy.magic.CombatSpellsPlugin] (consumes it
+     * on the next spell button click instead of casting that spell immediately).
+     */
+    val AWAITING_AUTOCAST_SELECTION = AttributeKey<Boolean>()
+
     const val PRIORITY_PID_VARP = 1075
     const val SELECTED_AUTOCAST_VARBIT = 276
     const val DEFENSIVE_MAGIC_CAST_VARBIT = 2668
@@ -57,9 +76,14 @@ object Combat {
         pawn: Pawn,
         target: Pawn,
     ) {
-        pawn.timers[ATTACK_DELAY] = CombatConfigs.getAttackDelay(pawn)
+        pawn.timers[ATTACK_DELAY] =
+            if (pawn.attr[INSTANT_NEXT_ATTACK] == true) {
+                pawn.attr.remove(INSTANT_NEXT_ATTACK)
+                1
+            } else {
+                CombatConfigs.getAttackDelay(pawn)
+            }
         target.timers[ACTIVE_COMBAT_TIMER] = 17 // 10,2 seconds
-        pawn.attr[BOLT_ENCHANTMENT_EFFECT] = false
 
         pawn.attr[LAST_HIT_ATTR] = WeakReference(target)
         target.attr[LAST_HIT_BY_ATTR] = WeakReference(pawn)
@@ -92,36 +116,54 @@ object Combat {
             target.animate(CombatConfigs.getBlockAnimation(target))
             if (target is Npc) {
                 val npcDefs = target.combatDef
-                if (npcDefs.defaultBlockSoundArea) {
-                    target.world.spawn(
-                        AreaSound(target.tile, npcDefs.defaultBlockSound, npcDefs.defaultBlockSoundRadius, npcDefs.defaultBlockSoundVolume),
-                    )
-                } else {
-                    (pawn as Player).playSound(npcDefs.defaultBlockSound, npcDefs.defaultBlockSoundVolume)
+                if (npcDefs.defaultBlockSound > 0) {
+                    if (npcDefs.defaultBlockSoundArea) {
+                        target.world.spawn(
+                            AreaSound(target.tile, npcDefs.defaultBlockSound, npcDefs.defaultBlockSoundRadius, npcDefs.defaultBlockSoundVolume),
+                        )
+                    } else {
+                        (pawn as? Player)?.playSound(npcDefs.defaultBlockSound, npcDefs.defaultBlockSoundVolume)
+                    }
                 }
             }
         }
 
         if (target.lock.canAttack()) {
             if (target.entityType.isNpc) {
-                if (!target.attr.has(COMBAT_TARGET_FOCUS_ATTR) || target.attr[COMBAT_TARGET_FOCUS_ATTR]!!.get() != pawn) {
+                /*
+                 * An NPC that is already busy with a living target does not drop it
+                 * just because someone else landed a hit - that is how OSRS behaves,
+                 * and it also matters mechanically here: `attack()` begins with
+                 * `interruptQueues()`, so re-targeting on every incoming hit tore down
+                 * the NPC's running combat loop and restarted it, which read in-game
+                 * as the NPC stuttering between engaging and not engaging.
+                 */
+                val engaged = target.getCombatTarget()
+                val engagedGone = engaged == null || engaged.isDead() || (engaged is Player && !engaged.isOnline)
+                if (engagedGone) {
                     target.attack(pawn)
                 }
             } else if (target is Player) {
                 val strategy = CombatConfigs.getCombatStrategy(target)
                 val attackRange = strategy.getAttackRange(target)
-                if (/** target.getVarp(AttackTab.DISABLE_AUTO_RETALIATE_VARP) == 0 && */ target.getCombatTarget() != pawn && target.tile.isWithinRadius(pawn.tile, attackRange)) {
+                /*
+                 * The auto-retaliate setting was being ignored entirely (the varp check
+                 * was commented out), and a player already mid-fight was re-targeted
+                 * onto whoever hit them last - again via `attack()`, so their own
+                 * attack loop was interrupted and restarted mid-swing every time a
+                 * second attacker connected.
+                 */
+                val autoRetaliateEnabled = target.getVarp(AttackTab.DISABLE_AUTO_RETALIATE_VARP) == 0
+                val alreadyFighting = target.getCombatTarget()?.isDead() == false
+                if (autoRetaliateEnabled && !alreadyFighting && target.tile.isWithinRadius(pawn.tile, attackRange)) {
                     target.attack(pawn)
-                } /**
-                    * @TODO Auto Retaliate
-                    */
-                    //else {
-                  //  val route = target.pathToRange(pawn)
-                  //  target.queue(TaskPriority.WEAK) {
-                  //      println("From here 124")
-                  //      awaitArrivalRanged(route, attackRange)
-                  //  }
-               // }
+                }
+                /*
+                 * @TODO Out-of-range auto-retaliate. A melee player attacked from
+                 * range still won't retaliate at all, because of the attackRange
+                 * guard above - in OSRS they'd walk to the attacker. Needs the chase
+                 * behaviour that `moveToAttackRange` never got.
+                 */
             }
         }
     }
@@ -157,6 +199,30 @@ object Combat {
         return start.isWithinRadius(end, distance) && world.lineValidator.rayCast(start, end, projectile = projectile)
     }
 
+    /**
+     * Whether [pawn] is close enough to [target] to attack it from [distance] tiles,
+     * with line of sight.
+     *
+     * **This does not move anything**, despite the name - the walking half
+     * (`|| pawn.walkToInteract(...)`) has been commented out for as long as this file
+     * has existed, so it is purely a range test. The engine's own combat loop
+     * ([org.alter.plugins.content.combat.CombatPlugin.cycle]) does the chasing for
+     * normal NPCs; custom per-NPC combat loops that call this (Dark Wizards, KBD) get
+     * no chase behaviour at all and will simply wait for the target to come to them.
+     *
+     * The [distance] > 1 branch used to build the target's range box as
+     * `Box(end.x, end.z, distance - 1, distance - 1)`, which is anchored at the
+     * target's own tile and grows **north-east only** - so a ranged/magic NPC would
+     * only ever find a target in range if that target stood north or east of it, and
+     * was blind to anyone to the south or west no matter how close. That is why Dark
+     * Wizards appeared to cast "only when you're up close" and inconsistently: being
+     * adjacent on the north-east side worked, everything else failed the check and the
+     * wizard silently did nothing. The box is now expanded by [distance] on all four
+     * sides of the target instead, which is symmetric.
+     *
+     * The melee branch (`distance <= 1`) is unchanged and still uses [areBordering],
+     * which correctly excludes pure diagonals.
+     */
     suspend fun moveToAttackRange(
         it: QueueTask,
         pawn: Pawn,
@@ -169,18 +235,26 @@ object Combat {
         val end = target.tile
 
         val srcSize = pawn.getSize()
-        val dstSize = Math.max(distance, target.getSize())
+        val dstSize = target.getSize()
 
         val touching =
             if (distance > 1) {
-                areOverlapping(start.x, start.z, srcSize, srcSize, end.x, end.z, dstSize, dstSize)
+                areOverlapping(
+                    start.x,
+                    start.z,
+                    srcSize,
+                    srcSize,
+                    end.x - distance,
+                    end.z - distance,
+                    dstSize + distance * 2,
+                    dstSize + distance * 2,
+                )
             } else {
                 areBordering(start.x, start.z, srcSize, srcSize, end.x, end.z, dstSize, dstSize)
             }
         val withinRange = touching && world.lineValidator.rayCast(start, end, projectile = projectile)
         return withinRange //|| pawn.walkToInteract(it, target, lineOfSightRange = distance)
     }
-
     fun getProjectileLifespan(
         source: Pawn,
         target: Tile,

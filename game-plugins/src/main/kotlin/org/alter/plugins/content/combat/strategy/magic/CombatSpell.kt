@@ -1,6 +1,15 @@
 package org.alter.plugins.content.combat.strategy.magic
 
+import org.alter.api.Skills
 import org.alter.game.model.Graphic
+
+/**
+ * A curse spell's secondary effect: draining [drainedSkill] by [drainPercent] of the
+ * target's current level (floored, minimum 1) on a landed hit. Real OSRS curse spells
+ * don't stack with themselves or each other - see
+ * [org.alter.plugins.content.combat.strategy.magic.CombatSpellsPlugin]'s gating.
+ */
+data class CurseEffect(val drainedSkill: Int, val drainPercent: Double)
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -10,12 +19,24 @@ enum class CombatSpell(
     val maxHit: Int,
     val castAnimation: Int,
     val castSound: Int,
+    /**
+     * Sound played where the spell lands, distinct from [castSound].
+     *
+     * Do **not** be tempted to derive this as `castSound + 1`: that holds for the 20
+     * elemental strike/bolt/blast/wave spells but is wrong elsewhere - the surges run
+     * the other way (FIRESURGE casts on 4032, hits on 4031, and 4033 is
+     * HUMAN_FOOTSTEP_3), as do Curse, Vulnerability and Weaken, while the Ancients
+     * each have their own separate `*_IMPACT` id. Every value below is the real named
+     * constant from [org.alter.api.cfg.Sound].
+     */
+    val impactSound: Int = -1,
     val castGfx: Graphic?,
     val projectile: Int,
     val projectilEndHeight: Int = -1,
     val impactGfx: Graphic?,
     val autoCastId: Int,
     val baseXp: Double = 0.0,
+    val curseEffect: CurseEffect? = null,
 ) {
     /**
      * Standard.
@@ -25,6 +46,7 @@ enum class CombatSpell(
         maxHit = 2,
         castAnimation = 711,
         castSound = 220,
+        impactSound = 221,
         castGfx = Graphic(id = 90, height = 92),
         projectile = 91,
         impactGfx = Graphic(id = 92, height = 124),
@@ -37,6 +59,7 @@ enum class CombatSpell(
         maxHit = 4,
         castAnimation = 711,
         castSound = 211,
+        impactSound = 212,
         castGfx = Graphic(id = 93, height = 92),
         projectile = 94,
         impactGfx = Graphic(id = 95, height = 124),
@@ -49,6 +72,7 @@ enum class CombatSpell(
         maxHit = 6,
         castAnimation = 711,
         castSound = 132,
+        impactSound = 133,
         castGfx = Graphic(id = 96, height = 92),
         projectile = 97,
         impactGfx = Graphic(id = 98, height = 124),
@@ -61,6 +85,7 @@ enum class CombatSpell(
         maxHit = 8,
         castAnimation = 711,
         castSound = 160,
+        impactSound = 161,
         castGfx = Graphic(id = 99, height = 92),
         projectile = 100,
         impactGfx = Graphic(id = 101, height = 124),
@@ -73,6 +98,7 @@ enum class CombatSpell(
         maxHit = 9,
         castAnimation = 711,
         castSound = 218,
+        impactSound = 219,
         castGfx = Graphic(id = 117, height = 92),
         projectile = 118,
         impactGfx = Graphic(id = 119, height = 124),
@@ -85,6 +111,7 @@ enum class CombatSpell(
         maxHit = 10,
         castAnimation = 711,
         castSound = 209,
+        impactSound = 210,
         castGfx = Graphic(id = 120, height = 92),
         projectile = 121,
         impactGfx = Graphic(id = 122, height = 124),
@@ -97,6 +124,7 @@ enum class CombatSpell(
         maxHit = 11,
         castAnimation = 711,
         castSound = 130,
+        impactSound = 131,
         castGfx = Graphic(id = 123, height = 92),
         projectile = 124,
         impactGfx = Graphic(id = 125, height = 124),
@@ -109,6 +137,7 @@ enum class CombatSpell(
         maxHit = 12,
         castAnimation = 711,
         castSound = 157,
+        impactSound = 158,
         castGfx = Graphic(id = 126, height = 92),
         projectile = 127,
         impactGfx = Graphic(id = 128, height = 124),
@@ -121,6 +150,7 @@ enum class CombatSpell(
         maxHit = 13,
         castAnimation = 711,
         castSound = 216,
+        impactSound = 217,
         castGfx = Graphic(id = 132, height = 92),
         projectile = 133,
         impactGfx = Graphic(id = 134, height = 124),
@@ -133,6 +163,7 @@ enum class CombatSpell(
         maxHit = 14,
         castAnimation = 711,
         castSound = 207,
+        impactSound = 208,
         castGfx = Graphic(id = 135, height = 92),
         projectile = 136,
         impactGfx = Graphic(id = 137, height = 124),
@@ -145,6 +176,7 @@ enum class CombatSpell(
         maxHit = 15,
         castAnimation = 711,
         castSound = 128,
+        impactSound = 129,
         castGfx = Graphic(id = 138, height = 92),
         projectile = 139,
         impactGfx = Graphic(id = 140, height = 124),
@@ -157,6 +189,7 @@ enum class CombatSpell(
         maxHit = 16,
         castAnimation = 711,
         castSound = 155,
+        impactSound = 156,
         castGfx = Graphic(id = 129, height = 92),
         projectile = 130,
         impactGfx = Graphic(id = 131, height = 124),
@@ -169,6 +202,7 @@ enum class CombatSpell(
         maxHit = 17,
         castAnimation = 727,
         castSound = 222,
+        impactSound = 223,
         castGfx = Graphic(id = 158, height = 92),
         projectile = 159,
         impactGfx = Graphic(id = 160, height = 124),
@@ -181,6 +215,7 @@ enum class CombatSpell(
         maxHit = 18,
         castAnimation = 727,
         castSound = 213,
+        impactSound = 214,
         castGfx = Graphic(id = 161, height = 92),
         projectile = 162,
         impactGfx = Graphic(id = 163, height = 124),
@@ -193,6 +228,7 @@ enum class CombatSpell(
         maxHit = 19,
         castAnimation = 727,
         castSound = 134,
+        impactSound = 135,
         castGfx = Graphic(id = 164, height = 92),
         projectile = 165,
         impactGfx = Graphic(id = 166, height = 124),
@@ -205,6 +241,7 @@ enum class CombatSpell(
         maxHit = 20,
         castAnimation = 727,
         castSound = 162,
+        impactSound = 163,
         castGfx = Graphic(id = 155, height = 92),
         projectile = 156,
         impactGfx = Graphic(id = 157, height = 124),
@@ -217,6 +254,7 @@ enum class CombatSpell(
         maxHit = 21,
         castAnimation = 7855,
         castSound = 4028,
+        impactSound = 4027,
         castGfx = Graphic(id = 1455, height = 92),
         projectile = 1456,
         impactGfx = Graphic(id = 1457, height = 124),
@@ -229,6 +267,7 @@ enum class CombatSpell(
         maxHit = 22,
         castAnimation = 7855,
         castSound = 4030,
+        impactSound = 4029,
         castGfx = Graphic(id = 1458, height = 92),
         projectile = 1459,
         impactGfx = Graphic(id = 1460, height = 124),
@@ -241,6 +280,7 @@ enum class CombatSpell(
         maxHit = 23,
         castAnimation = 7855,
         castSound = 4025,
+        impactSound = 4026,
         castGfx = Graphic(id = 1461, height = 92),
         projectile = 1462,
         impactGfx = Graphic(id = 1463, height = 124),
@@ -253,6 +293,7 @@ enum class CombatSpell(
         maxHit = 24,
         castAnimation = 7855,
         castSound = 4032,
+        impactSound = 4031,
         castGfx = Graphic(id = 1464, height = 92),
         projectile = 1465,
         impactGfx = Graphic(id = 1466, height = 124),
@@ -268,6 +309,7 @@ enum class CombatSpell(
         maxHit = 14,
         castAnimation = 1978,
         castSound = 183,
+        impactSound = 185,
         castGfx = null,
         projectile = 384,
         impactGfx = Graphic(id = 385, height = 0),
@@ -280,6 +322,7 @@ enum class CombatSpell(
         maxHit = 15,
         castAnimation = 1978,
         castSound = 178,
+        impactSound = 179,
         castGfx = null,
         projectile = 378,
         impactGfx = Graphic(id = 379, height = 0),
@@ -292,6 +335,7 @@ enum class CombatSpell(
         maxHit = 16,
         castAnimation = 1978,
         castSound = 106,
+        impactSound = 110,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 373, height = 0),
@@ -304,6 +348,7 @@ enum class CombatSpell(
         maxHit = 17,
         castAnimation = 1978,
         castSound = 171,
+        impactSound = 173,
         castGfx = null,
         projectile = 360,
         impactGfx = Graphic(id = 361, height = 0),
@@ -317,6 +362,7 @@ enum class CombatSpell(
         maxHit = 18,
         castAnimation = 1979,
         castSound = 183,
+        impactSound = 182,
         castGfx = null,
         projectile = 388,
         impactGfx = Graphic(id = 389, height = 0),
@@ -329,6 +375,7 @@ enum class CombatSpell(
         maxHit = 19,
         castAnimation = 1979,
         castSound = 178,
+        impactSound = 177,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 382, height = 0),
@@ -340,7 +387,10 @@ enum class CombatSpell(
         id = 4638,
         maxHit = 21,
         castAnimation = 1979,
-        castSound = 469,
+        // Was 469 - that is Sound.GOBLIN_ATTACK, not a spell sound at all. The other
+        // three Blood spells all cast on BLOOD_CAST (106); this one was the odd one out.
+        castSound = 106,
+        impactSound = 105,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 376, height = 0),
@@ -353,6 +403,7 @@ enum class CombatSpell(
         maxHit = 22,
         castAnimation = 1979,
         castSound = 171,
+        impactSound = 170,
         castGfx = null,
         projectile = 366,
         impactGfx = Graphic(id = 389, height = 0),
@@ -366,6 +417,7 @@ enum class CombatSpell(
         maxHit = 23,
         castAnimation = 1978,
         castSound = 183,
+        impactSound = 181,
         castGfx = null,
         projectile = 386,
         impactGfx = Graphic(id = 387, height = 124),
@@ -378,6 +430,7 @@ enum class CombatSpell(
         maxHit = 24,
         castAnimation = 1978,
         castSound = 178,
+        impactSound = 176,
         castGfx = null,
         projectile = 380,
         impactGfx = Graphic(id = 381, height = 0),
@@ -391,6 +444,7 @@ enum class CombatSpell(
         maxHit = 25,
         castAnimation = 1978,
         castSound = 106,
+        impactSound = 104,
         castGfx = null,
         projectile = 374,
         impactGfx = Graphic(id = 375, height = 0),
@@ -404,6 +458,7 @@ enum class CombatSpell(
         maxHit = 26,
         castAnimation = 1978,
         castSound = 171,
+        impactSound = 169,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 367, height = 0),
@@ -416,6 +471,7 @@ enum class CombatSpell(
         maxHit = 27,
         castAnimation = 1979,
         castSound = 183,
+        impactSound = 180,
         castGfx = null,
         projectile = 390,
         impactGfx = Graphic(id = 391, height = 124),
@@ -428,6 +484,7 @@ enum class CombatSpell(
         maxHit = 28,
         castAnimation = 1979,
         castSound = 178,
+        impactSound = 175,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 383, height = 0),
@@ -440,6 +497,7 @@ enum class CombatSpell(
         maxHit = 29,
         castAnimation = 1979,
         castSound = 106,
+        impactSound = 102,
         castGfx = null,
         projectile = 0,
         impactGfx = Graphic(id = 377, height = 0),
@@ -452,12 +510,106 @@ enum class CombatSpell(
         maxHit = 30,
         castAnimation = 1979,
         castSound = 171,
+        impactSound = 168,
         castGfx = null,
         projectile = 368,
         impactGfx = Graphic(id = 369, height = 0),
         autoCastId = 46,
         projectilEndHeight = 0,
         baseXp = 52.0,
+    ),
+
+    /**
+     * Curse spells: not autocastable in real OSRS (autoCastId = -1, an id no varbit
+     * value ever equals, so they can never be mistaken for a selected autocast spell -
+     * see [org.alter.plugins.content.combat.CombatPlugin]'s autocast lookup), and deal
+     * no damage (maxHit = 0) - their real effect is [curseEffect], applied in
+     * [org.alter.plugins.content.combat.strategy.MagicCombatStrategy.attack] on a
+     * landed hit. Cast animations/graphics are the real player-cast ones (distinct
+     * from the "_WIZARD" animations Dark wizards themselves use for the same spells).
+     */
+    CONFUSE(
+        id = 3274,
+        maxHit = 0,
+        castAnimation = 1163,
+        castSound = 119, // Sound.CONFUSE_CAST_AND_FIRE
+        impactSound = 121,
+        castGfx = Graphic(id = 102, height = 92),
+        projectile = 103,
+        impactGfx = Graphic(id = 104, height = 124),
+        autoCastId = -1,
+        baseXp = 13.0,
+        curseEffect = CurseEffect(Skills.ATTACK, 0.05),
+    ),
+
+    WEAKEN(
+        id = 3278,
+        maxHit = 0,
+        castAnimation = 1164,
+        castSound = 3011, // Sound.WEAKEN_CAST_AND_FIRE
+        impactSound = 3010,
+        castGfx = Graphic(id = 105, height = 92),
+        projectile = 106,
+        impactGfx = Graphic(id = 107, height = 124),
+        autoCastId = -1,
+        baseXp = 21.0,
+        curseEffect = CurseEffect(Skills.STRENGTH, 0.05),
+    ),
+
+    CURSE(
+        id = 3282,
+        maxHit = 0,
+        castAnimation = 1165,
+        castSound = 127, // Sound.CURSE_CAST_AND_FIRE
+        impactSound = 126,
+        castGfx = Graphic(id = 108, height = 92),
+        projectile = 109,
+        impactGfx = Graphic(id = 110, height = 124),
+        autoCastId = -1,
+        baseXp = 29.0,
+        curseEffect = CurseEffect(Skills.DEFENCE, 0.05),
+    ),
+
+    VULNERABILITY(
+        id = 3317,
+        maxHit = 0,
+        castAnimation = 718,
+        castSound = 3009, // Sound.VULNERABILITY_CAST_AND_FIRE
+        impactSound = 3008,
+        castGfx = Graphic(id = 167, height = 92),
+        projectile = 168,
+        impactGfx = Graphic(id = 169, height = 124),
+        autoCastId = -1,
+        baseXp = 76.0,
+        curseEffect = CurseEffect(Skills.DEFENCE, 0.10),
+    ),
+
+    ENFEEBLE(
+        id = 3320,
+        maxHit = 0,
+        castAnimation = 728,
+        castSound = 148, // Sound.ENFEEBLE_CAST_AND_FIRE
+        impactSound = 150,
+        castGfx = Graphic(id = 170, height = 92),
+        projectile = 171,
+        impactGfx = Graphic(id = 172, height = 124),
+        autoCastId = -1,
+        baseXp = 83.0,
+        curseEffect = CurseEffect(Skills.STRENGTH, 0.10),
+    ),
+
+    STUN(
+        id = 3324,
+        maxHit = 0,
+        castAnimation = 729,
+        castSound = 3004, // Sound.STUN_CAST_AND_FIRE
+        impactSound = 3005,
+        castGfx = Graphic(id = 173, height = 92),
+        projectile = 174,
+        impactGfx = Graphic(id = 80, height = 124),
+        autoCastId = -1,
+        baseXp = 90.0,
+        curseEffect = CurseEffect(Skills.ATTACK, 0.10),
     ),
     ;
 

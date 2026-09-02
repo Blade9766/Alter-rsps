@@ -67,7 +67,16 @@ object MeleeCombatFormula : CombatFormula {
     }
 
     private fun getDefenceRoll(pawn: Pawn, target: Pawn): Int {
-        val a = if (pawn is Player) getEffectiveDefenceLevel(pawn) else if (pawn is Npc) getEffectiveDefenceLevel(pawn) else 0.0
+        // The defence roll is the DEFENDER's. This read `pawn` - the attacker - so
+        // every melee attack in the game was rolled against the attacker's own Defence
+        // level, and the defender's was ignored entirely. The giveaway was that both
+        // branches of the original `if` called the same function with the same argument.
+        val a =
+            when (target) {
+                is Player -> getEffectiveDefenceLevel(target)
+                is Npc -> getEffectiveDefenceLevel(target)
+                else -> 0.0
+            }
         val b = getEquipmentDefenceBonus(pawn, target)
 
         var maxRoll = a * (b + 64.0)
@@ -214,19 +223,31 @@ object MeleeCombatFormula : CombatFormula {
 
     private fun getEffectiveStrengthLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.STRENGTH).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which under-rated every NPC's accuracy and damage slightly -
+        // enough to make Guthan's derived max hit 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
     private fun getEffectiveAttackLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.ATTACK).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which slightly under-rated every NPC - enough to make Guthan's
+        // derived max hit come out 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
     private fun getEffectiveDefenceLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.DEFENCE).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which slightly under-rated every NPC - enough to make Guthan's
+        // derived max hit come out 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 

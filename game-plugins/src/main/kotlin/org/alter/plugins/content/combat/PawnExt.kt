@@ -71,13 +71,43 @@ fun Pawn.dealHit(
     delay: Int,
     onHit: (PawnHit) -> Unit = {},
 ): PawnHit {
+    val damage = if (landHit) world.random(maxHit) else 0
+    return dealExactHit(
+        target = target,
+        damage = damage,
+        landHit = landHit,
+        delay = delay,
+        maxHit = landHit && damage == maxHit,
+        onHit = onHit,
+    )
+}
+
+/**
+ * Deals an already-rolled [damage] instead of rolling `0..maxHit` internally.
+ *
+ * Needed by anything that adjusts the *rolled* damage rather than the max hit:
+ * enchanted bolt effects add a flat bonus on top of the roll (opal, pearl,
+ * dragonstone) or replace it outright (ruby's percentage of the target's current
+ * hitpoints), neither of which can be expressed by scaling a max hit.
+ *
+ * [landHit] is kept separate from [damage] because a landed attack that rolls a 0 is
+ * still a landed attack - it renders as a block splat but counts as a hit for
+ * everything reading [PawnHit.landed].
+ */
+fun Pawn.dealExactHit(
+    target: Pawn,
+    damage: Int,
+    landHit: Boolean,
+    delay: Int,
+    maxHit: Boolean = false,
+    onHit: (PawnHit) -> Unit = {},
+): PawnHit {
     val hit =
         if (landHit) {
-            val hit = world.random(maxHit)
-            if (hit == maxHit && this@dealHit is Player) {
-                target.hit(damage = hit, type = HitType.HIT_MAX, delay = delay, attackersIndex = this.index) // maxhit type
+            if (maxHit && this@dealExactHit is Player) {
+                target.hit(damage = damage, type = HitType.HIT_MAX, delay = delay, attackersIndex = this.index) // maxhit type
             } else {
-                target.hit(damage = hit, delay = delay, attackersIndex = this.index)
+                target.hit(damage = damage, delay = delay, attackersIndex = this.index)
             }
         } else {
             target.hit(damage = 0, type = HitType.BLOCK, delay = delay, attackersIndex = this.index)
@@ -88,12 +118,12 @@ fun Pawn.dealHit(
     hit.setCancelIf { isDead() }
     hit.addAction { onHit(pawnHit) }
     hit.addAction {
-        val pawn = this@dealHit
+        val pawn = this@dealExactHit
         Combat.postDamage(pawn, target)
     }
     if (landHit) {
         hit.addAction {
-            val pawn = this@dealHit
+            val pawn = this@dealExactHit
             target.damageMap.add(pawn, hit.hitmarks.sumOf { it.damage })
         }
     }

@@ -102,7 +102,18 @@ object CombatConfigs {
         if (pawn is Player) {
             val default = PLAYER_DEFAULT_ATTACK_SPEED
             val weapon = pawn.getEquipment(EquipmentType.WEAPON) ?: return default
-            return Math.max(MIN_ATTACK_SPEED, weapon.getDef().attackSpeed)
+            var delay = weapon.getDef().attackSpeed
+            /*
+             * Rapid fires one tick faster than the weapon's base speed - the cache's
+             * attackSpeed is the Accurate/Longrange figure. This was missing entirely,
+             * so Rapid was purely cosmetic and every ranged style attacked at the same
+             * rate. Rapid only exists on ranged weapons (see getAttackStyle), so this
+             * cannot affect melee or magic.
+             */
+            if (getAttackStyle(pawn) == AttackStyle.RAPID) {
+                delay -= 1
+            }
+            return Math.max(MIN_ATTACK_SPEED, delay)
         }
 
         throw IllegalArgumentException("Invalid pawn type.")
@@ -154,6 +165,29 @@ object CombatConfigs {
         }
 
         throw IllegalArgumentException("Invalid pawn type.")
+    }
+
+    /**
+     * The weapon "clang"/swing sound heard by anyone near a player's melee or ranged
+     * attack. These IDs aren't exposed anywhere in the cache's animation or item
+     * definitions (verified against this server's own cache - none of the combat
+     * sequences carry embedded sound data), so they're sourced from known OSRS sound
+     * effect references instead.
+     */
+    fun getWeaponAttackSound(pawn: Player): Int {
+        val style = pawn.getAttackStyle()
+        return when {
+            pawn.hasWeaponType(WeaponType.NONE) -> 2566 // unarmed punch
+            pawn.hasWeaponType(WeaponType.WHIP) -> 2720
+            pawn.hasWeaponType(WeaponType.MACE) -> if (style == 2) 2509 else 2508 // stab vs crush
+            pawn.hasWeaponType(WeaponType.MAGIC_STAFF, WeaponType.STAFF) -> 2560
+            pawn.hasWeaponType(WeaponType.HALBERD) -> 2533
+            pawn.hasWeaponType(WeaponType.BOW) -> 2700
+            pawn.hasWeaponType(WeaponType.CROSSBOW) -> 2695
+            pawn.hasWeaponType(WeaponType.THROWN, WeaponType.CHINCHOMPA) -> 2696
+            pawn.hasWeaponType(WeaponType.DAGGER, WeaponType.LONG_SWORD, WeaponType.CLAWS, WeaponType.TWO_HANDED, WeaponType.SPEAR) -> 2510
+            else -> 2498 // generic melee hit (axes, picks, hammers, godswords, bulwark, scythe, etc.)
+        }
     }
 
     fun getBlockAnimation(pawn: Pawn): Int {

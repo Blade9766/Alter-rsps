@@ -54,9 +54,24 @@ object RangedCombatFormula : CombatFormula {
         pawn: Pawn,
         target: Pawn,
         specialAttackMultiplier: Double,
+    ): Double = getAccuracy(pawn, target, specialAttackMultiplier, ignoreDefence = false)
+
+    /**
+     * [ignoreDefence] rolls as though the target had no Ranged defence at all, for
+     * diamond bolts' Armour Piercing effect.
+     *
+     * Neither parameter carries a default: the three-argument [getAccuracy] above is
+     * the [CombatFormula] override, and giving this overload defaults would make
+     * `getAccuracy(pawn, target)` ambiguous between the two.
+     */
+    fun getAccuracy(
+        pawn: Pawn,
+        target: Pawn,
+        specialAttackMultiplier: Double,
+        ignoreDefence: Boolean,
     ): Double {
         val attack = getAttackRoll(pawn, target, specialAttackMultiplier)
-        val defence = getDefenceRoll(pawn, target)
+        val defence = if (ignoreDefence) 0 else getDefenceRoll(pawn, target)
 
         val accuracy: Double
         if (attack > defence) {
@@ -72,10 +87,27 @@ object RangedCombatFormula : CombatFormula {
         target: Pawn,
         specialAttackMultiplier: Double,
         specialPassiveMultiplier: Double,
+    ): Int = getMaxHit(pawn, target, specialAttackMultiplier, specialPassiveMultiplier, ignoreOffensivePrayers = false)
+
+    /**
+     * [ignoreOffensivePrayers] drops Sharp Eye / Hawk Eye / Eagle Eye / Rigour from the
+     * effective Ranged level, for the rune thrownaxe's Chainhit - the wiki has it using
+     * only the visible Ranged level and the weapon's ranged strength bonus.
+     *
+     * No parameter carries a default, for the same reason as the four-argument
+     * [getAccuracy]: the override above is the [CombatFormula] one, and defaults here
+     * would make the shorter calls ambiguous between the two.
+     */
+    fun getMaxHit(
+        pawn: Pawn,
+        target: Pawn,
+        specialAttackMultiplier: Double,
+        specialPassiveMultiplier: Double,
+        ignoreOffensivePrayers: Boolean,
     ): Int {
         val a =
             if (pawn is Player) {
-                getEffectiveRangedLevel(pawn)
+                getEffectiveRangedLevel(pawn, ignoreOffensivePrayers)
             } else if (pawn is Npc) {
                 getEffectiveRangedLevel(pawn)
             } else {
@@ -116,13 +148,14 @@ object RangedCombatFormula : CombatFormula {
         pawn: Pawn,
         target: Pawn,
     ): Int {
+        // Same attacker/defender mix-up MeleeCombatFormula had: this read `pawn`, the
+        // attacker, so ranged accuracy was rolled against the shooter's own Defence
+        // level rather than the target's.
         val a =
-            if (pawn is Player) {
-                getEffectiveDefenceLevel(pawn)
-            } else if (pawn is Npc) {
-                getEffectiveDefenceLevel(pawn)
-            } else {
-                0.0
+            when (target) {
+                is Player -> getEffectiveDefenceLevel(target)
+                is Npc -> getEffectiveDefenceLevel(target)
+                else -> 0.0
             }
         val b = getEquipmentDefenceBonus(target)
 
@@ -177,13 +210,18 @@ object RangedCombatFormula : CombatFormula {
             hit = Math.floor(hit)
         }
 
-        if (specialPassiveMultiplier == 1.0) {
-            hit = applyPassiveMultiplier(player, target, hit)
-            hit = Math.floor(hit)
-        } else {
-            hit *= specialPassiveMultiplier
-            hit = Math.floor(hit)
-        }
+        /*
+         * Enchanted bolt effects used to be applied here, gated on an attribute that
+         * `Combat.postAttack` only ever set to `false` and that this checked with
+         * `attr.has` - presence, not value - so from a player's first attack onwards
+         * the bonus applied on every single shot. They now live in
+         * [org.alter.plugins.content.combat.strategy.ranged.ammo.EnchantedBolt], which
+         * rolls the real activation chance per attack and applies the effect to the
+         * rolled damage rather than to the max hit. Diamond's and onyx's multipliers
+         * still arrive here, as [specialPassiveMultiplier].
+         */
+        hit *= specialPassiveMultiplier
+        hit = Math.floor(hit)
 
         hit *= getDamageDealMultiplier(player)
         hit = Math.floor(hit)
@@ -268,8 +306,12 @@ object RangedCombatFormula : CombatFormula {
         return target.getBonus(BonusSlot.DEFENCE_RANGED).toDouble()
     }
 
-    private fun getEffectiveRangedLevel(player: Player): Double {
-        var effectiveLevel = Math.floor(player.getSkills().getCurrentLevel(Skills.RANGED) * getPrayerRangedMultiplier(player))
+    private fun getEffectiveRangedLevel(
+        player: Player,
+        ignoreOffensivePrayers: Boolean = false,
+    ): Double {
+        val prayerMultiplier = if (ignoreOffensivePrayers) 1.0 else getPrayerRangedMultiplier(player)
+        var effectiveLevel = Math.floor(player.getSkills().getCurrentLevel(Skills.RANGED) * prayerMultiplier)
 
         effectiveLevel +=
             when (CombatConfigs.getAttackStyle(player)) {
@@ -327,19 +369,31 @@ object RangedCombatFormula : CombatFormula {
 
     private fun getEffectiveRangedLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.RANGED).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which under-rated every NPC's accuracy and damage slightly -
+        // enough to make Guthan's derived max hit 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
     private fun getEffectiveAttackLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.RANGED).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which slightly under-rated every NPC - enough to make Guthan's
+        // derived max hit come out 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
     private fun getEffectiveDefenceLevel(npc: Npc): Double {
         var effectiveLevel = npc.stats.getCurrentLevel(NpcSkills.DEFENCE).toDouble()
-        effectiveLevel += 8
+        // NPCs get an implicit +1 style bonus on top of the universal +8, so their
+        // effective level is level + 9 (wiki: monster def roll is "(Defence level+9)").
+        // This read +8, which slightly under-rated every NPC - enough to make Guthan's
+        // derived max hit come out 23 instead of the real 24.
+        effectiveLevel += 9
         return effectiveLevel
     }
 
@@ -385,52 +439,6 @@ object RangedCombatFormula : CombatFormula {
             else -> 1.0
         }
 
-    private fun applyPassiveMultiplier(
-        player: Player,
-        target: Pawn,
-        base: Double,
-    ): Double {
-        when {
-            player.hasWeaponType(WeaponType.CROSSBOW) && player.attr.has(Combat.BOLT_ENCHANTMENT_EFFECT) -> {
-                val dragonstone =
-                    player.hasEquipped(
-                        EquipmentType.AMMO,
-                        "item.dragonstone_bolts",
-                        "item.dragonstone_bolts_e",
-                        "item.dragonstone_dragon_bolts",
-                        "item.dragonstone_dragon_bolts_e",
-                    )
-                val opal =
-                    player.hasEquipped(
-                        EquipmentType.AMMO,
-                        "item.opal_bolts",
-                        "item.opal_bolts_e",
-                        "item.opal_dragon_bolts",
-                        "item.opal_dragon_bolts_e",
-                    )
-                val pearl =
-                    player.hasEquipped(
-                        EquipmentType.AMMO,
-                        "item.pearl_bolts",
-                        "item.pearl_bolts_e",
-                        "item.pearl_dragon_bolts",
-                        "item.pearl_dragon_bolts_e",
-                    )
-
-                when {
-                    dragonstone -> return base + Math.floor(player.getSkills().getCurrentLevel(Skills.RANGED) / 5.0)
-                    opal -> return base + Math.floor(player.getSkills().getCurrentLevel(Skills.RANGED) / 10.0)
-                    pearl ->
-                        return base +
-                            Math.floor(
-                                player.getSkills().getCurrentLevel(Skills.RANGED) / (if (isFiery(target)) 15.0 else 20.0),
-                            )
-                }
-            }
-        }
-        return base
-    }
-
     private fun getDamageDealMultiplier(pawn: Pawn): Double = pawn.attr[Combat.DAMAGE_DEAL_MULTIPLIER] ?: 1.0
 
     private fun getDamageTakeMultiplier(pawn: Pawn): Double = pawn.attr[Combat.DAMAGE_TAKE_MULTIPLIER] ?: 1.0
@@ -438,13 +446,6 @@ object RangedCombatFormula : CombatFormula {
     private fun isDragon(pawn: Pawn): Boolean {
         if (pawn.entityType.isNpc) {
             return (pawn as Npc).isSpecies(NpcSpecies.DRACONIC)
-        }
-        return false
-    }
-
-    private fun isFiery(pawn: Pawn): Boolean {
-        if (pawn.entityType.isNpc) {
-            return (pawn as Npc).isSpecies(NpcSpecies.FIERY)
         }
         return false
     }
