@@ -283,7 +283,33 @@
       "npc.guard_397",
       "npc.guard_398",
       "npc.guard_399",
-      "npc.guard_400"
+      "npc.guard_400",
+      "npc.guard_3269",
+      "npc.guard_11942",
+      "npc.guard_11943",
+      "npc.guard_11944",
+      "npc.guard_3270",
+      "npc.guard_11945",
+      "npc.guard_3271",
+      "npc.guard_11946",
+      "npc.guard_11947",
+      "npc.guard_3273",
+      "npc.guard_3274",
+      "npc.guard_11911",
+      "npc.guard_11912",
+      "npc.guard_11913",
+      "npc.guard_11914",
+      "npc.guard_11915",
+      "npc.guard_11916",
+      "npc.guard_11917",
+      "npc.guard_3254",
+      "npc.guard_11922",
+      "npc.guard_11923",
+      "npc.guard_11924",
+      "npc.guard_5418",
+      "npc.guard_11937",
+      "npc.guard_11938",
+      "npc.guard_11939"
     ],
     "level": 40,
     "experience": 46.8,
@@ -338,7 +364,8 @@
   {
     "npcs": [
       "npc.knight_of_ardougne",
-      "npc.knight_of_ardougne_3300"
+      "npc.knight_of_ardougne_3300",
+      "npc.knight_of_ardougne_11936"
     ],
     "level": 55,
     "experience": 84.3,
@@ -369,7 +396,11 @@
   {
     "npcs": [
       "npc.paladin_3293",
-      "npc.paladin_3294"
+      "npc.paladin_3294",
+      "npc.paladin_11930",
+      "npc.paladin_11931",
+      "npc.paladin_11932",
+      "npc.paladin_11933"
     ],
     "level": 70,
     "experience": 151.75,

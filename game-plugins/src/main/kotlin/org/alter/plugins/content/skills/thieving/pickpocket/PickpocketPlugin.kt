@@ -3,6 +3,7 @@ package org.alter.plugins.content.skills.thieving.pickpocket
 import dev.openrune.cache.CacheManager.getItem
 import org.alter.api.Skills
 import org.alter.api.cfg.Animation
+import org.alter.api.cfg.Sound
 import org.alter.api.ext.*
 import org.alter.game.Server
 import org.alter.game.model.World
@@ -115,6 +116,7 @@ class PickpocketPlugin(
             }
 
         if (entry.stun.ticks > 0) {
+            player.playSound(Sound.STUNNED)
             player.stun(entry.stun.ticks)
         }
         if (damage > 0) {

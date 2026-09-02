@@ -1,0 +1,102 @@
+[
+  {
+    "name": "clay",
+    "objects": ["object.clay_rocks", "object.clay_rocks_11363"],
+    "respawnTicks": 2,
+    "level": 1,
+    "experience": 5.0,
+    "ore": "item.clay",
+    "baseChance": 0.50,
+    "maxChance": 0.90
+  },
+  {
+    "name": "copper",
+    "objects": ["object.copper_rocks", "object.copper_rocks_10943", "object.copper_rocks_11161", "object.copper_rocks_37944"],
+    "respawnTicks": 4,
+    "level": 1,
+    "experience": 17.5,
+    "ore": "item.copper_ore",
+    "baseChance": 0.45,
+    "maxChance": 0.85
+  },
+  {
+    "name": "tin",
+    "objects": ["object.tin_rocks", "object.tin_rocks_11360", "object.tin_rocks_11361", "object.tin_rocks_37945"],
+    "respawnTicks": 4,
+    "level": 1,
+    "experience": 17.5,
+    "ore": "item.tin_ore",
+    "baseChance": 0.45,
+    "maxChance": 0.85
+  },
+  {
+    "name": "iron",
+    "objects": ["object.iron_rocks", "object.iron_rocks_11365", "object.iron_rocks_36203", "object.iron_rocks_42833"],
+    "respawnTicks": 9,
+    "level": 15,
+    "experience": 35.0,
+    "ore": "item.iron_ore",
+    "baseChance": 0.35,
+    "maxChance": 0.80
+  },
+  {
+    "name": "silver",
+    "objects": ["object.silver_rocks", "object.silver_rocks_11369", "object.silver_rocks_36205"],
+    "respawnTicks": 100,
+    "level": 20,
+    "experience": 40.0,
+    "ore": "item.silver_ore",
+    "baseChance": 0.30,
+    "maxChance": 0.75
+  },
+  {
+    "name": "coal",
+    "objects": ["object.coal_rocks", "object.coal_rocks_11366", "object.coal_rocks_11367", "object.coal_rocks_36204"],
+    "respawnTicks": 50,
+    "level": 30,
+    "experience": 50.0,
+    "ore": "item.coal",
+    "baseChance": 0.25,
+    "maxChance": 0.70
+  },
+  {
+    "name": "gold",
+    "objects": ["object.gold_rocks", "object.gold_rocks_11371", "object.gold_rocks_36206"],
+    "respawnTicks": 100,
+    "level": 40,
+    "experience": 65.0,
+    "ore": "item.gold_ore",
+    "baseChance": 0.22,
+    "maxChance": 0.65
+  },
+  {
+    "name": "mithril",
+    "objects": ["object.mithril_rocks", "object.mithril_rocks_11373", "object.mithril_rocks_36207"],
+    "respawnTicks": 200,
+    "level": 55,
+    "experience": 80.0,
+    "ore": "item.mithril_ore",
+    "baseChance": 0.15,
+    "maxChance": 0.55
+  },
+  {
+    "name": "adamantite",
+    "objects": ["object.adamantite_rocks", "object.adamantite_rocks_11375", "object.adamantite_rocks_36208"],
+    "respawnTicks": 400,
+    "level": 70,
+    "experience": 95.0,
+    "ore": "item.adamantite_ore",
+    "baseChance": 0.10,
+    "maxChance": 0.45
+  },
+  {
+    "name": "runite",
+    "objects": ["object.runite_rocks_11376", "object.runite_rocks_11377", "object.runite_rocks_36209"],
+    "respawnTicks": 1200,
+    "level": 85,
+    "experience": 125.0,
+    "ore": "item.runite_ore",
+    "baseChance": 0.05,
+    "maxChance": 0.30
+  }
+]

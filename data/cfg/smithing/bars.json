@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Bronze bar",
+    "bar": "item.bronze_bar",
+    "level": 1,
+    "experience": 6.2,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.copper_ore", "amount": 1 },
+      { "item": "item.tin_ore", "amount": 1 }
+    ]
+  },
+  {
+    "name": "Iron bar",
+    "bar": "item.iron_bar",
+    "level": 15,
+    "experience": 12.5,
+    "successChance": 0.5,
+    "ingredients": [
+      { "item": "item.iron_ore", "amount": 1 }
+    ]
+  },
+  {
+    "name": "Silver bar",
+    "bar": "item.silver_bar",
+    "level": 20,
+    "experience": 13.7,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.silver_ore", "amount": 1 }
+    ]
+  },
+  {
+    "name": "Steel bar",
+    "bar": "item.steel_bar",
+    "level": 30,
+    "experience": 17.5,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.iron_ore", "amount": 1 },
+      { "item": "item.coal", "amount": 2 }
+    ]
+  },
+  {
+    "name": "Gold bar",
+    "bar": "item.gold_bar",
+    "level": 40,
+    "experience": 22.5,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.gold_ore", "amount": 1 }
+    ]
+  },
+  {
+    "name": "Mithril bar",
+    "bar": "item.mithril_bar",
+    "level": 50,
+    "experience": 30.0,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.mithril_ore", "amount": 1 },
+      { "item": "item.coal", "amount": 4 }
+    ]
+  },
+  {
+    "name": "Adamantite bar",
+    "bar": "item.adamantite_bar",
+    "level": 70,
+    "experience": 37.5,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.adamantite_ore", "amount": 1 },
+      { "item": "item.coal", "amount": 6 }
+    ]
+  },
+  {
+    "name": "Runite bar",
+    "bar": "item.runite_bar",
+    "level": 85,
+    "experience": 50.0,
+    "successChance": 1.0,
+    "ingredients": [
+      { "item": "item.runite_ore", "amount": 1 },
+      { "item": "item.coal", "amount": 8 }
+    ]
+  }
+]

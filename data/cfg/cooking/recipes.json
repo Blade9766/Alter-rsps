@@ -1,0 +1,298 @@
+[
+  {
+    "name": "Bread dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bucket_of_water",
+    "product": "item.bread_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bucket",
+    "message": "You mix the flour and water into a ball of dough."
+  },
+  {
+    "name": "Pastry dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bucket_of_water",
+    "product": "item.pastry_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bucket",
+    "message": "You mix the flour and water into a ball of pastry dough."
+  },
+  {
+    "name": "Pitta dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bucket_of_water",
+    "product": "item.pitta_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bucket",
+    "message": "You mix the flour and water into a ball of pitta dough."
+  },
+
+  {
+    "name": "Bread dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.jug_of_water",
+    "product": "item.bread_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.jug",
+    "message": "You mix the flour and water into a ball of dough."
+  },
+  {
+    "name": "Pastry dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.jug_of_water",
+    "product": "item.pastry_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.jug",
+    "message": "You mix the flour and water into a ball of pastry dough."
+  },
+  {
+    "name": "Pitta dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.jug_of_water",
+    "product": "item.pitta_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.jug",
+    "message": "You mix the flour and water into a ball of pitta dough."
+  },
+
+  {
+    "name": "Bread dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bowl_of_water",
+    "product": "item.bread_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bowl",
+    "message": "You mix the flour and water into a ball of dough."
+  },
+  {
+    "name": "Pastry dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bowl_of_water",
+    "product": "item.pastry_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bowl",
+    "message": "You mix the flour and water into a ball of pastry dough."
+  },
+  {
+    "name": "Pitta dough",
+    "primary": "item.pot_of_flour",
+    "secondary": "item.bowl_of_water",
+    "product": "item.pitta_dough",
+    "primaryReplacement": "item.pot",
+    "secondaryReplacement": "item.bowl",
+    "message": "You mix the flour and water into a ball of pitta dough."
+  },
+
+  {
+    "name": "Pie shell",
+    "primary": "item.pie_dish",
+    "secondary": "item.pastry_dough",
+    "product": "item.pie_shell",
+    "message": "You put the pastry dough into the pie dish."
+  },
+
+  {
+    "name": "Uncooked berry pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.redberries",
+    "product": "item.uncooked_berry_pie",
+    "message": "You put the redberries into the pie shell."
+  },
+  {
+    "name": "Uncooked meat pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.cooked_meat",
+    "product": "item.uncooked_meat_pie",
+    "message": "You put the cooked meat into the pie shell."
+  },
+  {
+    "name": "Uncooked apple pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.cooking_apple",
+    "product": "item.uncooked_apple_pie",
+    "message": "You put the apple into the pie shell."
+  },
+  {
+    "name": "Uncooked botanical pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.golovanova_fruit_top",
+    "product": "item.uncooked_botanical_pie",
+    "message": "You put the golovanova fruit top into the pie shell."
+  },
+  {
+    "name": "Uncooked mushroom pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.sulliuscep_cap",
+    "product": "item.uncooked_mushroom_pie",
+    "message": "You put the sulliuscep cap into the pie shell."
+  },
+  {
+    "name": "Uncooked dragonfruit pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.dragonfruit",
+    "product": "item.uncooked_dragonfruit_pie",
+    "message": "You put the dragonfruit into the pie shell."
+  },
+
+  {
+    "name": "Part mud pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.compost",
+    "product": "item.part_mud_pie",
+    "message": "You put the compost into the pie shell."
+  },
+  {
+    "name": "Part mud pie",
+    "primary": "item.part_mud_pie",
+    "secondary": "item.bucket_of_water",
+    "product": "item.part_mud_pie_7166",
+    "secondaryReplacement": "item.bucket",
+    "message": "You pour the water into the pie."
+  },
+  {
+    "name": "Raw mud pie",
+    "primary": "item.part_mud_pie_7166",
+    "secondary": "item.clay",
+    "product": "item.raw_mud_pie",
+    "message": "You put the clay into the pie."
+  },
+
+  {
+    "name": "Part garden pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.tomato",
+    "product": "item.part_garden_pie",
+    "message": "You put the tomato into the pie shell."
+  },
+  {
+    "name": "Part garden pie",
+    "primary": "item.part_garden_pie",
+    "secondary": "item.onion",
+    "product": "item.part_garden_pie_7174",
+    "message": "You put the onion into the pie."
+  },
+  {
+    "name": "Raw garden pie",
+    "primary": "item.part_garden_pie_7174",
+    "secondary": "item.cabbage",
+    "product": "item.raw_garden_pie",
+    "message": "You put the cabbage into the pie."
+  },
+
+  {
+    "name": "Part fish pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.trout",
+    "product": "item.part_fish_pie",
+    "message": "You put the trout into the pie shell."
+  },
+  {
+    "name": "Part fish pie",
+    "primary": "item.part_fish_pie",
+    "secondary": "item.cod",
+    "product": "item.part_fish_pie_7184",
+    "message": "You put the cod into the pie."
+  },
+  {
+    "name": "Raw fish pie",
+    "primary": "item.part_fish_pie_7184",
+    "secondary": "item.potato",
+    "product": "item.raw_fish_pie",
+    "message": "You put the potato into the pie."
+  },
+
+  {
+    "name": "Part admiral pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.salmon",
+    "product": "item.part_admiral_pie",
+    "message": "You put the salmon into the pie shell."
+  },
+  {
+    "name": "Part admiral pie",
+    "primary": "item.part_admiral_pie",
+    "secondary": "item.tuna",
+    "product": "item.part_admiral_pie_7194",
+    "message": "You put the tuna into the pie."
+  },
+  {
+    "name": "Raw admiral pie",
+    "primary": "item.part_admiral_pie_7194",
+    "secondary": "item.potato",
+    "product": "item.raw_admiral_pie",
+    "message": "You put the potato into the pie."
+  },
+
+  {
+    "name": "Part wild pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.raw_bear_meat",
+    "product": "item.part_wild_pie",
+    "message": "You put the raw bear meat into the pie shell."
+  },
+  {
+    "name": "Part wild pie",
+    "primary": "item.part_wild_pie",
+    "secondary": "item.raw_chompy",
+    "product": "item.part_wild_pie_7204",
+    "message": "You put the raw chompy into the pie."
+  },
+  {
+    "name": "Raw wild pie",
+    "primary": "item.part_wild_pie_7204",
+    "secondary": "item.raw_rabbit",
+    "product": "item.raw_wild_pie",
+    "message": "You put the raw rabbit into the pie."
+  },
+
+  {
+    "name": "Part summer pie",
+    "primary": "item.pie_shell",
+    "secondary": "item.strawberry",
+    "product": "item.part_summer_pie",
+    "message": "You put the strawberry into the pie shell."
+  },
+  {
+    "name": "Part summer pie",
+    "primary": "item.part_summer_pie",
+    "secondary": "item.watermelon",
+    "product": "item.part_summer_pie_7214",
+    "message": "You put the watermelon into the pie."
+  },
+  {
+    "name": "Raw summer pie",
+    "primary": "item.part_summer_pie_7214",
+    "secondary": "item.cooking_apple",
+    "product": "item.raw_summer_pie",
+    "message": "You put the apple into the pie."
+  },
+
+  {
+    "name": "Incomplete stew",
+    "primary": "item.bowl_of_water",
+    "secondary": "item.potato",
+    "product": "item.incomplete_stew",
+    "message": "You put the potato into the bowl of water."
+  },
+  {
+    "name": "Uncooked stew",
+    "primary": "item.incomplete_stew",
+    "secondary": "item.cooked_meat",
+    "product": "item.uncooked_stew",
+    "message": "You put the cooked meat into the stew."
+  },
+  {
+    "name": "Uncooked stew",
+    "primary": "item.incomplete_stew",
+    "secondary": "item.cooked_chicken",
+    "product": "item.uncooked_stew",
+    "message": "You put the cooked chicken into the stew."
+  },
+  {
+    "name": "Uncooked curry",
+    "primary": "item.uncooked_stew",
+    "secondary": "item.spice",
+    "product": "item.uncooked_curry",
+    "message": "You add the spice to the stew."
+  }
+]

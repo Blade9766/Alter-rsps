@@ -1,0 +1,69 @@
+[
+  {
+    "objects": ["object.tree_1276","object.tree_1277","object.tree_1278","object.tree_1279","object.tree_1280","object.tree_1330","object.tree_1331","object.tree_1332","object.tree_2409","object.tree_3879","object.tree_3881","object.tree_3882","object.tree_3883","object.tree_9730","object.tree_9731","object.tree_9732","object.tree_9733","object.tree_10041","object.tree_14308","object.tree_14309","object.tree_16264","object.tree_16265","object.tree_36672","object.tree_36674","object.tree_36677","object.tree_36679","object.tree_37965","object.tree_37967","object.tree_37971","object.tree_37973","object.tree_40750","object.tree_40752","object.tree_42393","object.tree_42832","object.tree_50034","object.tree_51762","object.tree_51764","object.tree_52823","object.tree_53188","object.tree_55914","object.tree_55915"],
+    "stumpObject": "object.tree_stump",
+    "respawnTicksMin": 60,
+    "respawnTicksMax": 100,
+    "level": 1,
+    "experience": 25.0,
+    "log": "item.logs",
+    "baseChance": 0.50,
+    "maxChance": 0.85,
+    "depleteChance": 1.0
+  },
+  {
+    "objects": ["object.oak_tree_8467","object.oak_tree_9734","object.oak_tree_10820","object.oak_tree_37969","object.oak_tree_42395","object.oak_tree_42831","object.oak_tree_51772","object.oak_tree_55913"],
+    "respawnTicksMin": 14,
+    "respawnTicksMax": 14,
+    "level": 15,
+    "experience": 37.5,
+    "log": "item.oak_logs",
+    "baseChance": 0.25,
+    "maxChance": 0.70,
+    "depleteChance": 0.125
+  },
+  {
+    "objects": ["object.willow_tree_8488","object.willow_tree_10819","object.willow_tree_10829","object.willow_tree_10831","object.willow_tree_10833"],
+    "respawnTicksMin": 14,
+    "respawnTicksMax": 14,
+    "level": 30,
+    "experience": 67.5,
+    "log": "item.willow_logs",
+    "baseChance": 0.28,
+    "maxChance": 0.72,
+    "depleteChance": 0.125
+  },
+  {
+    "objects": ["object.maple_tree_4674","object.maple_tree_8444","object.maple_tree_10832","object.maple_tree_36681","object.maple_tree_40754"],
+    "respawnTicksMin": 59,
+    "respawnTicksMax": 59,
+    "level": 45,
+    "experience": 100.0,
+    "log": "item.maple_logs",
+    "baseChance": 0.20,
+    "maxChance": 0.65,
+    "depleteChance": 0.125
+  },
+  {
+    "objects": ["object.yew_tree_8513","object.yew_tree_10822","object.yew_tree_36683","object.yew_tree_40756","object.yew_tree_42391"],
+    "respawnTicksMin": 99,
+    "respawnTicksMax": 99,
+    "level": 60,
+    "experience": 175.0,
+    "log": "item.yew_logs",
+    "baseChance": 0.15,
+    "maxChance": 0.55,
+    "depleteChance": 0.125
+  },
+  {
+    "objects": ["object.magic_tree_8409","object.magic_tree_10834","object.magic_tree_36685"],
+    "respawnTicksMin": 199,
+    "respawnTicksMax": 199,
+    "level": 75,
+    "experience": 250.0,
+    "log": "item.magic_logs",
+    "baseChance": 0.10,
+    "maxChance": 0.45,
+    "depleteChance": 0.125
+  }
+]
