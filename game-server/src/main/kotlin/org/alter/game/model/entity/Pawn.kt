@@ -332,6 +332,15 @@ abstract class Pawn(val world: World) : Entity() {
                         setCurrentHp(hp - hitmark.damage)
                     }
                     /*
+                     * A player who survives this hit but is left at or below 10% of their max
+                     * hp - the Ring of Life / Defence cape threshold. Real OSRS does not save a
+                     * player from a single hit that takes them from above the threshold straight
+                     * to 0, so this only fires while they are still alive.
+                     */
+                    if (entityType.isPlayer && getCurrentHp() in 1..(getMaxHp() / 10)) {
+                        world.plugins.executePlayerLowHealth(this as Player)
+                    }
+                    /*
                      * If the pawn has less than or equal to 0 health,
                      * terminate all queues and begin the death logic.
                      */

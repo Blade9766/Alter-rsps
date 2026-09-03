@@ -325,6 +325,13 @@ class PluginRepository(
     private val playerPreDeathPlugins = mutableListOf<Plugin.() -> Unit>()
 
     /**
+     * A list of plugins that will be invoked when a player takes damage that leaves them
+     * above 0 hp but at or below 10% of their max hp - the Ring of Life / Defence cape
+     * "critically low health" threshold.
+     */
+    private val playerLowHealthPlugins = mutableListOf<Plugin.() -> Unit>()
+
+    /**
      * A list of plugins that will be invoked when a player dies and is teleported
      * back to the respawn location (after death animation played out).
      */
@@ -645,6 +652,14 @@ class PluginRepository(
         val logic = playerOptionPlugins[option] ?: return false
         player.executePlugin(logic)
         return true
+    }
+
+    fun bindPlayerLowHealth(plugin: Plugin.() -> Unit) {
+        playerLowHealthPlugins.add(plugin)
+    }
+
+    fun executePlayerLowHealth(p: Player) {
+        playerLowHealthPlugins.forEach { plugin -> p.executePlugin(plugin) }
     }
 
     fun bindPlayerDeath(plugin: Plugin.() -> Unit) {

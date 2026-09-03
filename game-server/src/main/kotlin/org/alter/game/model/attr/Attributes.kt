@@ -124,6 +124,20 @@ val ANTIFIRE_POTION_CHARGES_ATTR = AttributeKey<Int>(persistenceKey = "antifire_
 val DRAGONFIRE_IMMUNITY_ATTR = AttributeKey<Boolean>(persistenceKey = "dragonfire_immunity", resetOnDeath = true)
 
 /**
+ * Whether the Defence cape's "Toggle Effect" (its Ring of Life-style low-health save) is
+ * switched on. Off by default, same as the ring it mirrors requiring no action to carry but
+ * never activating unless equipped - the cape instead needs an explicit opt-in.
+ */
+val DEFENCE_CAPE_EFFECT_ATTR = AttributeKey<Boolean>(persistenceKey = "defence_cape_effect")
+
+/**
+ * Whether the Defence cape's save teleports to East Ardougne instead of the player's normal
+ * respawn point. Real OSRS gates this choice behind the medium Ardougne diary; that diary
+ * system does not exist here, so the "Toggle Respawn" option is left as a free preference.
+ */
+val DEFENCE_CAPE_ARDOUGNE_RESPAWN_ATTR = AttributeKey<Boolean>(persistenceKey = "defence_cape_ardougne_respawn")
+
+/**
  * The command that the player has submitted to the server using the '::' prefix.
  */
 val COMMAND_ATTR = AttributeKey<String>()

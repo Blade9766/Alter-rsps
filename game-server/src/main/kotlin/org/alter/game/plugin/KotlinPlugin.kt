@@ -588,6 +588,12 @@ abstract class KotlinPlugin(
     fun onPlayerPreDeath(plugin: Plugin.() -> Unit) = r.bindPlayerPreDeath(plugin)
 
     /**
+     * Invoked when a hit leaves a player above 0 hp but at or below 10% of their max hp -
+     * the threshold a Ring of Life or the Defence cape's Toggle Effect saves against.
+     */
+    fun onPlayerLowHealth(plugin: Plugin.() -> Unit) = r.bindPlayerLowHealth(plugin)
+
+    /**
      * Invoked when a player is sent back to their respawn location on
      * death.
      */
