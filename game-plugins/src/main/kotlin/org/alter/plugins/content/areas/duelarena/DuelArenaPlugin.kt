@@ -35,7 +35,7 @@ class DuelArenaPlugin(
          * standing invitation to a message that always says no.
          */
         onEnterRegion(DuelArena.LOBBY_REGION) {
-            player.sendOption("Challenge", DuelArena.CHALLENGE_OPTION_SLOT)
+            player.refreshChallengeOption()
             player.message("You enter the Duel Arena. Right-click another player to Challenge them.")
         }
 
@@ -174,6 +174,7 @@ class DuelArenaPlugin(
             player.moveTo(DuelArena.LOBBY_TILE)
             player.getSkills().restoreAll()
             player.getSkills().setCurrentLevel(Skills.HITPOINTS, player.getSkills().getBaseLevel(Skills.HITPOINTS))
+            player.refreshChallengeOption()
             player.message("You have been carried to the hospital.")
         }
 
@@ -191,7 +192,11 @@ class DuelArenaPlugin(
             player.getDuelRequests().clear()
         }
 
-        onLogin { player.getDuelRequests().clear() }
+        onLogin {
+            player.getDuelRequests().clear()
+            // Covers logging in already inside the arena, where no region change ever happens.
+            player.refreshChallengeOption()
+        }
 
         // ------------------------------------------------------------------------------------
         // Rule enforcement that has to live here
@@ -250,7 +255,12 @@ class DuelArenaPlugin(
             player.message("Sending duel challenge...")
             opponent.message(
                 "${player.username} wishes to duel with you.",
-                ChatMessageType.TRADE_REQ,
+                /*
+                 * NOT TRADE_REQ. That type is clickable and the client answers it by sending a
+                 * *trade* request, so accepting a duel from the chatbox opened a trade instead.
+                 * CHALREQ_TRADE is the challenge equivalent.
+                 */
+                ChatMessageType.CHALREQ_TRADE,
                 player.username,
             )
             return

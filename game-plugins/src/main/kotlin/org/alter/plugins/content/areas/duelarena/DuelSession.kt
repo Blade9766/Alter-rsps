@@ -259,7 +259,7 @@ class DuelSession(first: Player, second: Player) {
             player.setInterfaceEvents(
                 interfaceId = DuelArena.OPTIONS_INTERFACE,
                 component = WORN_ICON_COMPONENT,
-                range = 0..DuelSlot.values.size,
+                range = 0 until DuelSlot.values.size,
                 setting = InterfaceEvent.ClickOp1,
             )
             listOf(
@@ -506,6 +506,23 @@ class DuelSession(first: Player, second: Player) {
      * Commits the stake, claims an arena and puts both players in it.
      */
     private fun begin() {
+        /*
+         * Check both players can still pay before anything is claimed or taken.
+         *
+         * The stake screen works on a snapshot of the inventory, and the inventory tab is usable
+         * again from the options screen onwards - so a staked item can be equipped, dropped or
+         * otherwise moved before the duel starts. `begin` used to overwrite the real inventory with
+         * that snapshot, which duplicated anything equipped in between: worn *and* restored. The
+         * real inventory is the authority.
+         */
+        if (!canCollectStakes()) {
+            both {
+                it.accepted = false
+                it.player.message("The duel was called off - a staked item is no longer in your inventory.")
+            }
+            return
+        }
+
         val arena = DuelArenas.claim(this)
         if (arena == null) {
             // Both had accepted to get here; drop that so Accept works again once one frees up,
@@ -523,14 +540,10 @@ class DuelSession(first: Player, second: Player) {
         val (firstTile, secondTile) = arena.startTiles(adjacent)
         val tiles = listOf(firstTile, secondTile)
 
+        collectStakes()
+
         sides.forEachIndexed { index, side ->
             val player = side.player
-
-            // The working inventory is what the player agreed to keep; the stake stays with the
-            // session until there is a winner to give it to.
-            val inventory = player.inventory
-            inventory.removeAll()
-            side.inventory.forEachIndexed { slot, item -> inventory[slot] = item }
 
             player.closeInterface(InterfaceDestination.MAIN_SCREEN)
             player.closeInterface(STAKE_OVERLAY_INTERFACE)
@@ -551,12 +564,45 @@ class DuelSession(first: Player, second: Player) {
     }
 
     /**
+     * Removes both players' staked items from their real inventories, all or nothing.
+     *
+     * Checked in full before anything is taken, so a player who has moved a staked item since
+     * offering it cancels the duel rather than leaving the other one short.
+     */
+    /** What each player still owes the pot, totalled per item id. */
+    private fun owedStakes(): Map<DuelSide, Map<Int, Int>> =
+        sides.associateWith { side ->
+            val totals = HashMap<Int, Int>()
+            side.stake.rawItems.filterNotNull().forEach { item ->
+                totals[item.id] = (totals[item.id] ?: 0) + item.amount
+            }
+            totals
+        }
+
+    /** Whether both players still hold everything they offered. */
+    private fun canCollectStakes(): Boolean =
+        owedStakes().all { (side, totals) ->
+            totals.all { (id, amount) -> side.player.inventory.getItemCount(id) >= amount }
+        }
+
+    /** Takes both stakes out of the players' real inventories. Guarded by [canCollectStakes]. */
+    private fun collectStakes() {
+        owedStakes().forEach { (side, totals) ->
+            totals.forEach { (id, amount) ->
+                side.player.inventory.remove(id, amount, assureFullRemoval = true)
+            }
+        }
+    }
+
+    /**
      * Takes off anything worn in a slot this duel has locked.
      */
     private fun stripLockedSlots(player: Player) {
+        val stripped = mutableListOf<String>()
         DuelSlot.values.forEach { duelSlot ->
             if (!isSlotLocked(duelSlot.slot)) return@forEach
             val worn = player.equipment[duelSlot.slot] ?: return@forEach
+            stripped += duelSlot.label
             if (player.inventory.add(worn).hasSucceeded()) {
                 player.equipment[duelSlot.slot] = null
             } else {
@@ -566,6 +612,15 @@ class DuelSession(first: Player, second: Player) {
                 player.equipment[duelSlot.slot] = null
                 player.message("Your ${duelSlot.label} was dropped - you had no room for it.")
             }
+        }
+        /*
+         * Say so. The locked slots are shown on the options screen as a red overlay and the confirm
+         * screen says "Some worn items will be taken off", but both are easy to miss - and a stray
+         * click on the worn-icon panel locks a slot silently. Gear vanishing out of your equipment
+         * with no explanation reads as the server losing it.
+         */
+        if (stripped.isNotEmpty()) {
+            player.message("This duel locks your ${stripped.joinToString(", ")} - taken off and put in your inventory.")
         }
     }
 
@@ -652,6 +707,7 @@ class DuelSession(first: Player, second: Player) {
                 player.moveTo(DuelArena.LOBBY_TILE)
                 player.getSkills().restoreAll()
                 heal(player)
+                player.refreshChallengeOption()
             } else {
                 // Killed rather than beaten: they are part way through dying, so they are left
                 // where they fell and collected once the animation has run.
@@ -692,6 +748,7 @@ class DuelSession(first: Player, second: Player) {
                 // Their working inventory is already theirs; only the stake is outstanding.
                 player.moveTo(DuelArena.LOBBY_TILE)
                 heal(player)
+                player.refreshChallengeOption()
                 side.stake.rawItems.filterNotNull().forEach { item -> give(player, item) }
             } else {
                 // Still negotiating: the real inventory was never touched, so the working copies

@@ -290,4 +290,35 @@ class DuelArenaVerify {
         val start = end - u16(end) - 12
         return u16(start + 8) to u16(start + 10)
     }
+
+    /**
+     * The stake must be taken from the player's real inventory, never restored from a snapshot.
+     *
+     * `DuelSession.begin` used to overwrite the real inventory with the stake screen's working copy.
+     * That copy is taken when the screen opens, and the inventory tab is usable again from the
+     * options screen onwards - so equipping an item in between left it both worn and rewritten back
+     * into the inventory. A duplication bug, reported from live testing.
+     *
+     * The source is asserted directly: the fix is structural, and a future edit that reintroduces
+     * `inventory.removeAll()` followed by a copy-back would be silent and very costly.
+     */
+    @Test
+    fun `the duel never overwrites a real inventory with its working copy`() {
+        val source =
+            java.io.File("src/main/kotlin/org/alter/plugins/content/areas/duelarena/DuelSession.kt")
+                .readText()
+
+        assertTrue(
+            !source.contains("side.inventory.forEachIndexed"),
+            "begin() is writing the stake screen's snapshot back over the real inventory again",
+        )
+        assertTrue(
+            source.contains("private fun canCollectStakes()") && source.contains("private fun collectStakes()"),
+            "the stake must be checked and then taken from the real inventory",
+        )
+        // The check has to happen before an arena is claimed, or a refusal leaves one allocated.
+        val checkAt = source.indexOf("canCollectStakes()")
+        val claimAt = source.indexOf("DuelArenas.claim(this)")
+        assertTrue(checkAt in 1 until claimAt, "stakes must be verified before an arena is claimed")
+    }
 }
