@@ -15,6 +15,8 @@ import org.alter.game.model.queue.*
 import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
+import org.alter.plugins.content.areas.duelarena.getDuel
+import org.alter.plugins.content.areas.duelarena.hasDuel
 import org.alter.plugins.content.mechanics.trading.impl.TradeSession
 import org.alter.plugins.content.mechanics.trading.impl.TradeSession.Companion.ACCEPT_INTERFACE
 import org.alter.plugins.content.mechanics.trading.impl.TradeSession.Companion.OVERLAY_INTERFACE
@@ -60,6 +62,16 @@ class TradingPlugin(
                 return@onPlayerOption
             }
 
+            // Duellists cannot trade - and a trade would fight the duel for the same screen.
+            if (player.hasDuel()) {
+                player.message("You can't trade while you're duelling.")
+                return@onPlayerOption
+            }
+            if (partner.hasDuel()) {
+                player.message("Other player is busy at the moment.")
+                return@onPlayerOption
+            }
+
             // The set of players who have requested the player
             val requests = player.getTradeRequests()
 
@@ -83,8 +95,38 @@ class TradingPlugin(
             }
         }
 
+        /*
+         * The four handlers below are shared with the Duel Arena.
+         *
+         * A duel stakes on this same screen - nothing left in this cache offers a second two-sided
+         * wager interface - and a component may only be bound to one plugin, so these live here,
+         * where the interface already belonged, and route on whichever session the player is in.
+         * Binding them in both places is not a conflict that shows up as a conflict: the second
+         * plugin to load simply throws in its constructor and registers *nothing*.
+         */
+
         // Item Offer Event
         onButton(OVERLAY_INTERFACE, 0) {
+            player.getDuel()?.let { duel ->
+                val side = duel.sideOf(player)
+                val slot = player.getInteractingSlot()
+                val opt = player.getInteractingOption()
+                val item = side.inventory[slot] ?: return@onButton
+
+                player.queue(TaskPriority.WEAK) {
+                    val amount =
+                        when (opt) {
+                            2 -> 5
+                            3 -> 10
+                            4 -> side.inventory.getItemCount(item.id)
+                            5 -> inputInt(player, "Enter amount:")
+                            else -> 1
+                        }
+                    duel.stake(player, slot, amount)
+                }
+                return@onButton
+            }
+
             player.getTradeSession()?.let { trade ->
 
                 // The player's inventory
@@ -118,6 +160,26 @@ class TradingPlugin(
 
         // Item Remove Event
         onButton(TRADE_INTERFACE, PLAYER_TRADE_CHILD) {
+            player.getDuel()?.let { duel ->
+                val side = duel.sideOf(player)
+                val slot = player.getInteractingSlot()
+                val opt = player.getInteractingOption()
+                val item = side.stake[slot] ?: return@onButton
+
+                player.queue(TaskPriority.WEAK) {
+                    val amount =
+                        when (opt) {
+                            2 -> 5
+                            3 -> 10
+                            4 -> side.stake.getItemCount(item.id)
+                            5 -> inputInt(player, "Enter amount:")
+                            else -> 1
+                        }
+                    duel.unstake(player, slot, amount)
+                }
+                return@onButton
+            }
+
             player.getTradeSession()?.let { trade ->
 
                 // The player's trade container
@@ -150,15 +212,36 @@ class TradingPlugin(
         }
 
         // Accept buttons
-        onButton(TRADE_INTERFACE, 10) { player.getTradeSession()?.progress() }
+        onButton(TRADE_INTERFACE, 10) {
+            val duel = player.getDuel()
+            if (duel != null) {
+                duel.accept(player)
+                return@onButton
+            }
+            player.getTradeSession()?.progress()
+        }
         onButton(ACCEPT_INTERFACE, 13) { player.getTradeSession()?.progress() }
 
         // Decline buttons
-        onButton(TRADE_INTERFACE, 11) { player.getTradeSession()?.decline() }
+        onButton(TRADE_INTERFACE, 11) {
+            val duel = player.getDuel()
+            if (duel != null) {
+                if (!duel.isCommitted()) duel.abort("${player.username} declined the duel.")
+                return@onButton
+            }
+            player.getTradeSession()?.decline()
+        }
         onButton(ACCEPT_INTERFACE, 14) { player.getTradeSession()?.decline() }
 
         // Interface close events
         onInterfaceClose(TRADE_INTERFACE) {
+            val duel = player.getDuel()
+            if (duel != null) {
+                if (duel.stage.isAbandonedBy(TRADE_INTERFACE)) {
+                    duel.abort("${player.username} declined the duel.")
+                }
+                return@onInterfaceClose
+            }
 
             if (player.hasTradeSession() && !player.hasAcceptedTrade()) {
                 player.getTradeSession()?.decline()

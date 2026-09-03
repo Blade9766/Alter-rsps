@@ -220,6 +220,12 @@ abstract class Pawn(val world: World) : Entity() {
         interruptQueues()
         attr[COMBAT_TARGET_FOCUS_ATTR] = WeakReference(target)
         /*
+         * Face the target as combat begins. The combat loop requires it - it reads the face target
+         * to decide the pawn is still engaged - and not every route into combat goes through the
+         * walk-to-target path that would otherwise have set it.
+         */
+        facePawn(target)
+        /*
          * Players always have the default combat, and npcs will use default
          * combat <strong>unless</strong> they have a custom npc combat plugin
          * bound to their npc id.
@@ -241,24 +247,34 @@ abstract class Pawn(val world: World) : Entity() {
      * Handle a single cycle for [timers].
      */
     fun timerCycle() {
-        val iterator = timers.getTimers().iterator()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            val key = entry.key
-            val time = entry.value
-            if (time <= 0) {
-                if (key == RESET_PAWN_FACING_TIMER) {
-                    resetFacePawn()
-                } else {
-                    try {
-                        world.plugins.executeTimer(this, key)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+        /*
+         * Iterate a snapshot of the keys rather than the map itself.
+         *
+         * A timer's callback is invoked from inside this loop, and it is entirely reasonable for one
+         * to start or cancel a timer - a countdown that arms the thing it was counting down to, say.
+         * Against a live iterator that is a structural modification, and the
+         * ConcurrentModificationException it throws is not caught by the try below (which only
+         * covers the callback itself), so it escapes and kills the whole PlayerCycleTask for that
+         * cycle. Taking a snapshot makes every callback free to touch timers; anything it adds is
+         * simply picked up on the next cycle.
+         */
+        for (key in timers.getTimers().keys.toList()) {
+            val time = timers.getTimers()[key] ?: continue
+            if (time > 0) {
+                continue
+            }
+            if (key == RESET_PAWN_FACING_TIMER) {
+                resetFacePawn()
+            } else {
+                try {
+                    world.plugins.executeTimer(this, key)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                if (!timers.has(key)) {
-                    iterator.remove()
-                }
+            }
+            // The callback may have re-armed it; if it did not, the timer is done with.
+            if (!timers.has(key) && timers.exists(key)) {
+                timers.remove(key)
             }
         }
 
@@ -379,10 +395,32 @@ abstract class Pawn(val world: World) : Entity() {
         delay: Int = 0,
         interruptable: Boolean = false,
     ) {
+        /*
+         * [previouslySetAnim] is this tick's claim on the pawn's animation, and for npcs it
+         * has to be *enforced*, not merely recorded.
+         *
+         * The client does arbitrate animations by `SeqType.forcedPriority` - a defend at
+         * priority 5 cannot displace an attack at priority 6 that is still playing. But
+         * RSProt's extended info keeps only the **last** `setSequence` written in a cycle
+         * (`NpcAvatarExtendedInfo.setSequence` assigns into one `blocks.sequence` slot), so a
+         * second animate() in the same tick never reaches that arbitration: it erases the
+         * first animation before it is ever sent.
+         *
+         * That is exactly what happens to an npc in melee. [org.alter.game.task.NpcCycleTask]
+         * runs `queues.cycle()` - where the combat loop plays the attack - and then `cycle()`,
+         * whose `hitsCycle` applies the incoming hit and plays the block over the top. On
+         * every tick where an npc both swings and is hit, the client saw only the flinch and
+         * the swing was silently dropped mid-animation.
+         *
+         * Players keep the previous behaviour: their claim is still recorded, but a second
+         * animate() in a tick still replaces the first, because plugin flows (eating and
+         * skilling while in combat) are built on that.
+         */
+        if (entityType.isNpc && id != -1 && !interruptable && previouslySetAnim != -1) {
+            return
+        }
         if (previouslySetAnim == -1 || interruptable) {
-            if (entityType.isPlayer) {
-                previouslySetAnim = id
-            }
+            previouslySetAnim = id
             if (this is Player) {
                 world.plugins.executeOnAnimation(this, id)
             }
@@ -580,15 +618,16 @@ abstract class Pawn(val world: World) : Entity() {
         val EMPTY_TILE_DEQUE = ArrayList<RouteCoordinates>()
     }
 
-    /*
-just
-    if (newAnim.id == -1 ||
-        previouslySetAnim == -1 ||
-        newAnim.config.priority >= config<AnimationConfig>(previouslySetAnim).priority
-    )
-
-if this is true, set the new anim and update the "previouslySetAnim" id to the newAnim.id
-end of tick, reset previouslySetAnim to -1
+    /**
+     * The animation this pawn has already claimed this tick, or -1 if it has not animated
+     * yet. Released at the end of the cycle - [Player.postCycle] for players,
+     * `npcPostSynchronizationTask` for npcs - which in both cases is after the tick's
+     * extended info has been encoded.
+     *
+     * For npcs this is enforced in [animate]; see the reasoning there. The `AnimationConfig`
+     * priority table the original note here proposed does not exist and is not needed: the
+     * client already arbitrates by `SeqType.forcedPriority`, so all the server has to do is
+     * stop overwriting an animation before it has been sent.
      */
     var previouslySetAnim = -1
 }

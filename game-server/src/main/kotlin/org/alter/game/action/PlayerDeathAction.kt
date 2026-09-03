@@ -42,21 +42,31 @@ object PlayerDeathAction {
             player.attr[KILLER_ATTR] = WeakReference(killer)
         }
 
-        world.plugins.executePlayerPreDeath(player)
+        val handled = world.plugins.executePlayerPreDeath(player)
         player.resetFacePawn()
         wait(2)
-        player.animate(deathAnim.id)
+        // Same rule as NpcDeathAction: a player who dies on a tick they swung on still dies
+        // visibly. Players do not enforce the claim in animate(), but they do record it, and
+        // `interruptable` is what keeps the death animation's own claim from being ignored.
+        player.animate(deathAnim.id, interruptable = true)
         wait(deathAnim.cycleLength + 1)
         player.getSkills().restoreAll()
         player.animate(-1)
-        if (instancedMap == null) {
-            // Note: maybe add a player attribute for death locations
-            player.moveTo(player.world.gameContext.home)
-        } else {
-            player.moveTo(instancedMap.exitTile)
-            world.instanceAllocator.death(player)
+        /*
+         * A plugin that claimed the death has already decided where the player goes and what they
+         * are told - a duel puts the loser in the arena lobby, not at a respawn point - so the
+         * default respawn is skipped rather than run and then undone.
+         */
+        if (!handled) {
+            if (instancedMap == null) {
+                // Note: maybe add a player attribute for death locations
+                player.moveTo(player.world.gameContext.home)
+            } else {
+                player.moveTo(instancedMap.exitTile)
+                world.instanceAllocator.death(player)
+            }
+            player.writeMessage("Oh dear, you are dead!")
         }
-        player.writeMessage("Oh dear, you are dead!")
         player.unlock()
 
         player.attr.removeIf { it.resetOnDeath }

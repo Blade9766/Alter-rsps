@@ -1,6 +1,7 @@
 package org.alter.plugins.content.commands.commands.developer
 
 import org.alter.api.ext.getCommandArgs
+import org.alter.api.ext.message
 import org.alter.api.ext.player
 import org.alter.game.Server
 import org.alter.game.model.Tile
@@ -18,10 +19,14 @@ class TelerPlugin(
         
     init {
         onCommand("teler", Privilege.DEV_POWER, description = "Teleport to region") {
-            val args = player.getCommandArgs()
-            val region = args[0].toInt()
+            val region = player.getCommandArgs().firstOrNull()?.toIntOrNull()
+            if (region == null) {
+                player.message("Usage: ::teler <region> - e.g. ::teler 13363")
+                return@onCommand
+            }
             val tile = Tile.fromRegion(region)
             player.moveTo(tile)
+            player.message("Teleported to region $region ($tile).")
         }
     }
 }

@@ -102,6 +102,10 @@ object EquipAction {
             return Result.PLUGIN
         }
 
+        if (!plugins.executeGlobalEquipRequirement(p, item.id)) {
+            return Result.PLUGIN
+        }
+
         val levelRequirements = def.skillReqs
         if (levelRequirements != null) {
             var failed = false

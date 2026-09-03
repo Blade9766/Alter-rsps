@@ -10,6 +10,7 @@ import org.alter.game.model.attr.PROTECT_ITEM_ATTR
 import org.alter.game.model.bits.INFINITE_VARS_STORAGE
 import org.alter.game.model.bits.InfiniteVarsType
 import org.alter.game.model.entity.Player
+import org.alter.plugins.content.areas.duelarena.DuelRules
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.timer.TimerKey
 import org.alter.game.plugin.Plugin
@@ -57,6 +58,10 @@ object Prayers {
     ) {
 
         if (p.isDead() || !p.lock.canUsePrayer()) {
+            p.syncVarp(ACTIVE_PRAYERS_VARP)
+            return
+        } else if (!DuelRules.canPray(p)) {
+            // Re-sync so the client puts the prayer it just lit back out again.
             p.syncVarp(ACTIVE_PRAYERS_VARP)
             return
         } else if (!checkRequirements(p, it, prayer)) {
@@ -124,6 +129,18 @@ object Prayers {
                 p.attr[PROTECT_ITEM_ATTR] = false
             }
         }
+    }
+
+    /**
+     * Clears the accumulated drain counter without touching the prayer points themselves.
+     *
+     * Praying at an altar resets the timer on Prayer point draining effects (OSRS,
+     * 5 April 2023), and the counter is what that timer is here: half a point's worth of
+     * drain carried over from before the recharge would otherwise take the first point
+     * straight back off.
+     */
+    fun resetDrain(p: Player) {
+        p.attr.remove(PRAYER_DRAIN_COUNTER)
     }
 
     fun drainPrayer(p: Player) {
@@ -194,7 +211,7 @@ object Prayers {
         p: Player,
         opt: Int,
     ) {
-        if (p.isDead() || !p.lock.canUsePrayer()) {
+        if (p.isDead() || !p.lock.canUsePrayer() || !DuelRules.canPray(p)) {
             p.setVarbit(QUICK_PRAYERS_ACTIVE_VARBIT, 0)
             return
         }

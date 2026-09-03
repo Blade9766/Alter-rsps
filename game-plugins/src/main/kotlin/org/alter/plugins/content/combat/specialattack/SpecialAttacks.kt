@@ -7,6 +7,7 @@ import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
 import org.alter.rscm.RSCM.getRSCM
 import org.alter.plugins.content.interfaces.attack.AttackTab
+import org.alter.plugins.content.areas.duelarena.DuelRules
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -50,6 +51,10 @@ object SpecialAttacks {
     ): Boolean {
         val weaponItem = player.getEquipment(EquipmentType.WEAPON) ?: return false
         val special = attacks[weaponItem.id] ?: return false
+
+        if (!DuelRules.canUseSpecialAttack(player)) {
+            return false
+        }
 
         if (AttackTab.getEnergy(player) < special.energyRequired) {
             return false

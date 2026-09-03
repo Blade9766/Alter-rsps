@@ -22,7 +22,11 @@ import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
 import org.alter.plugins.content.combat.strategy.RangedCombatStrategy
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.interfaces.attack.AttackTab
+import org.alter.plugins.content.npcs.slayer.SlayerImmunity
 import java.lang.ref.WeakReference
+import org.alter.plugins.content.areas.duelarena.DuelRules
+import org.alter.plugins.content.areas.duelarena.DuelStyle
+import org.alter.plugins.content.areas.duelarena.getActiveDuel
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -42,11 +46,11 @@ object Combat {
 
     /**
      * Set (to the pending defensive flag) while the player has clicked
-     * Autocast/Defensive Autocast and the spellbook is showing waiting for them to pick
-     * a spell - see [org.alter.plugins.content.interfaces.gameframe.tabs.combat_options.AttackTabPlugin]
-     * (sets it, opens the spellbook) and
-     * [org.alter.plugins.content.combat.strategy.magic.CombatSpellsPlugin] (consumes it
-     * on the next spell button click instead of casting that spell immediately).
+     * Autocast or Defensive Autocast and the client's native autocast spell grid is
+     * showing over the Combat Options tab, waiting for them to pick a spell - see
+     * [org.alter.plugins.content.interfaces.gameframe.tabs.combat_options.AttackTabPlugin],
+     * which sets it when opening the grid and consumes it when the pick comes back, and
+     * [org.alter.plugins.content.magic.AutocastInterface] for how that grid works.
      */
     val AWAITING_AUTOCAST_SELECTION = AttributeKey<Boolean>()
 
@@ -62,13 +66,30 @@ object Combat {
         pawn: Pawn,
         target: Pawn,
         combatClass: CombatClass,
-    ): Boolean = canEngage(pawn, target) && getStrategy(combatClass).canAttack(pawn, target)
+    ): Boolean = canAttack(pawn, target, getStrategy(combatClass))
 
     fun canAttack(
         pawn: Pawn,
         target: Pawn,
         strategy: CombatStrategy,
-    ): Boolean = canEngage(pawn, target) && strategy.canAttack(pawn, target)
+    ): Boolean =
+        canEngage(pawn, target) &&
+            duelAllowsStyle(pawn, strategy) &&
+            strategy.canAttack(pawn, target)
+
+    /**
+     * A duel's "No Melee" / "No Ranged" / "No Magic" rules, asked at the only point the style being
+     * used is actually known. [canEngage] settles whether the two may fight at all; this settles
+     * whether they may do it this way.
+     */
+    private fun duelAllowsStyle(
+        pawn: Pawn,
+        strategy: CombatStrategy,
+    ): Boolean {
+        val player = pawn as? Player ?: return true
+        if (player.getActiveDuel() == null) return true
+        return DuelRules.canAttackWith(player, styleOf(strategy))
+    }
 
     fun isAttackDelayReady(pawn: Pawn): Boolean = !pawn.timers.has(ATTACK_DELAY)
 
@@ -109,6 +130,13 @@ object Combat {
 
         /*
          * Don't override the animation if one is already set. @Z-Kris
+         *
+         * This was dead for npcs until Pawn.animate started recording their claim too:
+         * previouslySetAnim was only ever assigned for players, so every npc read -1 here and
+         * played its block regardless. An npc that swung and was hit on the same tick had its
+         * attack animation overwritten before the tick's extended info was ever encoded, so
+         * the client only saw the flinch. It still gates the block *sound* as well as the
+         * animation, which is why the check stays here rather than being left to animate().
          */
         val hasBlock = target.previouslySetAnim != -1
 
@@ -168,6 +196,25 @@ object Combat {
         }
     }
 
+    /**
+     * The [NpcSkills] index matching player skill [skill], or `null` when npcs have no
+     * such stat.
+     *
+     * Npcs store their combat levels in a five-slot array with its own ordering, so a
+     * player [Skills] constant used directly against `Npc.stats` silently reads the
+     * wrong stat (Strength and Defence are swapped) or overflows the array outright -
+     * `Skills.MAGIC` is 6, which threw ArrayIndexOutOfBoundsException.
+     */
+    fun toNpcSkill(skill: Int): Int? =
+        when (skill) {
+            Skills.ATTACK -> NpcSkills.ATTACK
+            Skills.STRENGTH -> NpcSkills.STRENGTH
+            Skills.DEFENCE -> NpcSkills.DEFENCE
+            Skills.MAGIC -> NpcSkills.MAGIC
+            Skills.RANGED -> NpcSkills.RANGED
+            else -> null
+        }
+
     fun getNpcXpMultiplier(npc: Npc): Double {
         val attackLvl = npc.stats.getMaxLevel(NpcSkills.ATTACK)
         val strengthLvl = npc.stats.getMaxLevel(NpcSkills.STRENGTH)
@@ -191,12 +238,89 @@ object Combat {
         target: Pawn,
         distance: Int,
         projectile: Boolean,
-    ): Boolean {
-        val world = pawn.world
-        val start = pawn.tile
-        val end = target.tile
+    ): Boolean = pawn.tile.isWithinRadius(target.tile, distance) && hasAttackLineOfSight(pawn, target, projectile)
 
-        return start.isWithinRadius(end, distance) && world.lineValidator.rayCast(start, end, projectile = projectile)
+    /**
+     * [default], unless [pawn] is an npc whose combat def overrides its attack range.
+     *
+     * Every [CombatStrategy] hardcoded its range for npcs - 1 melee, 7 ranged, 10 magic
+     * - because [org.alter.game.model.combat.NpcCombatDef] had nowhere to put one.
+     * (`attackRanged` in the npc DSL is easy to mistake for this; it is the ranged
+     * *attack bonus*, a stat, not a distance.) Npcs that leave it unset keep the
+     * default, so this changes nothing on its own.
+     */
+    fun npcAttackRange(
+        pawn: Pawn,
+        default: Int,
+    ): Int = (pawn as? Npc)?.combatDef?.attackRange?.takeIf { it != -1 } ?: default
+
+    /**
+     * The number of tiles between the closest edges of [pawn]'s and [target]'s
+     * footprints - `0` when the two boxes touch or overlap, `1` when they are
+     * adjacent (diagonals included), and so on.
+     *
+     * This is the metric attack ranges are expressed in, and the combat loop was not
+     * using it. It compared `Tile.getDistance` - a *Euclidean* distance, rounded up -
+     * against `attackRange + target.getSize()`, which is wrong twice over:
+     *
+     * - Euclidean distance overstates diagonals, so a 7-tile bow reached 7 tiles due
+     *   north but only 5 to the north-east.
+     * - Adding the target's size on top compensated for that by inflating every range,
+     *   which is where "melee connecting from two tiles away" came from: a 1-tile
+     *   weapon was really being allowed `ceil(sqrt(2)) = 2`.
+     *
+     * Measuring between box edges instead handles large npcs correctly on its own - a
+     * 3x3 dragon is in melee range when you are next to any of its nine tiles - so no
+     * size fudge is needed.
+     */
+    fun edgeDistance(
+        pawn: Pawn,
+        target: Pawn,
+    ): Int {
+        val a = Box(pawn.tile.x, pawn.tile.z, pawn.getSize() - 1, pawn.getSize() - 1)
+        val b = Box(target.tile.x, target.tile.z, target.getSize() - 1, target.getSize() - 1)
+        val dx = maxOf(0, maxOf(a.x1 - b.x2, b.x1 - a.x2))
+        val dz = maxOf(0, maxOf(a.y1 - b.y2, b.y1 - a.y2))
+        return maxOf(dx, dz)
+    }
+
+    /**
+     * Whether [pawn] can see [target] well enough to attack it - i.e. nothing solid
+     * stands between them.
+     *
+     * [projectile] picks which of the two line tests is used: `true` casts a line of
+     * *sight*, which is what arrows, bolts and spells travel along and which some
+     * objects (low fences, tables) deliberately let through; `false` casts a line of
+     * *walk*, the stricter test used for melee, where anything you cannot step over
+     * also stops you swinging.
+     *
+     * Both entities' sizes are passed through, so a large npc is attackable from any
+     * tile that can see any part of it rather than only from tiles that can see its
+     * south-west corner.
+     *
+     * A raycast across height levels is meaningless - and [rayCast] throws on one - so
+     * differing heights are rejected up front. Standing on the target's own tile always
+     * counts as visible, since there is no line to cast.
+     */
+    fun hasAttackLineOfSight(
+        pawn: Pawn,
+        target: Pawn,
+        projectile: Boolean,
+    ): Boolean {
+        if (pawn.tile.height != target.tile.height) {
+            return false
+        }
+        if (pawn.tile.sameAs(target.tile)) {
+            return true
+        }
+        return pawn.world.lineValidator.rayCast(
+            start = pawn.tile,
+            target = target.tile,
+            projectile = projectile,
+            srcSize = pawn.getSize(),
+            destWidth = target.getSize(),
+            destLength = target.getSize(),
+        )
     }
 
     /**
@@ -230,7 +354,6 @@ object Combat {
         distance: Int,
         projectile: Boolean,
     ): Boolean {
-        val world = pawn.world
         val start = pawn.tile
         val end = target.tile
 
@@ -252,7 +375,7 @@ object Combat {
             } else {
                 areBordering(start.x, start.z, srcSize, srcSize, end.x, end.z, dstSize, dstSize)
             }
-        val withinRange = touching && world.lineValidator.rayCast(start, end, projectile = projectile)
+        val withinRange = touching && hasAttackLineOfSight(pawn, target, projectile)
         return withinRange //|| pawn.walkToInteract(it, target, lineOfSightRange = distance)
     }
     fun getProjectileLifespan(
@@ -322,6 +445,11 @@ object Combat {
                 pawn.message("You need a higher Slayer level to know how to wound this monster.")
                 return false
             }
+            // Turoths and kurasks take damage only from leaf-bladed weaponry or broad ammunition.
+            if (pawn is Player && !SlayerImmunity.canDamage(pawn, target)) {
+                pawn.message(SlayerImmunity.MESSAGE)
+                return false
+            }
         } else if (target is Player) {
             if (!target.isOnline || target.invisible) {
                 return false
@@ -333,6 +461,22 @@ object Combat {
 
             if (pvp) {
                 pawn as Player
+
+                /*
+                 * A duel is its own PvP area with its own rules: the two players may fight each
+                 * other whatever their levels, and nobody else may join in. Checked before the
+                 * wilderness rules because none of those apply inside an arena.
+                 */
+                val duel = pawn.getActiveDuel()
+                if (duel != null || target.getActiveDuel() != null) {
+                    if (duel == null || duel.other(pawn).player != target) {
+                        pawn.message("You can't interfere with a duel.")
+                        return false
+                    }
+                    // The two duellists may fight regardless of level or of where they stand; which
+                    // styles they may use is settled by duelAllowsStyle, where the strategy is known.
+                    return true
+                }
 
                 if (!inPvpArea(pawn)) {
                     pawn.message("You can't attack players here.")
@@ -355,6 +499,16 @@ object Combat {
     }
 
     private fun inPvpArea(player: Player): Boolean = player.inWilderness()
+
+    /**
+     * Which of the duel's three attack rules a strategy falls under.
+     */
+    private fun styleOf(strategy: CombatStrategy): DuelStyle =
+        when (strategy) {
+            RangedCombatStrategy -> DuelStyle.RANGED
+            MagicCombatStrategy -> DuelStyle.MAGIC
+            else -> DuelStyle.MELEE
+        }
 
     private fun getValidCombatLvlRange(player: Player): IntRange {
         val wildLvl = player.tile.getWildernessLevel()

@@ -21,6 +21,7 @@ import org.alter.game.model.queue.QueueTask
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.combat.specialattack.SpecialAttacks
+import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.interfaces.attack.AttackTab
 import java.util.*
@@ -71,6 +72,21 @@ class CombatPlugin(
             pawn.stopMovement()
             pawn.walkTo(pawn.spawnTile)
             return false
+        }
+        /*
+         * Resolve the autocast spell *before* the strategy is picked. This ran after
+         * the walk-to-target section, so the first cycle of an autocast attack chose
+         * the melee strategy and its 1-tile range, then set CASTING_SPELL - which
+         * flips the combat style to MAGIC - and handed the attack to the melee
+         * formula anyway, throwing "Invalid combat style. MAGIC" out of
+         * MeleeCombatFormula and killing the combat queue.
+         */
+        if (pawn is Player && !pawn.attr.has(Combat.CASTING_SPELL) && pawn.getVarbit(Combat.SELECTED_AUTOCAST_VARBIT) != 0) {
+            val spell =
+                CombatSpell.values.firstOrNull { it.autoCastId == pawn.getVarbit(Combat.SELECTED_AUTOCAST_VARBIT) }
+            if (spell != null) {
+                pawn.attr[Combat.CASTING_SPELL] = spell
+            }
         }
         val strategy = CombatConfigs.getCombatStrategy(pawn)
         val attackRange = strategy.getAttackRange(pawn)
@@ -149,24 +165,73 @@ class CombatPlugin(
                     } else {
                         route.add(diagonalMove)
                     }
+                    /*
+                     * Every step towards the target is blocked: the npc is behind a
+                     * fence, wedged in a corner, or already standing on the closest tile
+                     * `naiveDestination` can offer it. Returning true leaves it where it
+                     * is and re-tries next tick, so it engages the moment the player
+                     * moves - the same "genuine safespot" outcome described below.
+                     *
+                     * This used to `forceChat("Broke")` here, an upstream debug leftover
+                     * that put the word "Broke" over the head of every npc whose route
+                     * came back empty. It fires for any npc on the dumb router
+                     * (`Npc.routeLogic` defaults to 0, so that is all of them), and is
+                     * loudest in Barbarian Village, where the fences and huts make the
+                     * naive router fail on almost every barbarian that retaliates
+                     * through a wall.
+                     */
                     if (route.isEmpty()) {
-                        pawn.forceChat("Broke")
                         return true
                     }
                     pawn.walkRoute(route, stepType = StepType.NORMAL)
                 }
             }
         }
-        if (pawn.tile.getDistance(target.tile) <= attackRange + target.getSize()) {
+        /*
+         * Being close enough is not the same as being able to see the target. This
+         * used to declare the target reached on distance alone, which is why an npc
+         * would happily shoot, cast at, or swing through a fence, a wall or a closed
+         * door: nothing anywhere in the combat path tested line of sight, so the only
+         * thing standing between an "unreachable" player and a full attack loop was
+         * how many tiles away they stood.
+         *
+         * Melee uses line of *walk* (if you cannot step there you cannot swing there);
+         * ranged and magic use line of *sight*, which is the looser test objects opt
+         * into for projectiles - shooting over a low fence stays legal, shooting
+         * through a wall does not.
+         *
+         * When sight is blocked the pawn is deliberately left un-reached rather than
+         * having its combat reset, so it keeps walking the route issued above and
+         * re-engages the moment it comes round the obstacle. A target that cannot be
+         * pathed to at all - a genuine safespot - simply leaves the npc standing there
+         * facing them, which is the intended outcome.
+         */
+        val projectileAttack = strategy !== MeleeCombatStrategy
+        if (!reached &&
+            Combat.edgeDistance(pawn, target) <= attackRange &&
+            Combat.hasAttackLineOfSight(pawn, target, projectile = projectileAttack)
+        ) {
             reached = true
+        }
+        if (reached) {
             pawn.stopMovement()
         }
-        while (pawn.hasMoveDestination() || !reached) {
-            queue.wait(1)
+        if (pawn.hasMoveDestination() || !reached) {
             if (!target.isAlive()) {
                 return false
             }
-            return cycle(pawn, queue)
+            /*
+             * Still closing in. Returning true hands the pawn back to the caller's
+             * `while (true)` loop, which waits a tick and calls this again - the same
+             * one-tick-per-step cadence as before.
+             *
+             * This used to `queue.wait(1)` and then recurse into `cycle`, and because
+             * a suspending call is not tail-call optimised, every waiting tick kept
+             * its own continuation alive. An npc that could never reach its target -
+             * exactly the safespot case above - grew an unbounded chain of them for as
+             * long as it stayed in combat.
+             */
+            return true
         }
         if (!Combat.canEngage(pawn, target)) {
             Combat.reset(pawn)
@@ -179,13 +244,6 @@ class CombatPlugin(
         }
         if (pawn is Player) {
             pawn.setVarp(Combat.PRIORITY_PID_VARP, target.index)
-            if (!pawn.attr.has(Combat.CASTING_SPELL) && pawn.getVarbit(Combat.SELECTED_AUTOCAST_VARBIT) != 0) {
-                val spell =
-                    CombatSpell.values.firstOrNull { it.autoCastId == pawn.getVarbit(Combat.SELECTED_AUTOCAST_VARBIT) }
-                if (spell != null) {
-                    pawn.attr[Combat.CASTING_SPELL] = spell
-                }
-            }
         }
         if (target != pawn.attr[FACING_PAWN_ATTR]?.get()) {
             Combat.reset(pawn)

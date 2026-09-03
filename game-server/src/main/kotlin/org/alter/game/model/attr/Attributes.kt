@@ -197,6 +197,18 @@ val INTERACTING_ITEM_SLOT = AttributeKey<Int>()
 val INTERACTING_ITEM_ID = AttributeKey<Int>()
 
 /**
+ * The id of the item a global equip requirement is currently being asked about.
+ */
+val EQUIP_REQUIREMENT_ITEM_ID = AttributeKey<Int>()
+
+/**
+ * Set during [org.alter.game.plugin.PluginRepository.executePlayerPreDeath] by a plugin that is
+ * taking the death over - a duel, say, which sends the loser to the arena lobby rather than to a
+ * respawn point. Cleared as it is read.
+ */
+val DEATH_HANDLED_ATTR = AttributeKey<Boolean>()
+
+/**
  * The item pointer of the interacting item.
  */
 val INTERACTING_ITEM = AttributeKey<WeakReference<Item>>()

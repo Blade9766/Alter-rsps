@@ -260,13 +260,13 @@ abstract class KotlinPlugin(
     ) {
         val opt = option.lowercase()
         val def = getItem(getRSCM(item))
-        val option = def.interfaceOptions.indexOfFirst { it?.lowercase() == opt }
-        check(option != -1) {
+        val index = def.interfaceOptions.indexOfFirst { it?.lowercase() == opt }
+        check(index != -1) {
             "Option \"$option\" not found for item $item [options=${
                 def.interfaceOptions.filterNotNull().filter { it.isNotBlank() }
             }]"
         }
-        r.bindItem(def.id, option + 1, logic)
+        r.bindItem(def.id, INVENTORY_OP_OFFSET + index, logic)
     }
 
     /**
@@ -291,7 +291,7 @@ abstract class KotlinPlugin(
             }]"
         }
 
-        r.bindEquipmentOption(rItem, slot + 1, logic)
+        r.bindEquipmentOption(rItem, EQUIPMENT_OP_OFFSET + slot, logic)
     }
 
 
@@ -761,6 +761,14 @@ abstract class KotlinPlugin(
     ) = r.bindEquipItemRequirement(getRSCM(item), logic)
 
     /**
+     * Return true if the item currently being equipped may be equipped, false if it can't.
+     *
+     * Unlike [canEquipItem] this is consulted for every item, so it can express a rule about the
+     * slot rather than about the item - a duel that has locked a player's helmet slot, say.
+     */
+    fun canEquipAnyItem(logic: (Plugin).() -> Boolean) = r.bindGlobalEquipRequirement(logic)
+
+    /**
      * Invoke [logic] when [item] is equipped.
      */
     fun onItemEquip(
@@ -970,4 +978,44 @@ abstract class KotlinPlugin(
 //         * Run this block -> if Object does not have specific handling for it refering to ['on_item_on_obj']
 //         */
 //    }
+
+    companion object {
+        /**
+         * The inventory component's op number for the item's **first** interface option.
+         *
+         * Item options are not op1..op5. Interface 149's own ops sit in the same numbering -
+         * op7 is Drop and op10 is Examine, which is why `InventoryPlugin` hardcodes those two -
+         * and the item's five options start at op2. So the item's option at index `i` arrives
+         * as op `2 + i`: Eat and Drink (index 0) as op2, Wield and Wear (index 1) as op3 -
+         * which is exactly the op `InventoryPlugin` hands to `EquipAction` - and Empty and Rub
+         * (index 3) as op5.
+         *
+         * This was `index + 1`, one too low, so every option bound here by name was registered
+         * against an op the client never sends and did nothing at all when clicked. The two
+         * places that bind an item op by raw number rather than by name - the mystery box at
+         * op2 for its index-0 "Open" - were already written against the real numbering, which
+         * is what made the off-by-one visible.
+         *
+         * Objects are **not** the same: `onObjOption` binds `index + 1` and that is correct,
+         * as an object's ops are its actions and nothing else.
+         */
+        private const val INVENTORY_OP_OFFSET = 2
+
+        /**
+         * The worn-equipment component's op number for the item's **first** equipment option.
+         *
+         * The same shape as [INVENTORY_OP_OFFSET], for the same reason. Interface 387's own ops
+         * share the numbering with the item's: `EquipmentPlugin` and `EquipmentStatsPlugin` both
+         * hardcode op1 as Remove and op10 as Examine, and an item carries eight equipment options
+         * (params 451-458). One Remove, eight options and one Examine is exactly the ten ops
+         * available, and they only fit if the options occupy op2 through op9.
+         *
+         * This was `slot + 1`, which put the first option on op1 - the op both of those plugins
+         * intercept as Remove before any binding is consulted. So every equipment option sitting
+         * at index 0 was unreachable: the ring of wealth's Rub, all four Shattered cane emotes,
+         * and the skillcape Boost. Nothing was bound at the old numbering that is not also
+         * reachable at this one, so no previously working option changes behaviour.
+         */
+        const val EQUIPMENT_OP_OFFSET = 2
+    }
 }

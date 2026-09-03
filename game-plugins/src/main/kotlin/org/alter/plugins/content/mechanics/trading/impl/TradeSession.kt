@@ -63,11 +63,24 @@ class TradeSession(private val player: Player, private val partner: Player) {
         player.setVarbit(PLAYER_TRADE_MODIFIED_VARBIT, 0)
         player.setVarbit(PARTNER_TRADE_MODIFIED_VARBIT, 0)
 
+        /*
+         * Open the windows before configuring them: `interface_inv_init_big` below sets up the
+         * inventory that lives on the overlay, and running it before the client has been told to
+         * open that overlay leaves it nothing to configure.
+         */
+        player.openInterface(OVERLAY_INTERFACE, InterfaceDestination.TAB_AREA)
+        player.openInterface(TRADE_INTERFACE, InterfaceDestination.MAIN_SCREEN)
+
         // Configure the trade text
         player.setComponentText(TRADE_INTERFACE, 31, "Trading with: ${partner.username}")
 
         // Open the inventory overlay
         player.sendItemContainer(key = PLAYER_INVENTORY_KEY, container = inventory)
+        /*
+         * `interface_inv_init_big` takes 6 ints and NINE strings - its decoded signature says so.
+         * Passing five made the client reject the call outright, so the inventory here has never
+         * actually offered "Offer"/"Offer-5"/... The four spare option slots are sent empty.
+         */
         player.runClientScript(
             INTERFACE_INV_INIT_BIG,
             OVERLAY_INTERFACE.getInterfaceHash(),
@@ -81,12 +94,12 @@ class TradeSession(private val player: Player, private val partner: Player) {
             "Offer-10",
             "Offer-All",
             "Offer-X",
+            "",
+            "",
+            "",
+            "",
         )
         player.setInterfaceEvents(interfaceId = OVERLAY_INTERFACE, component = 0, range = 0..container.capacity, setting = 1086)
-        player.openInterface(OVERLAY_INTERFACE, InterfaceDestination.TAB_AREA)
-
-        // Open the trade screen interface
-        player.openInterface(TRADE_INTERFACE, InterfaceDestination.MAIN_SCREEN)
 
         // Initialise the trade containers
         initTradeContainers()

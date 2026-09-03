@@ -7,6 +7,7 @@ import org.alter.game.model.attr.CLIENT_KEY_COMBINATION
 import org.alter.game.model.entity.*
 import org.alter.game.model.move.MovementQueue.StepType
 import org.alter.game.model.priv.Privilege
+import org.alter.game.model.timer.FROZEN_TIMER
 import org.rsmod.routefinder.Route
 import org.rsmod.routefinder.RouteCoordinates
 import java.util.*
@@ -126,6 +127,16 @@ fun Pawn.walkTo(
              * @TODO Add silent lock.
              */
             writeMessage("You are locked")
+            return
+        }
+        /*
+         * ObjectPathAction already refuses to path a frozen pawn, but a plain map click reached
+         * here without ever consulting the timer, so a freeze only ever stopped half the ways a
+         * player can walk. A duel fought under "No Movement" is held with this same timer.
+         */
+        if (timers.has(FROZEN_TIMER)) {
+            writeMessage(Entity.MAGIC_STOPS_YOU_FROM_MOVING)
+            write(SetMapFlag(255, 255))
             return
         }
         this.closeInterfaceModal()

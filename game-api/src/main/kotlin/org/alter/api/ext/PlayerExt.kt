@@ -44,6 +44,12 @@ import kotlin.math.floor
  */
 val INTERFACE_INV_INIT_BIG = ClientScript("interface_inv_init_big")
 
+/**
+ * How many right-click options a player can carry. `SetPlayerOp` documents its id as a value in
+ * the range 1 to 8, so slots beyond that cannot be sent even though the backing array is larger.
+ */
+const val MAX_PLAYER_OPTIONS = 8
+
 fun Player.openShop(shop: String) {
     val s = world.getShop(shop)
     if (s != null) {
@@ -685,15 +691,25 @@ fun Player.clearMapFlag() {
     setMapFlag(255, 255)
 }
 
+/**
+ * Puts [option] in the player's right-click menu at slot [id] (1-8).
+ *
+ * The slot goes on the wire as-is. It used to be sent as `id - 1`, the array index, which put the
+ * whole system one slot out of step with itself: the client hands the op back unchanged, and both
+ * `OpPlayerHandler` and `PawnPathAction` resolve it as `options[op - 1]`, so every click landed on
+ * the entry *before* the one that was clicked. Follow (slot 3) resolved to a null entry and did
+ * nothing at all, "Trade with" (slot 4) resolved to Follow and made you follow the person instead
+ * of trading with them, and slot 1 never appeared at all because id 0 is outside the 1-8 range
+ * `SetPlayerOp` accepts.
+ */
 fun Player.sendOption(
     option: String,
     id: Int,
     leftClick: Boolean = false,
 ) {
-    check(id in 1..options.size) { "Option id must range from [1-${options.size}]" }
-    val index = id - 1
-    options[index] = option
-    write(SetPlayerOp(id = index, priority = leftClick, op = option))
+    check(id in 1..MAX_PLAYER_OPTIONS) { "Option id must range from [1-$MAX_PLAYER_OPTIONS]" }
+    options[id - 1] = option
+    write(SetPlayerOp(id = id, priority = leftClick, op = option))
 }
 
 /**
@@ -711,10 +727,9 @@ fun Player.hasOption(
  * Removes the option with [id] from this player.
  */
 fun Player.removeOption(id: Int) {
-    check(id in 1..options.size) { "Option id must range from [1-${options.size}]" }
-    val index = id - 1
-    write(SetPlayerOp(id = index, priority = false, op = "null"))
-    options[index] = null
+    check(id in 1..MAX_PLAYER_OPTIONS) { "Option id must range from [1-$MAX_PLAYER_OPTIONS]" }
+    write(SetPlayerOp(id = id, priority = false, op = "null"))
+    options[id - 1] = null
 }
 
 fun Player.getStorageBit(
@@ -757,20 +772,30 @@ fun Player.getSpellbook(): Spellbook = Spellbook.values.first { getVarbit(Varbit
 
 fun Player.setSpellbook(book: Spellbook) = setVarbit(Varbit.PLAYER_SPELL_BOOK, book.id)
 
-fun Player.getWeaponType(): Int = getVarbit(Varbit.WEAPON_TYPE_VARBIT)
+/**
+ * The weapon type of whatever is in the player's weapon slot, or [WeaponType.NONE] when the
+ * slot is empty.
+ *
+ * Read off the item definition rather than out of `Varbit.WEAPON_TYPE_VARBIT` (357). The
+ * varbit holds the same number and is what tells the *client* which Combat Options panel to
+ * draw, but it is only correct once [sendWeaponComponentInformation] has run for the current
+ * weapon - on login, on equip and on unequip. Anything that reads it before then, or after a
+ * path that changes the weapon without going through those hooks, sees a stale value, and
+ * every caller of [hasWeaponType] then quietly takes the wrong branch: the wrong combat
+ * class, the wrong attack style, the wrong animation. The definition is authoritative from
+ * start-up and cannot go stale.
+ */
+fun Player.getWeaponType(): Int = getEquipment(EquipmentType.WEAPON)?.getDef()?.weaponType?.coerceAtLeast(0) ?: WeaponType.NONE.id
 
 fun Player.getAttackStyle(): Int = getVarp(Varp.WEAPON_ATTACK_STYLE)
 
 fun Player.hasWeaponType(
     type: WeaponType,
     vararg others: WeaponType,
-): Boolean =
-    getWeaponType() == type.id ||
-        others.isNotEmpty() &&
-        getWeaponType() in
-        others.map {
-            it.id
-        }
+): Boolean {
+    val weaponType = getWeaponType()
+    return weaponType == type.id || others.any { weaponType == it.id }
+}
 
 fun Player.hasEquipped(
     slot: EquipmentType,

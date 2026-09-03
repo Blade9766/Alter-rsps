@@ -226,3 +226,74 @@ tasks.register<JavaExec>("agilityMapDump") {
     mainClass.set("org.alter.tools.AgilityMapDump")
     workingDir = rootDir
 }
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("agilityReachDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.AgilityReachDump")
+    workingDir = rootDir
+}
+
+// Bakes data/cfg/grandexchange/prices.json from the OSRS wiki price API. Re-run whenever the
+// guide prices should be refreshed; the file it writes is committed.
+tasks.register<JavaExec>("gePriceDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.GrandExchangePriceDump")
+    workingDir = rootDir
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("makeoverDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.MakeoverDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("varpSaveDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.VarpSaveDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
+// Bakes data/cfg/settings/settings.json from this cache's own settings catalogue (enum 422 plus
+// clientscripts 3960/3965). Re-run if the cache revision moves; the file it writes is committed.
+tasks.register<JavaExec>("settingsDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.SettingsDump")
+    workingDir = rootDir
+}
+
+// Boots a world and checks the Settings plugin registered, then prints the sub map the All Settings
+// panel will be read with. See org.alter.tools.SettingsDiag.
+tasks.register<JavaExec>("settingsDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.SettingsDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
+// Boots a world and checks the Duel Arena plugin registered, then re-verifies every cache id the
+// duel screens depend on. See org.alter.tools.DuelDiag.
+tasks.register<JavaExec>("duelDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.DuelDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}

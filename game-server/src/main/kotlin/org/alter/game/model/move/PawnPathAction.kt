@@ -8,6 +8,7 @@ import org.alter.game.model.timer.RESET_PAWN_FACING_TIMER
 import org.alter.game.plugin.Plugin
 import org.rsmod.routefinder.collision.CollisionStrategy
 import java.lang.ref.WeakReference
+import org.alter.game.model.attr.COMBAT_TARGET_FOCUS_ATTR
 
 object PawnPathAction {
     private const val ITEM_USE_OPCODE = -1
@@ -140,8 +141,20 @@ object PawnPathAction {
                     }
                 }
             }
-            pawn.resetFacePawn()
-            pawn.faceTile(other.tile)
+            /*
+             * Clearing the face target here cancels a fight the option just started.
+             *
+             * The combat loop treats "am I still facing my target" as its signal that the pawn is
+             * still engaged - clicking elsewhere resets interactions, which drops the facing, and
+             * combat ends. But an Attack option *begins* combat from inside this very call, and the
+             * reset below then ran a line later, so the loop's first cycle found no face target and
+             * stopped before landing a single hit. Interactions that are not combat still reset, so
+             * talking to someone and walking away behaves as before.
+             */
+            if (pawn.attr[COMBAT_TARGET_FOCUS_ATTR]?.get() != other) {
+                pawn.resetFacePawn()
+                pawn.faceTile(other.tile)
+            }
         }
     }
 }

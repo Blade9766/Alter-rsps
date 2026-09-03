@@ -26,25 +26,48 @@ class GatePlugin(
         onWorldInit {
             world.getService(GateService::class.java)?.let { service ->
                 service.gates.forEach { gate ->
-                    onObjOption(obj = gate.closed.hinge, option = "open", lineOfSightDistance = 1) {
+                    bindIfPresent(gate.closed.hinge, "open") {
                         openGate(player, player.getInteractingGameObj(), gate)
                     }
 
-                    onObjOption(obj = gate.closed.extension, option = "open", lineOfSightDistance = 1) {
+                    bindIfPresent(gate.closed.extension, "open") {
                         openGate(player, player.getInteractingGameObj(), gate)
                     }
 
-                    onObjOption(obj = gate.opened.hinge, option = "close", lineOfSightDistance = 1) {
+                    bindIfPresent(gate.opened.hinge, "close") {
                         closeGate(player, player.getInteractingGameObj(), gate)
                     }
 
-                    onObjOption(obj = gate.opened.extension, option = "close", lineOfSightDistance = 1) {
+                    bindIfPresent(gate.opened.extension, "close") {
                         closeGate(player, player.getInteractingGameObj(), gate)
                     }
                 }
             }
         }
 
+    }
+
+    /**
+     * Binds [option] on [obj] only if the object actually carries it.
+     *
+     * `onObjOption` throws when the option is absent, and not every gate has both halves: the
+     * Emir's Arena gates (44920/44921) open into 44922/44923, which have no actions at all and so
+     * can never be closed. Binding "close" on those unconditionally would throw during world init
+     * and take *every* gate in the game down with it, Al Kharid's included - so a missing option is
+     * treated as "this gate does not do that" rather than as a mistake in the config.
+     */
+    private fun bindIfPresent(
+        obj: Int,
+        option: String,
+        logic: (org.alter.game.plugin.Plugin).() -> Unit,
+    ) {
+        val present =
+            runCatching {
+                dev.openrune.cache.CacheManager.getObject(obj).actions.any { it?.lowercase() == option }
+            }.getOrDefault(false)
+        if (present) {
+            onObjOption(obj = obj, option = option, lineOfSightDistance = 1, logic = logic)
+        }
     }
 
     fun copyStickVars(from: GameObject, to: GameObject) {

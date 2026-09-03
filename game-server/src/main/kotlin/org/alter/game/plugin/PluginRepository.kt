@@ -14,6 +14,8 @@ import org.alter.game.Server
 import org.alter.game.event.Event
 import org.alter.game.model.World
 import org.alter.game.model.attr.COMMAND_ARGS_ATTR
+import org.alter.game.model.attr.DEATH_HANDLED_ATTR
+import org.alter.game.model.attr.EQUIP_REQUIREMENT_ITEM_ID
 import org.alter.game.model.attr.COMMAND_ATTR
 import org.alter.game.model.combat.NpcCombatDef
 import org.alter.game.model.container.key.*
@@ -173,7 +175,21 @@ class PluginRepository(
     /**
      * A map of plugins that can stop an item from being equipped.
      */
+    /**
+     * Plugins whose constructor threw, and which therefore registered nothing at all.
+     */
+    val failedPlugins = mutableListOf<String>()
+
     private val equipItemRequirementPlugins = Int2ObjectOpenHashMap<Plugin.() -> Boolean>()
+
+    /**
+     * Requirements that apply to *every* item rather than to one item id.
+     *
+     * [equipItemRequirementPlugins] is keyed by item, so it cannot express a rule that depends on
+     * the slot being filled rather than on what fills it - which is what a duel's locked equipment
+     * slots are. Each of these is consulted on every equip and any one of them can refuse it.
+     */
+    private val globalEquipRequirementPlugins = mutableListOf<Plugin.() -> Boolean>()
 
     /**
      * A map of plugins that are executed when a player equips an item.
@@ -458,13 +474,26 @@ class PluginRepository(
                         constructor.newInstance(this, world, server)
                         pluginCount++
                     } catch (e: Exception) {
-                        println("Failed to load: ${p.name} plugin")
-                        e.printStackTrace()
+                        failedPlugins.add(p.name)
+                        logger.error(e) { "Failed to load plugin: ${p.name}" }
                     }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+
+        /*
+         * A plugin whose constructor throws registers *nothing* - every option, button and hook it
+         * owns is silently gone, and the server otherwise starts up looking perfectly healthy. The
+         * one line it used to print scrolled past in the startup wall and was missed, so the whole
+         * list is repeated here at the end where it cannot be.
+         */
+        if (failedPlugins.isNotEmpty()) {
+            logger.error { "=".repeat(78) }
+            logger.error { "${failedPlugins.size} PLUGIN(S) FAILED TO LOAD - their content is entirely absent:" }
+            failedPlugins.forEach { name -> logger.error { "    $name" } }
+            logger.error { "=".repeat(78) }
         }
     }
 
@@ -634,8 +663,16 @@ class PluginRepository(
         playerPreDeathPlugins.add(plugin)
     }
 
-    fun executePlayerPreDeath(p: Player) {
+    /**
+     * Returns true when one of the plugins claimed the death by setting [DEATH_HANDLED_ATTR],
+     * meaning it has decided where the player goes and the default respawn should not run.
+     */
+    fun executePlayerPreDeath(p: Player): Boolean {
+        p.attr.remove(DEATH_HANDLED_ATTR)
         playerPreDeathPlugins.forEach { plugin -> p.executePlugin(plugin) }
+        val handled = p.attr[DEATH_HANDLED_ATTR] == true
+        p.attr.remove(DEATH_HANDLED_ATTR)
+        return handled
     }
 
     fun bindPlayerOption(
@@ -1156,6 +1193,29 @@ class PluginRepository(
         /*
          * Should always be able to wear items by default.
          */
+        return true
+    }
+
+    fun bindGlobalEquipRequirement(plugin: Plugin.() -> Boolean) {
+        globalEquipRequirementPlugins.add(plugin)
+    }
+
+    /**
+     * Runs every global equip requirement, stopping at the first refusal.
+     */
+    fun executeGlobalEquipRequirement(
+        p: Player,
+        item: Int,
+    ): Boolean {
+        if (globalEquipRequirementPlugins.isEmpty()) {
+            return true
+        }
+        p.attr[EQUIP_REQUIREMENT_ITEM_ID] = item
+        globalEquipRequirementPlugins.forEach { plugin ->
+            if (!p.executePlugin(plugin)) {
+                return false
+            }
+        }
         return true
     }
 
