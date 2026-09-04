@@ -8,57 +8,24 @@ import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
+import org.alter.plugins.content.combat.SalveAmulet
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.combat.strategy.magic.elementOf
 import org.alter.plugins.content.combat.strategy.magic.groupOf
 import org.alter.plugins.content.combat.strategy.magic.spellsInGroup
 import org.alter.plugins.content.magic.MagicSpells
+import org.alter.plugins.content.magic.TwinflameStaff
 import org.alter.plugins.content.mechanics.prayer.Prayer
 import org.alter.plugins.content.mechanics.prayer.Prayers
+import org.alter.plugins.content.skills.slayer.SlayerHeadgear
 
 /**
  * @author Tom <rspsmods@gmail.com>
  */
 object MagicCombatFormula : CombatFormula {
-    private val BLACK_MASKS =
-        arrayOf(
-            "item.black_mask",
-            "item.black_mask_1",
-            "item.black_mask_2",
-            "item.black_mask_3",
-            "item.black_mask_4",
-            "item.black_mask_5",
-            "item.black_mask_6",
-            "item.black_mask_7",
-            "item.black_mask_8",
-            "item.black_mask_9",
-            "item.black_mask_10",
-        )
-
-    private val BLACK_MASKS_I =
-        arrayOf(
-            "item.black_mask_i",
-            "item.black_mask_1_i",
-            "item.black_mask_2_i",
-            "item.black_mask_3_i",
-            "item.black_mask_4_i",
-            "item.black_mask_5_i",
-            "item.black_mask_6_i",
-            "item.black_mask_7_i",
-            "item.black_mask_8_i",
-            "item.black_mask_9_i",
-            "item.black_mask_10_i",
-        )
-
-    private val SLAYER_HELM_I =
-        arrayOf(
-            "item.slayer_helmet_i",
-            "item.black_slayer_helmet_i",
-            "item.green_slayer_helmet_i",
-            "item.purple_slayer_helmet_i",
-            "item.red_slayer_helmet_i",
-            "item.turquoise_slayer_helmet_i",
-        )
+    // Black mask / slayer helmet handling lives in [SlayerHeadgear], shared with the melee and
+    // ranged formulas. Magic is the one style where imbued matters: a plain mask or helmet gives
+    // no magic bonus at all, where this file used to hand it 7/6 on the accuracy roll.
 
     private val MAGE_VOID = arrayOf("item.void_mage_helm", "item.void_knight_top", "item.void_knight_robe", "item.void_knight_gloves")
 
@@ -74,7 +41,7 @@ object MagicCombatFormula : CombatFormula {
         target: Pawn,
         specialAttackMultiplier: Double,
     ): Double {
-        var attack = getAttackRoll(pawn).toDouble()
+        var attack = getAttackRoll(pawn, target).toDouble()
         if (pawn is Player && target is Npc) {
             attack *= elementalWeaknessMultiplier(pawn, target)
         }
@@ -150,6 +117,8 @@ object MagicCombatFormula : CombatFormula {
                 multiplier += 0.1
             }
 
+            multiplier += TwinflameStaff.standardSpellbookBonus(pawn)
+
             if (pawn.hasEquipped(MAGE_ELITE_VOID)) {
                 multiplier += 0.025
             }
@@ -163,15 +132,15 @@ object MagicCombatFormula : CombatFormula {
                 hit = Math.floor(hit)
             }
 
+            /*
+             * The same salve/black mask resolution the accuracy roll uses, so the two cannot
+             * disagree about a hit. This arm used to prefer the black mask over the salve - the
+             * wrong way round - and knew only about the (ei) amulet, so an imbued salve raised the
+             * accuracy roll and then left the damage alone.
+             */
             if (target is Npc) {
-                if (pawn.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS_I) || pawn.hasEquipped(EquipmentType.HEAD, *SLAYER_HELM_I)) {
-                    // TODO: check if on slayer task and target is slayer task
-                    hit *= 1.15
-                    hit = Math.floor(hit)
-                } else if (pawn.hasEquipped(EquipmentType.AMULET, "item.salve_amuletei") && target.isSpecies(NpcSpecies.UNDEAD)) {
-                    hit *= 1.20
-                    hit = Math.floor(hit)
-                }
+                hit *= getEquipmentMultiplier(pawn, target)
+                hit = Math.floor(hit)
             }
         } else if (pawn is Npc) {
             val multiplier = 1.0 + (pawn.getMagicDamageBonus() / 100.0)
@@ -229,7 +198,10 @@ object MagicCombatFormula : CombatFormula {
         return 1.0 + def.elementalWeaknessPercent / 100.0
     }
 
-    private fun getAttackRoll(pawn: Pawn): Int {
+    private fun getAttackRoll(
+        pawn: Pawn,
+        target: Pawn?,
+    ): Int {
         val a =
             if (pawn is Player) {
                 getEffectiveAttackLevel(pawn)
@@ -242,7 +214,7 @@ object MagicCombatFormula : CombatFormula {
 
         var maxRoll = a * (b + 64.0)
         if (pawn is Player) {
-            maxRoll = applyAttackSpecials(pawn, maxRoll)
+            maxRoll = applyAttackSpecials(pawn, target, maxRoll)
         }
         return maxRoll.toInt()
     }
@@ -286,11 +258,12 @@ object MagicCombatFormula : CombatFormula {
 
     private fun applyAttackSpecials(
         player: Player,
+        target: Pawn?,
         base: Double,
     ): Double {
         var hit = base
 
-        hit *= getEquipmentMultiplier(player)
+        hit *= getEquipmentMultiplier(player, target)
         hit = Math.floor(hit)
 
         if (player.hasEquipped(EquipmentType.WEAPON, "item.mystic_smoke_staff")) {
@@ -298,20 +271,23 @@ object MagicCombatFormula : CombatFormula {
             hit = Math.floor(hit)
         }
 
+        hit *= 1.0 + TwinflameStaff.standardSpellbookBonus(player)
+        hit = Math.floor(hit)
+
         return hit
     }
 
     private fun getEffectiveAttackLevel(player: Player): Double {
         var effectiveLevel = Math.floor(player.getSkills().getCurrentLevel(Skills.MAGIC) * getPrayerAttackMultiplier(player))
 
-        if (player.hasWeaponType(WeaponType.TRIDENT)) {
+        if (player.hasWeaponType(WeaponType.POWERED_STAFF)) {
             effectiveLevel +=
                 when (CombatConfigs.getAttackStyle(player)) {
                     AttackStyle.ACCURATE -> 3.0
                     // Longrange on a powered staff gives +1 Magic (its +3 Defence is
                     // handled in getEffectiveDefenceLevel). That branch was missing, so
                     // Longrange gave no Magic bonus at all. CONTROLLED is kept alongside
-                    // it defensively - getAttackStyle never yields it for a TRIDENT.
+                    // it defensively - getAttackStyle never yields it for a powered staff.
                     AttackStyle.LONG_RANGE, AttackStyle.CONTROLLED -> 1.0
                     else -> 0.0
                 }
@@ -372,17 +348,20 @@ object MagicCombatFormula : CombatFormula {
         return target.getBonus(BonusSlot.DEFENCE_MAGIC).toDouble()
     }
 
-    private fun getEquipmentMultiplier(player: Player): Double =
-        when {
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet") -> 7.0 / 6.0
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet_e") -> 1.2
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amuleti") -> 1.15
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amuletei") -> 1.2
-            // TODO: this should only apply when target is slayer task?
-            player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS) -> 7.0 / 6.0
-            player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS_I) -> 1.15
-            else -> 1.0
-        }
+    /**
+     * The salve amulet and the black mask do not stack - the salve wins when it applies at all.
+     * This used to apply a salve bonus against every target, which also meant the imbued black
+     * mask behind it never ran, and it granted the plain and enchanted amulets a magic bonus they
+     * have never had. It also disagreed with this file's own max-hit path, which already required
+     * an imbued amulet and an undead target. See [SalveAmulet].
+     */
+    private fun getEquipmentMultiplier(
+        player: Player,
+        target: Pawn?,
+    ): Double {
+        val salve = SalveAmulet.magicMultiplier(player, target)
+        return if (salve > 1.0) salve else SlayerHeadgear.magicMultiplier(player, target)
+    }
 
     private fun getPrayerAttackMultiplier(player: Player): Double =
         when {

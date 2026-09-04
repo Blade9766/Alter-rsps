@@ -8,42 +8,19 @@ import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
+import org.alter.plugins.content.combat.SalveAmulet
 import org.alter.plugins.content.mechanics.prayer.Prayer
 import org.alter.plugins.content.mechanics.prayer.Prayers
+import org.alter.plugins.content.skills.slayer.SlayerHeadgear
+import org.alter.plugins.content.combat.protectionPrayersActive
 
 /**
  * @author Tom <rspsmods@gmail.com>
  */
 object RangedCombatFormula : CombatFormula {
-    private val BLACK_MASKS =
-        arrayOf(
-            "item.black_mask",
-            "item.black_mask_1",
-            "item.black_mask_2",
-            "item.black_mask_3",
-            "item.black_mask_4",
-            "item.black_mask_5",
-            "item.black_mask_6",
-            "item.black_mask_7",
-            "item.black_mask_8",
-            "item.black_mask_9",
-            "item.black_mask_10",
-        )
-
-    private val BLACK_MASKS_I =
-        arrayOf(
-            "item.black_mask_i",
-            "item.black_mask_1_i",
-            "item.black_mask_2_i",
-            "item.black_mask_3_i",
-            "item.black_mask_4_i",
-            "item.black_mask_5_i",
-            "item.black_mask_6_i",
-            "item.black_mask_7_i",
-            "item.black_mask_8_i",
-            "item.black_mask_9_i",
-            "item.black_mask_10_i",
-        )
+    // Black mask / slayer helmet handling, and the on-task condition, live in [SlayerHeadgear].
+    // Note the imbued mask used to be worth 1.15 here; it is 7/6 for ranged exactly as the plain
+    // one is, and only the *magic* bonus differs between imbued and not.
 
     private val RANGED_VOID = arrayOf("item.void_ranger_helm", "item.void_knight_top", "item.void_knight_robe", "item.void_knight_gloves")
 
@@ -173,7 +150,7 @@ object RangedCombatFormula : CombatFormula {
     ): Int {
         var hit = base.toDouble()
 
-        hit *= getEquipmentMultiplier(player)
+        hit *= getEquipmentMultiplier(player, target)
         hit = Math.floor(hit)
 
         if (specialAttackMultiplier == 1.0) {
@@ -205,7 +182,7 @@ object RangedCombatFormula : CombatFormula {
             hit = Math.floor(hit)
         }
 
-        if (target.hasPrayerIcon(PrayerIcon.PROTECT_FROM_MISSILES)) {
+        if (target.protectionPrayersActive(PrayerIcon.PROTECT_FROM_MISSILES)) {
             hit *= 0.6
             hit = Math.floor(hit)
         }
@@ -240,7 +217,7 @@ object RangedCombatFormula : CombatFormula {
     ): Double {
         var hit = base
 
-        hit *= getEquipmentMultiplier(player)
+        hit *= getEquipmentMultiplier(player, target)
         hit = Math.floor(hit)
 
         if (specialAttackMultiplier == 1.0) {
@@ -427,17 +404,19 @@ object RangedCombatFormula : CombatFormula {
             else -> 1.0
         }
 
-    private fun getEquipmentMultiplier(player: Player): Double =
-        when {
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet") -> 7.0 / 6.0
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet_e") -> 1.2
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amuleti") -> 1.15
-            player.hasEquipped(EquipmentType.AMULET, "item.salve_amuletei") -> 1.2
-            // TODO: this should only apply when target is slayer task?
-            player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS) -> 7.0 / 6.0
-            player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS_I) -> 1.15
-            else -> 1.0
-        }
+    /**
+     * The salve amulet and the black mask do not stack - the salve wins when it applies at all.
+     * This used to apply a salve bonus against every target, which also meant the black mask
+     * behind it never ran, and it granted the plain and enchanted amulets a ranged bonus they have
+     * never had - both are melee-only. See [SalveAmulet].
+     */
+    private fun getEquipmentMultiplier(
+        player: Player,
+        target: Pawn?,
+    ): Double {
+        val salve = SalveAmulet.rangedMultiplier(player, target)
+        return if (salve > 1.0) salve else SlayerHeadgear.meleeRangedMultiplier(player, target)
+    }
 
     private fun getDamageDealMultiplier(pawn: Pawn): Double = pawn.attr[Combat.DAMAGE_DEAL_MULTIPLIER] ?: 1.0
 

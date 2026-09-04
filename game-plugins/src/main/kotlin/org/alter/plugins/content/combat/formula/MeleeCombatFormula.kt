@@ -8,24 +8,21 @@ import org.alter.game.model.entity.Player
 import org.alter.api.*
 import org.alter.api.ext.*
 import org.alter.plugins.content.combat.Combat
+import org.alter.plugins.content.combat.protectionPrayersActive
 import org.alter.plugins.content.combat.CombatConfigs
+import org.alter.plugins.content.combat.SalveAmulet
 import org.alter.plugins.content.mechanics.prayer.Prayer
 import org.alter.plugins.content.mechanics.prayer.Prayers
+import org.alter.plugins.content.skills.slayer.SlayerHeadgear
 
 /**
  * @author Tom <rspsmods@gmail.com>
  */
 object MeleeCombatFormula : CombatFormula {
 
-    private val BLACK_MASKS = arrayOf("item.black_mask",
-            "item.black_mask_1", "item.black_mask_2", "item.black_mask_3", "item.black_mask_4",
-            "item.black_mask_5", "item.black_mask_6", "item.black_mask_7", "item.black_mask_8",
-            "item.black_mask_9", "item.black_mask_10")
-
-    private val BLACK_MASKS_I = arrayOf("item.black_mask_i",
-            "item.black_mask_1_i", "item.black_mask_2_i", "item.black_mask_3_i", "item.black_mask_4_i",
-            "item.black_mask_5_i", "item.black_mask_6_i", "item.black_mask_7_i", "item.black_mask_8_i",
-            "item.black_mask_9_i", "item.black_mask_10_i")
+    // The black mask and slayer helmet lists, and the on-task condition they were always missing,
+    // now live in [SlayerHeadgear] - shared with the ranged and magic formulas rather than pasted
+    // into each of the three.
 
     private val MELEE_VOID = arrayOf("item.void_melee_helm", "item.void_knight_top", "item.void_knight_robe", "item.void_knight_gloves")
 
@@ -44,13 +41,33 @@ object MeleeCombatFormula : CombatFormula {
         return accuracy
     }
 
-    override fun getMaxHit(pawn: Pawn, target: Pawn, specialAttackMultiplier: Double, specialPassiveMultiplier: Double): Int {
+    override fun getMaxHit(pawn: Pawn, target: Pawn, specialAttackMultiplier: Double, specialPassiveMultiplier: Double): Int =
+        maxHit(pawn, target, specialAttackMultiplier, specialPassiveMultiplier, piercesProtectionPrayer = false)
+
+    /**
+     * The same max hit, but ignoring the target's Protect from Melee.
+     *
+     * Two specials are described as hitting straight through it - the dragon sword's Wild Stab and
+     * the Ancient mace's Favour of the War God - and both mean the 40% reduction below simply does
+     * not happen, not that the prayer is switched off. Separate from [getMaxHit] rather than an
+     * extra defaulted parameter because [CombatFormula] fixes that signature for all three styles.
+     */
+    fun getMaxHitPiercingPrayer(pawn: Pawn, target: Pawn, specialAttackMultiplier: Double = 1.0): Int =
+        maxHit(pawn, target, specialAttackMultiplier, specialPassiveMultiplier = 1.0, piercesProtectionPrayer = true)
+
+    private fun maxHit(
+        pawn: Pawn,
+        target: Pawn,
+        specialAttackMultiplier: Double,
+        specialPassiveMultiplier: Double,
+        piercesProtectionPrayer: Boolean,
+    ): Int {
         val a = if (pawn is Player) getEffectiveStrengthLevel(pawn) else if (pawn is Npc) getEffectiveStrengthLevel(pawn) else 0.0
         val b = getEquipmentStrengthBonus(pawn)
 
         var base = Math.floor(0.5 + a * (b + 64.0) / 640.0).toInt()
         if (pawn is Player) {
-            base = applyStrengthSpecials(pawn, target, base, specialAttackMultiplier, specialPassiveMultiplier)
+            base = applyStrengthSpecials(pawn, target, base, specialAttackMultiplier, specialPassiveMultiplier, piercesProtectionPrayer)
         }
         return base
     }
@@ -84,16 +101,23 @@ object MeleeCombatFormula : CombatFormula {
         return maxRoll.toInt()
     }
 
-    private fun applyStrengthSpecials(player: Player, target: Pawn, base: Int, specialAttackMultiplier: Double, specialPassiveMultiplier: Double): Int {
+    private fun applyStrengthSpecials(
+        player: Player,
+        target: Pawn,
+        base: Int,
+        specialAttackMultiplier: Double,
+        specialPassiveMultiplier: Double,
+        piercesProtectionPrayer: Boolean = false,
+    ): Int {
         var hit = base.toDouble()
 
-        hit *= getEquipmentMultiplier(player)
+        hit *= getEquipmentMultiplier(player, target)
         hit = Math.floor(hit)
 
         hit *= specialAttackMultiplier
         hit = Math.floor(hit)
 
-        if (target.hasPrayerIcon(PrayerIcon.PROTECT_FROM_MELEE)) {
+        if (!piercesProtectionPrayer && target.protectionPrayersActive(PrayerIcon.PROTECT_FROM_MELEE)) {
             hit *= 0.6
             hit = Math.floor(hit)
         }
@@ -112,13 +136,16 @@ object MeleeCombatFormula : CombatFormula {
         hit *= getDamageTakeMultiplier(target)
         hit = Math.floor(hit)
 
+        hit *= getMeleeDamageTakeMultiplier(target)
+        hit = Math.floor(hit)
+
         return hit.toInt()
     }
 
     private fun applyAttackSpecials(player: Player, target: Pawn, base: Double, specialAttackMultiplier: Double): Double {
         var hit = base
 
-        hit *= getEquipmentMultiplier(player)
+        hit *= getEquipmentMultiplier(player, target)
         hit = Math.floor(hit)
 
         hit *= (if (player.hasEquipped(EquipmentType.WEAPON, "item.arclight") && isDemon(target)) 1.7 else specialAttackMultiplier)
@@ -280,12 +307,15 @@ object MeleeCombatFormula : CombatFormula {
         else -> 1.0
     }
 
-    private fun getEquipmentMultiplier(player: Player): Double = when {
-        player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet") -> 7.0 / 6.0 // These should only apply if the target is undead..
-        player.hasEquipped(EquipmentType.AMULET, "item.salve_amulet_e") -> 1.2 // These should only apply if the target is undead..
-        // TODO: this should only apply when target is slayer task?
-        player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS) || player.hasEquipped(EquipmentType.HEAD, *BLACK_MASKS_I) -> 7.0 / 6.0 // This should only apply if you have the target || his category as a Slayer Task
-        else -> 1.0
+    /**
+     * The salve amulet and the black mask do not stack - the salve wins when it applies at all.
+     * That "when it applies" is the part this used to be missing: the salve arms had no undead
+     * check, so the amulet boosted every target in the game and, because the black mask sat behind
+     * them in the same `when`, silently switched the black mask off. See [SalveAmulet].
+     */
+    private fun getEquipmentMultiplier(player: Player, target: Pawn?): Double {
+        val salve = SalveAmulet.meleeMultiplier(player, target)
+        return if (salve > 1.0) salve else SlayerHeadgear.meleeRangedMultiplier(player, target)
     }
 
     private fun applyPassiveMultiplier(pawn: Pawn, target: Pawn, base: Double): Double {
@@ -313,6 +343,9 @@ object MeleeCombatFormula : CombatFormula {
     private fun getDamageDealMultiplier(pawn: Pawn): Double = pawn.attr[Combat.DAMAGE_DEAL_MULTIPLIER] ?: 1.0
 
     private fun getDamageTakeMultiplier(pawn: Pawn): Double = pawn.attr[Combat.DAMAGE_TAKE_MULTIPLIER] ?: 1.0
+
+    /** Melee-only, so Power of Death and Spear Wall do not also blunt incoming arrows. */
+    private fun getMeleeDamageTakeMultiplier(pawn: Pawn): Double = pawn.attr[Combat.MELEE_DAMAGE_TAKE_MULTIPLIER] ?: 1.0
 
     private fun isDemon(pawn: Pawn): Boolean {
         if (pawn.entityType.isNpc) {

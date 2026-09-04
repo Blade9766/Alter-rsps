@@ -65,7 +65,7 @@ object RangedAmmo {
 
         val projectile = player.createProjectile(target, ammoProjectile.gfx, ammoProjectile.type)
         ammoProjectile.drawback?.let { drawback -> player.graphic(drawback) }
-        ammoProjectile.impact?.let { impact -> target.graphic(impact.id, impact.height, projectile.lifespan) }
+        ammoProjectile.impact?.let { impact -> target.graphic(impact.id, impact.height, projectile.impactDelay) }
         player.world.spawn(projectile)
     }
 
@@ -199,7 +199,7 @@ object RangedAmmo {
             RangedProjectile.values.firstOrNull { dartId in it.items }?.let { dart ->
                 val projectile = player.createProjectile(target, dart.gfx, dart.type)
                 dart.drawback?.let { drawback -> player.graphic(drawback) }
-                dart.impact?.let { impact -> target.graphic(impact.id, impact.height, projectile.lifespan) }
+                dart.impact?.let { impact -> target.graphic(impact.id, impact.height, projectile.impactDelay) }
                 world.spawn(projectile)
             }
         }

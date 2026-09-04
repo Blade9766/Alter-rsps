@@ -12,6 +12,14 @@ import org.alter.game.model.Graphic
 data class CurseEffect(val drainedSkill: Int, val drainPercent: Double)
 
 /**
+ * Initial poison damage a smoke spell inflicts - the wiki's severity 10.
+ *
+ * Top-level rather than in [CombatSpell]'s companion because enum entry constructor
+ * arguments are evaluated before the companion object is initialised.
+ */
+private const val SMOKE_POISON_DAMAGE = 2
+
+/**
  * @author Tom <rspsmods@gmail.com>
  */
 enum class CombatSpell(
@@ -37,6 +45,15 @@ enum class CombatSpell(
     val autoCastId: Int,
     val baseXp: Double = 0.0,
     val curseEffect: CurseEffect? = null,
+    /**
+     * Initial poison damage this spell can inflict on a landed hit, or `0` for the spells
+     * that cannot poison at all - which is every spell but the four smoke ones.
+     *
+     * The roll itself (1/8, the same as poisoned ranged ammo) lives in
+     * [org.alter.plugins.content.mechanics.poison.CombatPoison], alongside the poisoned
+     * weapons, rather than being restated per spell.
+     */
+    val poisonDamage: Int = 0,
 ) {
     /**
      * Standard.
@@ -315,6 +332,7 @@ enum class CombatSpell(
         impactGfx = Graphic(id = 385, height = 0),
         autoCastId = 31,
         baseXp = 30.0,
+        poisonDamage = SMOKE_POISON_DAMAGE,
     ),
 
     SHADOW_RUSH(
@@ -368,6 +386,7 @@ enum class CombatSpell(
         impactGfx = Graphic(id = 389, height = 0),
         autoCastId = 35,
         baseXp = 36.0,
+        poisonDamage = SMOKE_POISON_DAMAGE,
     ),
 
     SHADOW_BURST(
@@ -423,6 +442,7 @@ enum class CombatSpell(
         impactGfx = Graphic(id = 387, height = 124),
         autoCastId = 39,
         baseXp = 42.0,
+        poisonDamage = SMOKE_POISON_DAMAGE,
     ),
 
     SHADOW_BLITZ(
@@ -477,6 +497,7 @@ enum class CombatSpell(
         impactGfx = Graphic(id = 391, height = 124),
         autoCastId = 43,
         baseXp = 48.0,
+        poisonDamage = SMOKE_POISON_DAMAGE,
     ),
 
     SHADOW_BARRAGE(

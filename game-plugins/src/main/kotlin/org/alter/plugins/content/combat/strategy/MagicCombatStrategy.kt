@@ -14,11 +14,13 @@ import org.alter.game.model.entity.Player
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
 import org.alter.plugins.content.combat.createProjectile
+import org.alter.plugins.content.combat.dealExactHit
 import org.alter.plugins.content.combat.dealHit
 import org.alter.plugins.content.combat.formula.MagicCombatFormula
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.combat.strategy.magic.CurseEffect
 import org.alter.plugins.content.magic.MagicSpells
+import org.alter.plugins.content.magic.TwinflameStaff
 
 /**
  * Plays a spell's cast or impact sound to the humans involved.
@@ -49,7 +51,10 @@ fun playSpellSound(
  * @author Tom <rspsmods@gmail.com>
  */
 object MagicCombatStrategy : CombatStrategy {
-    override fun getAttackRange(pawn: Pawn): Int = 10
+    private const val MAX_ATTACK_RANGE = 10
+
+    /** The standard spellbook's cast range; [MAX_ATTACK_RANGE] for players. */
+    override fun getAttackRange(pawn: Pawn): Int = Combat.npcAttackRange(pawn, MAX_ATTACK_RANGE)
 
     override fun canAttack(
         pawn: Pawn,
@@ -82,7 +87,7 @@ object MagicCombatStrategy : CombatStrategy {
 
         pawn.animate(spell.castAnimation)
         spell.castGfx?.let { gfx -> pawn.graphic(gfx) }
-        spell.impactGfx?.let { gfx -> target.graphic(Graphic(gfx.id, gfx.height, projectile.lifespan)) }
+        spell.impactGfx?.let { gfx -> target.graphic(Graphic(gfx.id, gfx.height, projectile.impactDelay)) }
         if (spell.projectile > 0) {
             world.spawn(projectile)
         }
@@ -117,9 +122,41 @@ object MagicCombatStrategy : CombatStrategy {
                 }.hit.hitmarks
                 .sumOf { it.damage }
 
+        val secondCast = twinflameSecondCast(pawn, target, spell, damage, hitDelay, projectile.impactDelay)
+
         if (damage >= 0 && pawn.entityType.isPlayer) {
-            addCombatXp(pawn as Player, target, damage, spell)
+            addCombatXp(pawn as Player, target, damage + secondCast, spell)
         }
+    }
+
+    /**
+     * The Twinflame staff's second cast: a Bolt, Blast or Wave lands a second time a tick after
+     * the first, for 40% of what the first one dealt. See [TwinflameStaff].
+     *
+     * Returns the damage the second hit will deal, so the caller can pay experience on it - it is
+     * the same spell hitting the same target, and awarding nothing for it would make the staff a
+     * damage upgrade and an experience downgrade.
+     */
+    private fun twinflameSecondCast(
+        pawn: Pawn,
+        target: Pawn,
+        spell: CombatSpell,
+        firstHitDamage: Int,
+        hitDelay: Int,
+        impactDelay: Int,
+    ): Int {
+        val damage = TwinflameStaff.secondCastDamage(pawn, spell, firstHitDamage)
+        if (damage <= 0) {
+            return 0
+        }
+        val delay = hitDelay + TwinflameStaff.SECOND_CAST_DELAY
+        spell.impactGfx?.let { gfx ->
+            target.graphic(Graphic(gfx.id, gfx.height, impactDelay + TwinflameStaff.SECOND_CAST_DELAY))
+        }
+        pawn.dealExactHit(target = target, damage = damage, landHit = true, delay = delay) {
+            playSpellSound(pawn, target, spell.impactSound)
+        }
+        return damage
     }
 
     /** Drains [effect.drainedSkill] by [effect.drainPercent] of its current level (floored, min 1). */
@@ -134,9 +171,15 @@ object MagicCombatStrategy : CombatStrategy {
                 target.getSkills().alterCurrentLevel(effect.drainedSkill, -reduction)
             }
             is Npc -> {
-                val current = target.stats.getCurrentLevel(effect.drainedSkill)
+                /*
+                 * [CurseEffect.drainedSkill] is a player [Skills] constant; npc stats are
+                 * indexed by [NpcSkills]. Using it unmapped drained Defence when the spell
+                 * said Strength (and vice versa).
+                 */
+                val npcSkill = Combat.toNpcSkill(effect.drainedSkill) ?: return
+                val current = target.stats.getCurrentLevel(npcSkill)
                 val reduction = (current * effect.drainPercent).toInt().coerceAtLeast(1)
-                target.stats.alterCurrentLevel(effect.drainedSkill, -reduction)
+                target.stats.alterCurrentLevel(npcSkill, -reduction)
             }
             else -> {}
         }

@@ -1,5 +1,6 @@
 package org.alter.plugins.content.combat.strategy.magic
 
+import org.alter.api.NpcSkills
 import org.alter.api.Skills
 import org.alter.api.Spellbook
 import org.alter.api.ext.getInteractingNpc
@@ -82,11 +83,19 @@ class CombatSpellsPlugin(
     private fun hasActiveStatDrain(target: Pawn): Boolean =
         when (target) {
             is Player -> COMBAT_STATS.any { target.getSkills().getCurrentLevel(it) < target.getSkills().getBaseLevel(it) }
-            is Npc -> COMBAT_STATS.any { target.stats.getCurrentLevel(it) < target.stats.getMaxLevel(it) }
+            is Npc -> NPC_COMBAT_STATS.any { target.stats.getCurrentLevel(it) < target.stats.getMaxLevel(it) }
             else -> false
         }
 
     private companion object {
         val COMBAT_STATS = listOf(Skills.ATTACK, Skills.STRENGTH, Skills.DEFENCE, Skills.MAGIC, Skills.RANGED)
+
+        /*
+         * Npc stats are a five-slot array indexed by [NpcSkills], not by [Skills] - the
+         * player constants used to be reused here, which read Strength for Defence and
+         * ran off the end of the array on Skills.MAGIC (6).
+         */
+        val NPC_COMBAT_STATS =
+            listOf(NpcSkills.ATTACK, NpcSkills.STRENGTH, NpcSkills.DEFENCE, NpcSkills.MAGIC, NpcSkills.RANGED)
     }
 }

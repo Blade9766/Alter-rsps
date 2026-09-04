@@ -22,7 +22,6 @@ import org.alter.game.model.queue.QueueTask
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.combat.specialattack.SpecialAttacks
-import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.interfaces.attack.AttackTab
 import java.util.*
@@ -147,7 +146,7 @@ class CombatPlugin(
          * a genuine safespot - simply leaves the pawn standing there facing them, which
          * is the intended outcome.
          */
-        val projectileAttack = strategy !== MeleeCombatStrategy
+        val projectileAttack = strategy.usesProjectile
         if (!reached &&
             Combat.edgeDistance(pawn, target) <= attackRange &&
             Combat.hasAttackLineOfSight(pawn, target, projectile = projectileAttack)
@@ -264,13 +263,23 @@ class CombatPlugin(
         }
         if (Combat.isAttackDelayReady(pawn)) {
             if (Combat.canAttack(pawn, target, strategy)) {
-                if (pawn is Player && AttackTab.isSpecialEnabled(pawn) && pawn.getEquipment(EquipmentType.WEAPON) != null) {
+                if (pawn is Player && AttackTab.isSpecialEnabled(pawn)) {
+                    val weapon = pawn.getEquipment(EquipmentType.WEAPON)
                     AttackTab.disableSpecial(pawn)
-                    if (SpecialAttacks.execute(pawn, target, world)) {
-                        Combat.postAttack(pawn, target)
-                        return true
+                    if (weapon != null && SpecialAttacks.hasSpecial(weapon.id)) {
+                        if (SpecialAttacks.execute(pawn, target, world)) {
+                            Combat.postAttack(pawn, target)
+                            return true
+                        }
+                        /*
+                         * execute() also refuses when the duel's rules forbid specials, and that
+                         * path has already told the player why - only the bar being short is left
+                         * to report here.
+                         */
+                        if (AttackTab.getEnergy(pawn) < (SpecialAttacks.energyRequired(weapon.id) ?: 0)) {
+                            pawn.message("You don't have enough power left.")
+                        }
                     }
-                    pawn.message("You don't have enough power left.")
                 }
                 strategy.attack(pawn, target)
                 Combat.postAttack(pawn, target)

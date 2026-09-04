@@ -11,6 +11,7 @@ import org.alter.game.model.attr.DRAGONFIRE_IMMUNITY_ATTR
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
+import org.alter.plugins.content.combat.protectionPrayersActive
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -33,7 +34,7 @@ class DragonfireFormula(val maxHit: Int, val minHit: Int = 0) : CombatFormula {
         var max = maxHit.toDouble()
 
         if (target is Player) {
-            val magicProtection = target.hasPrayerIcon(PrayerIcon.PROTECT_FROM_MAGIC)
+            val magicProtection = target.protectionPrayersActive(PrayerIcon.PROTECT_FROM_MAGIC)
             val antiFirePotion = (target.attr[ANTIFIRE_POTION_CHARGES_ATTR] ?: 0) > 0
             val dragonFireImmunity = target.attr[DRAGONFIRE_IMMUNITY_ATTR] ?: false
             val antiFireShield = target.hasEquipped(EquipmentType.SHIELD, *ANTI_DRAGON_SHIELDS)

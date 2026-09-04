@@ -16,6 +16,7 @@ import org.alter.game.model.entity.Player
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.timer.ACTIVE_COMBAT_TIMER
 import org.alter.game.model.timer.ATTACK_DELAY
+import org.alter.game.model.timer.PROTECTION_PRAYER_BLOCK_TIMER
 import org.alter.plugins.content.combat.strategy.CombatStrategy
 import org.alter.plugins.content.combat.strategy.MagicCombatStrategy
 import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
@@ -27,6 +28,7 @@ import java.lang.ref.WeakReference
 import org.alter.plugins.content.areas.duelarena.DuelRules
 import org.alter.plugins.content.areas.duelarena.DuelStyle
 import org.alter.plugins.content.areas.duelarena.getActiveDuel
+import org.alter.plugins.content.areas.wilderness.WildernessRisk
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -37,12 +39,32 @@ object Combat {
     val DAMAGE_TAKE_MULTIPLIER = AttributeKey<Double>()
 
     /**
+     * A melee-only version of [DAMAGE_TAKE_MULTIPLIER], read by [MeleeCombatFormula] alone.
+     *
+     * Needed because two specials reduce *melee* damage specifically and nothing else: the staff of
+     * the dead's Power of Death (half melee damage for a minute) and Vesta's spear's Spear Wall
+     * (melee immunity for five seconds). Putting either on the shared key would have quietly halved
+     * incoming ranged damage too.
+     */
+    val MELEE_DAMAGE_TAKE_MULTIPLIER = AttributeKey<Double>()
+
+    /**
      * Set by a special attack that grants an immediate follow-up attack rather than
      * waiting out the weapon's speed - the dragon thrownaxe's Momentum Throw. Consumed
      * by [postAttack], which runs after the special resolves and would otherwise
      * overwrite any attack delay the special set for itself.
      */
     val INSTANT_NEXT_ATTACK = AttributeKey<Boolean>()
+
+    /**
+     * Extra ticks added to the delay after the current attack, then cleared.
+     *
+     * [INSTANT_NEXT_ATTACK]'s opposite, and the same shape: a special cannot set the attack delay
+     * itself because [postAttack] overwrites it immediately afterwards, so the slow specials -
+     * the ballistas' Concentrated Shot at +2.4 seconds, the keris partisan of corruption's halved
+     * attack speed - leave the extra here for [postAttack] to add on.
+     */
+    val EXTRA_ATTACK_DELAY = AttributeKey<Int>()
 
     /**
      * Set (to the pending defensive flag) while the player has clicked
@@ -97,21 +119,60 @@ object Combat {
         pawn: Pawn,
         target: Pawn,
     ) {
+        /*
+         * Skulling, before anything below touches LAST_HIT_BY_ATTR - the retaliation test reads
+         * the attacker's own copy of it, which is only written when *they* are hit, but keeping
+         * this first means the two can never be read out of order. A duel is its own PvP area with
+         * its own consequences and never skulls anyone.
+         */
+        if (pawn is Player && target is Player && pawn.getActiveDuel() == null) {
+            WildernessRisk.onPlayerAttackedPlayer(pawn, target)
+        }
+
+        val extraDelay = pawn.attr[EXTRA_ATTACK_DELAY] ?: 0
+        pawn.attr.remove(EXTRA_ATTACK_DELAY)
         pawn.timers[ATTACK_DELAY] =
             if (pawn.attr[INSTANT_NEXT_ATTACK] == true) {
                 pawn.attr.remove(INSTANT_NEXT_ATTACK)
                 1
             } else {
-                CombatConfigs.getAttackDelay(pawn)
+                CombatConfigs.getAttackDelay(pawn) + extraDelay
             }
         target.timers[ACTIVE_COMBAT_TIMER] = 17 // 10,2 seconds
 
         pawn.attr[LAST_HIT_ATTR] = WeakReference(target)
         target.attr[LAST_HIT_BY_ATTR] = WeakReference(pawn)
 
-        if (pawn.attr.has(CASTING_SPELL) && pawn is Player && pawn.getVarbit(SELECTED_AUTOCAST_VARBIT) == 0) {
-            reset(pawn)
-            pawn.attr.remove(CASTING_SPELL)
+        /*
+         * A spell cast by hand out of the spellbook is a one-off. What follows it
+         * depends on whether autocast is set.
+         *
+         * With no autocast, the cast ends the fight - [reset] drops the target focus so
+         * the player stands still afterwards, the same as real OSRS.
+         *
+         * With autocast set, the fight carries on, but it has to carry on with the
+         * *autocast* spell rather than the one just cast by hand. Clearing the attribute
+         * is all that is needed: [org.alter.plugins.content.combat.CombatPlugin] puts the
+         * autocast spell back at the top of the next cycle, before the strategy is
+         * chosen, because it only skips that step while a spell is already set. Leaving
+         * it set is what let a hand-cast spell quietly take over as the autocast spell
+         * and keep repeating until another one was picked, while the Combat Options tab
+         * still showed the real autocast spell.
+         *
+         * Clearing it here is safe.
+         * [org.alter.plugins.content.combat.strategy.MagicCombatStrategy.attack] reads
+         * the spell into a local and finishes with it before returning, and postAttack
+         * runs after that - the delayed-hit callback closes over that local rather than
+         * reading the attribute again.
+         */
+        if (pawn is Player && pawn.attr.has(CASTING_SPELL)) {
+            val autocastId = pawn.getVarbit(SELECTED_AUTOCAST_VARBIT)
+            if (autocastId == 0) {
+                reset(pawn)
+                pawn.attr.remove(CASTING_SPELL)
+            } else if (pawn.attr[CASTING_SPELL]?.autoCastId != autocastId) {
+                pawn.attr.remove(CASTING_SPELL)
+            }
         }
 
         if (target is Player && target.interfaces.getModal() != -1) {
@@ -596,3 +657,14 @@ object Combat {
         val y2: Int get() = y + length
     }
 }
+
+/**
+ * Whether [icon]'s protection prayer is actually stopping damage right now.
+ *
+ * The same question as [Pawn.hasPrayerIcon], plus the one thing that can suspend the answer without
+ * suspending the prayer: the dragon scimitar's Sever leaves the prayer on and its icon up while
+ * attacks go straight through it. Every damage formula asks this rather than the raw icon, so a
+ * severed target is unprotected against melee, missiles and dragonfire alike for the five seconds.
+ */
+fun Pawn.protectionPrayersActive(icon: PrayerIcon): Boolean =
+    hasPrayerIcon(icon) && !timers.has(PROTECTION_PRAYER_BLOCK_TIMER)
