@@ -18,5 +18,39 @@
       "hinge": 44920,
       "extension": 44921
     }
+  },
+  {
+    "opened": {
+      "hinge": 1571,
+      "extension": 1572
+    },
+    "closed": {
+      "hinge": 1727,
+      "extension": 1728
+    }
+  },
+  {
+    "opened": {
+      "hinge": 1571,
+      "extension": 1572
+    },
+    "closed": {
+      "hinge": 1568,
+      "extension": 1569
+    }
+  },
+  {
+    "opened": {
+      "hinge": 1571,
+      "extension": 1572
+    },
+    "closed": {
+      "hinge": 23552,
+      "extension": 23554
+    },
+    "requirement": {
+      "skill": "agility",
+      "level": 52
+    }
   }
 ]
