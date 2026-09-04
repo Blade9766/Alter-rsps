@@ -27,7 +27,8 @@ class DragonCrossbowPlugin(
     server: Server,
 ) : KotlinPlugin(r, world, server) {
     init {
-        SpecialAttacks.register("item.dragon_crossbow", SPECIAL_REQUIREMENT) {
+        // The plain crossbow and its (cr) ornament.
+        SpecialAttacks.registerByName("Annihilate") {
             player.animate(CROSSBOW_ATTACK_ANIMATION)
             world.spawn(AreaSound(tile = player.tile, id = CROSSBOW_SOUND, radius = 10, volume = 1))
 
@@ -58,7 +59,6 @@ class DragonCrossbowPlugin(
     }
 
     private companion object {
-        const val SPECIAL_REQUIREMENT = 60
 
         /** 3x3 centred on the clicked target. */
         const val BLAST_RADIUS = 1

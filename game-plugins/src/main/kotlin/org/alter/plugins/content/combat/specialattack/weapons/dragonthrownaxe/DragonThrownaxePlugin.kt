@@ -30,7 +30,8 @@ class DragonThrownaxePlugin(
     server: Server,
 ) : KotlinPlugin(r, world, server) {
     init {
-        SpecialAttacks.register("item.dragon_thrownaxe", SPECIAL_REQUIREMENT) {
+        // Both thrownaxe ids - the ordinary one and the untradeable 21207.
+        SpecialAttacks.registerByName("Momentum Throw") {
             player.animate(Animation.DRAGON_THROWNAXE_SPECIAL)
             player.graphic(id = Graphic.DRAGON_THROWNAXE_SPECIAL_DRAWBACK, height = 96)
             world.spawn(AreaSound(tile = player.tile, id = THROWN_SOUND, radius = 10, volume = 1))
@@ -50,7 +51,6 @@ class DragonThrownaxePlugin(
     }
 
     private companion object {
-        const val SPECIAL_REQUIREMENT = 25
         const val ACCURACY_MULTIPLIER = 1.25
 
         /** Reuses the ordinary thrown-weapon effect - see CombatConfigs.getWeaponAttackSound. */

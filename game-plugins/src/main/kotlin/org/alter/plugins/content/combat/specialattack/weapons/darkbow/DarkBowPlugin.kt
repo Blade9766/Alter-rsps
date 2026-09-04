@@ -33,17 +33,10 @@ class DarkBowPlugin(
     server: Server,
 ) : KotlinPlugin(r, world, server) {
     init {
-        val darkBows =
-            listOf(
-                "item.dark_bow",
-                "item.dark_bow_12765",
-                "item.dark_bow_12766",
-                "item.dark_bow_12767",
-                "item.dark_bow_12768",
-            )
-
-        for (bow in darkBows) {
-            SpecialAttacks.register(bow, SPECIAL_REQUIREMENT) {
+        // Every dark bow: the four recoloured ones, the untradeable, the (bh), the deadman and
+        // the corrupted - nine ids, where the hand-written list this replaces named five.
+        run {
+            SpecialAttacks.registerByName("Descent of Darkness") {
                 val dragonArrows = player.getEquipment(EquipmentType.AMMO)?.id in DRAGON_ARROW_IDS
 
                 val projectileGfx = if (dragonArrows) Graphic.DARK_BOW_DRAGON_PROJECTILE else Graphic.DARK_BOW_DARKNESS_PROJECTILE
@@ -68,7 +61,7 @@ class DarkBowPlugin(
 
                     val projectile = player.createProjectile(target, projectileGfx, ProjectileType.ARROW)
                     world.spawn(projectile)
-                    target.graphic(impactGfx, 96, projectile.lifespan + shot)
+                    target.graphic(impactGfx, 96, projectile.impactDelay + shot)
 
                     RangedCombatStrategy.shoot(
                         player = player,
@@ -85,7 +78,6 @@ class DarkBowPlugin(
     }
 
     private companion object {
-        const val SPECIAL_REQUIREMENT = 55
 
         const val DRAGON_ARROW_MULTIPLIER = 1.5
         const val STANDARD_MULTIPLIER = 1.3

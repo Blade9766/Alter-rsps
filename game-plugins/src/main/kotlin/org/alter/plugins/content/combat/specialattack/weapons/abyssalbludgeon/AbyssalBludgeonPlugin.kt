@@ -12,6 +12,7 @@ import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.combat.dealHit
 import org.alter.plugins.content.combat.formula.MeleeCombatFormula
 import org.alter.plugins.content.combat.specialattack.SpecialAttacks
+import org.alter.plugins.content.combat.specialattack.dealMeleeSpecialHit
 
 class AbyssalBludgeonPlugin(
     r: PluginRepository,
@@ -21,19 +22,23 @@ class AbyssalBludgeonPlugin(
 
     init {
 
-        val SPECIAL_REQUIREMENT = 50
-
-        SpecialAttacks.register("item.abyssal_bludgeon", SPECIAL_REQUIREMENT) {
+        SpecialAttacks.registerByName("Penance") {
             player.animate(id = 3299)
             player.graphic(id = 1284)
 
             world.spawn(AreaSound(tile = player.tile, id = 2715, radius = 10, volume = 1, delay = 10))
             world.spawn(AreaSound(tile = player.tile, id = 1930, radius = 10, volume = 1, delay = 30))
 
-            val dmgBonus = (player.getSkills().getBaseLevel(Skills.PRAYER) - player.getSkills().getCurrentLevel(Skills.PRAYER)) * .5 / 100
-            val maxHit = MeleeCombatFormula.getMaxHit(player, target, specialAttackMultiplier = dmgBonus)
+            /*
+             * 0.5% more damage per prayer point spent. This used to pass the bonus alone as the
+             * multiplier - 0.25 for fifty points drained - which scaled the max hit *down* to a
+             * quarter and made Penance weaker the more it was earned. It is 1 + the bonus.
+             */
+            val spent = player.getSkills().getBaseLevel(Skills.PRAYER) - player.getSkills().getCurrentLevel(Skills.PRAYER)
+            val multiplier = 1.0 + spent.coerceAtLeast(0) * DAMAGE_PER_PRAYER_POINT
+            val maxHit = MeleeCombatFormula.getMaxHit(player, target, specialAttackMultiplier = multiplier)
             val landHit = MeleeCombatFormula.getAccuracy(player, target) >= world.randomDouble()
-            player.dealHit(target = target, maxHit = maxHit, landHit = landHit, delay = 1)
+            player.dealMeleeSpecialHit(target = target, maxHit = maxHit, landHit = landHit)
         }
 
         setItemCombatLogic("item.abyssal_bludgeon") {
@@ -43,5 +48,10 @@ class AbyssalBludgeonPlugin(
                 player.dealHit(target = target, maxHit = 10, landHit = true, delay = 1)
             }
         }
+    }
+
+    private companion object {
+        /** 0.5% per point of Prayer spent, per the wiki. */
+        const val DAMAGE_PER_PRAYER_POINT = 0.005
     }
 }

@@ -3,6 +3,7 @@ package org.alter.plugins.content.combat
 import org.alter.api.EquipmentType
 import org.alter.api.WeaponType
 import org.alter.api.ext.getAttackStyle
+import org.alter.api.ext.getWeaponType
 import org.alter.api.ext.getEquipment
 import org.alter.api.ext.hasEquipped
 import org.alter.api.ext.hasWeaponType
@@ -14,6 +15,7 @@ import org.alter.plugins.content.combat.strategy.CombatStrategy
 import org.alter.plugins.content.combat.strategy.MagicCombatStrategy
 import org.alter.plugins.content.combat.strategy.MeleeCombatStrategy
 import org.alter.plugins.content.combat.strategy.RangedCombatStrategy
+import org.alter.plugins.content.combat.strategy.SalamanderCombatStrategy
 
 /**
  * @author Tom <rspsmods@gmail.com>
@@ -22,6 +24,13 @@ object CombatConfigs {
     private const val PLAYER_DEFAULT_ATTACK_SPEED = 4
 
     private const val MIN_ATTACK_SPEED = 1
+
+    /*
+     * Attack-style varp value for a salamander's Flare, the one option whose speed differs
+     * from the weapon's cache attack rate. Its other two options, Scorch and Blaze, are
+     * resolved through [WeaponStyles] like every other button.
+     */
+    private const val SALAMANDER_FLARE = 1
 
     private val DEFENDERS =
         arrayOf(
@@ -70,12 +79,52 @@ object CombatConfigs {
             "item.zamorak_godsword_or",
         )
 
+    /**
+     * Per-npc-id strategy overrides, registered by monster plugins through [setNpcCombatStrategy].
+     *
+     * This is the only place a monster can be given an attack the three ordinary strategies cannot
+     * execute *without* losing the engine's combat loop. `onNpcCombat` looks like the hook for it
+     * and is not: it replaces [org.alter.plugins.content.combat.CombatPlugin]'s loop wholesale, and
+     * that loop is the only thing in the game that walks an npc towards its target -
+     * [Combat.moveToAttackRange], despite the name, only *tests* range (its walk call is commented
+     * out). That is invisible for the casters that use `onNpcCombat` today, which stand off at ten
+     * tiles and never need to close, and fatal for anything that fights at melee range: it would
+     * stand on its spawn tile swinging at nothing.
+     *
+     * A strategy registered here keeps all of it - routing, leashing, line of sight, retaliation,
+     * attack speed - and replaces only the swing itself.
+     */
+    private val npcStrategies = HashMap<Int, CombatStrategy>()
+
+    /**
+     * Registers [strategy] as the attack for every npc with [npcId]. Called from a monster plugin's
+     * constructor, so it is in place before any npc of that id can be spawned.
+     */
+    fun setNpcCombatStrategy(
+        npcId: Int,
+        strategy: CombatStrategy,
+    ) {
+        npcStrategies[npcId] = strategy
+    }
+
     fun getCombatStrategy(pawn: Pawn): CombatStrategy =
-        when (getCombatClass(pawn)) {
-            CombatClass.MELEE -> MeleeCombatStrategy
-            CombatClass.MAGIC -> MagicCombatStrategy
-            CombatClass.RANGED -> RangedCombatStrategy
-            else -> throw IllegalStateException("Invalid combat class: ${getCombatClass(pawn)} for $pawn")
+        /*
+         * A salamander's combat class is real and is reported honestly by
+         * [getCombatClass] - prayers, defence rolls and experience all key off it - but
+         * none of the three ordinary strategies can execute its attack. See
+         * [SalamanderCombatStrategy].
+         */
+        if (SalamanderCombatStrategy.applies(pawn)) {
+            SalamanderCombatStrategy
+        } else if (pawn is Npc && npcStrategies.containsKey(pawn.id)) {
+            npcStrategies.getValue(pawn.id)
+        } else {
+            when (getCombatClass(pawn)) {
+                CombatClass.MELEE -> MeleeCombatStrategy
+                CombatClass.MAGIC -> MagicCombatStrategy
+                CombatClass.RANGED -> RangedCombatStrategy
+                else -> throw IllegalStateException("Invalid combat class: ${getCombatClass(pawn)} for $pawn")
+            }
         }
 
     fun getCombatClass(pawn: Pawn): CombatClass {
@@ -84,9 +133,18 @@ object CombatConfigs {
         }
 
         if (pawn is Player) {
-            return when {
-                pawn.attr.has(Combat.CASTING_SPELL) -> CombatClass.MAGIC
-                pawn.hasWeaponType(WeaponType.BOW, WeaponType.CHINCHOMPA, WeaponType.CROSSBOW, WeaponType.THROWN) -> CombatClass.RANGED
+            if (pawn.attr.has(Combat.CASTING_SPELL)) {
+                return CombatClass.MAGIC
+            }
+            /*
+             * Follows the selected button rather than the weapon, which matters for the
+             * weapons whose class is not fixed: a salamander's Scorch is melee, Flare is
+             * ranged and Blaze is magic, and a powered staff attacks with magic from what is
+             * otherwise a melee-looking staff.
+             */
+            return when (selectedStyle(pawn)?.combatStyle) {
+                CombatStyle.RANGED -> CombatClass.RANGED
+                CombatStyle.MAGIC -> CombatClass.MAGIC
                 else -> CombatClass.MELEE
             }
         }
@@ -111,6 +169,14 @@ object CombatConfigs {
              * cannot affect melee or magic.
              */
             if (getAttackStyle(pawn) == AttackStyle.RAPID) {
+                delay -= 1
+            }
+            /*
+             * Salamanders are speed 5 in the cache, which is Scorch's and Blaze's rate;
+             * Flare is a tick faster at 4. Flare is not the Rapid style, so the branch
+             * above does not cover it.
+             */
+            if (pawn.hasWeaponType(WeaponType.SALAMANDER) && pawn.getAttackStyle() == SALAMANDER_FLARE) {
                 delay -= 1
             }
             return Math.max(MIN_ATTACK_SPEED, delay)
@@ -144,7 +210,15 @@ object CombatConfigs {
                 pawn.hasWeaponType(WeaponType.CROSSBOW) -> 4230
                 pawn.hasWeaponType(WeaponType.LONG_SWORD) -> if (style == 2) 386 else 390
                 pawn.hasWeaponType(WeaponType.TWO_HANDED) -> if (style == 2) 406 else 407
-                pawn.hasWeaponType(WeaponType.PICKAXE) -> if (style == 2) 400 else 401
+                /*
+                 * 400 is Animation.HUMAN_BLUNT_STAB and 401 HUMAN_BLUNT_SWING, so a
+                 * pickaxe's styles run the opposite way round to a mace's: style 2 is its
+                 * Smash (crush) and every other style is a thrust - Spike, Impale, Block.
+                 * The mace line below shares the expression because style 2 is the one
+                 * *stab* option on a mace; copying it here had the pickaxe thrusting on
+                 * Smash and swinging on Spike.
+                 */
+                pawn.hasWeaponType(WeaponType.PICKAXE) -> if (style == 2) 401 else 400
                 pawn.hasWeaponType(WeaponType.DAGGER) -> if (style == 2) 390 else 386
                 pawn.hasWeaponType(WeaponType.MAGIC_STAFF) || pawn.hasWeaponType(WeaponType.STAFF) -> 419
                 pawn.hasWeaponType(WeaponType.MACE) -> if (style == 2) 400 else 401
@@ -169,26 +243,39 @@ object CombatConfigs {
 
     /**
      * The weapon "clang"/swing sound heard by anyone near a player's melee or ranged
-     * attack. These IDs aren't exposed anywhere in the cache's animation or item
-     * definitions (verified against this server's own cache - none of the combat
-     * sequences carry embedded sound data), so they're sourced from known OSRS sound
-     * effect references instead.
+     * attack, picked out of [WeaponSounds] by the weapon in hand and the attack type the
+     * selected style deals - so the sound and the attack animation are driven off the same
+     * style and a slash no longer plays a lunge.
      */
-    fun getWeaponAttackSound(pawn: Player): Int {
-        val style = pawn.getAttackStyle()
-        return when {
-            pawn.hasWeaponType(WeaponType.NONE) -> 2566 // unarmed punch
-            pawn.hasWeaponType(WeaponType.WHIP) -> 2720
-            pawn.hasWeaponType(WeaponType.MACE) -> if (style == 2) 2509 else 2508 // stab vs crush
-            pawn.hasWeaponType(WeaponType.MAGIC_STAFF, WeaponType.STAFF) -> 2560
-            pawn.hasWeaponType(WeaponType.HALBERD) -> 2533
-            pawn.hasWeaponType(WeaponType.BOW) -> 2700
-            pawn.hasWeaponType(WeaponType.CROSSBOW) -> 2695
-            pawn.hasWeaponType(WeaponType.THROWN, WeaponType.CHINCHOMPA) -> 2696
-            pawn.hasWeaponType(WeaponType.DAGGER, WeaponType.LONG_SWORD, WeaponType.CLAWS, WeaponType.TWO_HANDED, WeaponType.SPEAR) -> 2510
-            else -> 2498 // generic melee hit (axes, picks, hammers, godswords, bulwark, scythe, etc.)
+    fun getWeaponAttackSound(pawn: Player): Int = getWeaponSounds(pawn).forAttackType(getCombatStyle(pawn))
+
+    /**
+     * Which set of clips the equipped weapon draws from. Unarmed is the one case the
+     * attack *type* can't separate - Punch and Kick are both crush - so it reads the raw
+     * style index instead.
+     */
+    private fun getWeaponSounds(pawn: Player): WeaponSounds.Weapon =
+        when {
+            pawn.hasWeaponType(WeaponType.NONE) ->
+                if (pawn.getAttackStyle() == 1) WeaponSounds.Weapon.KICK else WeaponSounds.Weapon.UNARMED
+            pawn.hasEquipped(EquipmentType.WEAPON, *GODSWORDS) -> WeaponSounds.Weapon.GODSWORD
+            pawn.hasWeaponType(WeaponType.LONG_SWORD) -> WeaponSounds.Weapon.SWORD
+            pawn.hasWeaponType(WeaponType.DAGGER) -> WeaponSounds.Weapon.DAGGER
+            pawn.hasWeaponType(WeaponType.CLAWS) -> WeaponSounds.Weapon.CLAWS
+            pawn.hasWeaponType(WeaponType.TWO_HANDED) -> WeaponSounds.Weapon.TWO_HANDED
+            pawn.hasWeaponType(WeaponType.AXE) -> WeaponSounds.Weapon.AXE
+            pawn.hasWeaponType(WeaponType.PICKAXE) -> WeaponSounds.Weapon.PICKAXE
+            pawn.hasWeaponType(WeaponType.HAMMER, WeaponType.BLUDGEON) -> WeaponSounds.Weapon.HAMMER
+            pawn.hasWeaponType(WeaponType.HALBERD, WeaponType.SPEAR, WeaponType.STAFF_HALBERD) -> WeaponSounds.Weapon.POLEARM
+            pawn.hasWeaponType(WeaponType.SCYTHE) -> WeaponSounds.Weapon.SCYTHE
+            pawn.hasWeaponType(WeaponType.MACE) -> WeaponSounds.Weapon.MACE
+            pawn.hasWeaponType(WeaponType.STAFF, WeaponType.MAGIC_STAFF, WeaponType.POWERED_STAFF) -> WeaponSounds.Weapon.STAFF
+            pawn.hasWeaponType(WeaponType.WHIP) -> WeaponSounds.Weapon.WHIP
+            pawn.hasWeaponType(WeaponType.BOW) -> WeaponSounds.Weapon.BOW
+            pawn.hasWeaponType(WeaponType.CROSSBOW) -> WeaponSounds.Weapon.CROSSBOW
+            pawn.hasWeaponType(WeaponType.THROWN, WeaponType.CHINCHOMPA) -> WeaponSounds.Weapon.THROWN
+            else -> WeaponSounds.Weapon.GENERIC
         }
-    }
 
     fun getBlockAnimation(pawn: Pawn): Int {
         if (pawn is Npc) {
@@ -231,92 +318,7 @@ object CombatConfigs {
         }
 
         if (pawn is Player) {
-            val style = pawn.getAttackStyle()
-
-            return when {
-                pawn.hasWeaponType(WeaponType.NONE) ->
-                    when (style) {
-                        0 -> AttackStyle.ACCURATE
-                        1 -> AttackStyle.AGGRESSIVE
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.BOW, WeaponType.CROSSBOW, WeaponType.THROWN, WeaponType.CHINCHOMPA) ->
-                    when (style) {
-                        0 -> AttackStyle.ACCURATE
-                        1 -> AttackStyle.RAPID
-                        3 -> AttackStyle.LONG_RANGE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.TRIDENT) ->
-                    when (style) {
-                        0, 1 -> AttackStyle.ACCURATE
-                        3 -> AttackStyle.LONG_RANGE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(
-                    WeaponType.AXE,
-                    WeaponType.HAMMER,
-                    WeaponType.TWO_HANDED,
-                    WeaponType.PICKAXE,
-                    WeaponType.DAGGER,
-                    WeaponType.MAGIC_STAFF,
-                    WeaponType.LONG_SWORD,
-                    WeaponType.MAGIC_STAFF,
-                    WeaponType.CLAWS,
-                ) ->
-                    when (style) {
-                        0 -> AttackStyle.ACCURATE
-                        1 -> AttackStyle.AGGRESSIVE
-                        2 -> AttackStyle.CONTROLLED
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.SPEAR) ->
-                    when (style) {
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.CONTROLLED
-                    }
-
-                pawn.hasWeaponType(WeaponType.HALBERD) ->
-                    when (style) {
-                        0 -> AttackStyle.CONTROLLED
-                        1 -> AttackStyle.AGGRESSIVE
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.SCYTHE) ->
-                    when (style) {
-                        0 -> AttackStyle.ACCURATE
-                        1 -> AttackStyle.AGGRESSIVE
-                        2 -> AttackStyle.AGGRESSIVE
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.WHIP) ->
-                    when (style) {
-                        0 -> AttackStyle.ACCURATE
-                        1 -> AttackStyle.CONTROLLED
-                        3 -> AttackStyle.DEFENSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.BLUDGEON) ->
-                    when (style) {
-                        0, 1, 3 -> AttackStyle.AGGRESSIVE
-                        else -> AttackStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.BULWARK) -> AttackStyle.ACCURATE
-
-                else -> AttackStyle.NONE
-            }
+            return selectedStyle(pawn)?.attackStyle ?: AttackStyle.NONE
         }
 
         throw IllegalArgumentException("Invalid pawn type.")
@@ -328,226 +330,51 @@ object CombatConfigs {
         }
 
         if (pawn is Player) {
-            val style = pawn.getAttackStyle()
-
-            return when {
-                pawn.attr.has(Combat.CASTING_SPELL) -> CombatStyle.MAGIC
-
-                pawn.hasWeaponType(WeaponType.NONE) ->
-                    when (style) {
-                        0 -> CombatStyle.CRUSH
-                        1 -> CombatStyle.CRUSH
-                        3 -> CombatStyle.CRUSH
-                        else -> CombatStyle.NONE
-                    }
-
-                pawn.hasWeaponType(WeaponType.BOW, WeaponType.CROSSBOW, WeaponType.THROWN, WeaponType.CHINCHOMPA) -> CombatStyle.RANGED
-
-                pawn.hasWeaponType(WeaponType.AXE) ->
-                    when (style) {
-                        2 -> CombatStyle.CRUSH
-                        else -> CombatStyle.SLASH
-                    }
-
-                pawn.hasWeaponType(WeaponType.HAMMER) -> CombatStyle.CRUSH
-
-                pawn.hasWeaponType(WeaponType.CLAWS) ->
-                    when (style) {
-                        2 -> CombatStyle.STAB
-                        else -> CombatStyle.SLASH
-                    }
-
-                pawn.hasWeaponType(WeaponType.SALAMANDER) ->
-                    when (style) {
-                        0 -> CombatStyle.SLASH
-                        1 -> CombatStyle.RANGED
-                        else -> CombatStyle.MAGIC
-                    }
-
-                pawn.hasWeaponType(WeaponType.LONG_SWORD) ->
-                    when (style) {
-                        2 -> CombatStyle.STAB
-                        else -> CombatStyle.SLASH
-                    }
-
-                pawn.hasWeaponType(WeaponType.TWO_HANDED) ->
-                    when (style) {
-                        2 -> CombatStyle.CRUSH
-                        else -> CombatStyle.SLASH
-                    }
-
-                pawn.hasWeaponType(WeaponType.PICKAXE) ->
-                    when (style) {
-                        2 -> CombatStyle.CRUSH
-                        else -> CombatStyle.STAB
-                    }
-
-                pawn.hasWeaponType(WeaponType.HALBERD) ->
-                    when (style) {
-                        1 -> CombatStyle.SLASH
-                        else -> CombatStyle.STAB
-                    }
-
-                pawn.hasWeaponType(WeaponType.STAFF) -> CombatStyle.CRUSH
-
-                pawn.hasWeaponType(WeaponType.SCYTHE) ->
-                    when (style) {
-                        2 -> CombatStyle.CRUSH
-                        else -> CombatStyle.SLASH
-                    }
-
-                pawn.hasWeaponType(WeaponType.SPEAR) ->
-                    when (style) {
-                        1 -> CombatStyle.SLASH
-                        2 -> CombatStyle.CRUSH
-                        else -> CombatStyle.STAB
-                    }
-
-                pawn.hasWeaponType(WeaponType.MACE) ->
-                    when (style) {
-                        2 -> CombatStyle.STAB
-                        else -> CombatStyle.CRUSH
-                    }
-
-                pawn.hasWeaponType(WeaponType.DAGGER) ->
-                    when (style) {
-                        2 -> CombatStyle.SLASH
-                        else -> CombatStyle.STAB
-                    }
-
-                pawn.hasWeaponType(WeaponType.MAGIC_STAFF) -> CombatStyle.CRUSH
-
-                pawn.hasWeaponType(WeaponType.WHIP) -> CombatStyle.SLASH
-
-                pawn.hasWeaponType(WeaponType.STAFF_HALBERD) ->
-                    when (style) {
-                        0 -> CombatStyle.STAB
-                        1 -> CombatStyle.SLASH
-                        else -> CombatStyle.CRUSH
-                    }
-
-                pawn.hasWeaponType(WeaponType.TRIDENT) -> CombatStyle.MAGIC
-
-                pawn.hasWeaponType(WeaponType.BLUDGEON) -> CombatStyle.CRUSH
-
-                pawn.hasWeaponType(WeaponType.BULWARK) ->
-                    when (style) {
-                        0 -> CombatStyle.CRUSH
-                        else -> CombatStyle.NONE
-                    }
-
-                else -> CombatStyle.NONE
+            if (pawn.attr.has(Combat.CASTING_SPELL)) {
+                return CombatStyle.MAGIC
             }
+            return selectedStyle(pawn)?.combatStyle ?: CombatStyle.NONE
         }
 
         throw IllegalArgumentException("Invalid pawn type.")
     }
 
-    fun getXpMode(player: Player): XpMode {
-        val style = player.getAttackStyle()
+    fun getXpMode(player: Player): XpMode = selectedStyle(player)?.xpMode ?: XpMode.ATTACK
 
-        return when {
-            player.hasWeaponType(WeaponType.NONE) -> {
-                when (style) {
-                    1 -> XpMode.STRENGTH
-                    3 -> XpMode.DEFENCE
-                    else -> XpMode.ATTACK
-                }
-            }
-
-            player.hasWeaponType(
-                WeaponType.AXE,
-                WeaponType.HAMMER,
-                WeaponType.TWO_HANDED,
-                WeaponType.PICKAXE,
-                WeaponType.DAGGER,
-                WeaponType.STAFF,
-                WeaponType.MAGIC_STAFF,
-            ) -> {
-                when (style) {
-                    1 -> XpMode.STRENGTH
-                    2 -> XpMode.STRENGTH
-                    3 -> XpMode.DEFENCE
-                    else -> XpMode.ATTACK
-                }
-            }
-
-            player.hasWeaponType(WeaponType.LONG_SWORD, WeaponType.MACE, WeaponType.CLAWS) -> {
-                when (style) {
-                    1 -> XpMode.STRENGTH
-                    2 -> XpMode.SHARED
-                    3 -> XpMode.DEFENCE
-                    else -> XpMode.ATTACK
-                }
-            }
-
-            player.hasWeaponType(WeaponType.WHIP) -> {
-                when (style) {
-                    1 -> XpMode.SHARED
-                    3 -> XpMode.DEFENCE
-                    else -> XpMode.ATTACK
-                }
-            }
-
-            player.hasWeaponType(WeaponType.SPEAR) -> {
-                when (style) {
-                    3 -> XpMode.DEFENCE
-                    else -> XpMode.SHARED
-                }
-            }
-
-            player.hasWeaponType(WeaponType.TRIDENT) -> {
-                when (style) {
-                    3 -> XpMode.SHARED
-                    else -> XpMode.MAGIC
-                }
-            }
-
-            player.hasWeaponType(WeaponType.SCYTHE) -> {
-                when (style) {
-                    0 -> XpMode.ATTACK
-                    1 -> XpMode.STRENGTH
-                    2 -> XpMode.STRENGTH
-                    else -> XpMode.DEFENCE
-                }
-            }
-
-            player.hasWeaponType(WeaponType.HALBERD) -> {
-                when (style) {
-                    0 -> XpMode.SHARED
-                    1 -> XpMode.STRENGTH
-                    else -> XpMode.DEFENCE
-                }
-            }
-
-            player.hasWeaponType(WeaponType.STAFF_HALBERD) -> {
-                when (style) {
-                    0 -> XpMode.ATTACK
-                    1 -> XpMode.STRENGTH
-                    else -> XpMode.DEFENCE
-                }
-            }
-
-            player.hasWeaponType(WeaponType.BLUDGEON) -> XpMode.STRENGTH
-
-            player.hasWeaponType(WeaponType.BULWARK) -> XpMode.ATTACK
-
-            player.hasWeaponType(WeaponType.BOW, WeaponType.CROSSBOW, WeaponType.THROWN, WeaponType.CHINCHOMPA) -> {
-                when (style) {
-                    3 -> XpMode.SHARED
-                    else -> XpMode.RANGED
-                }
-            }
-
-            player.hasWeaponType(WeaponType.SALAMANDER) -> {
-                when (style) {
-                    0 -> XpMode.STRENGTH
-                    1 -> XpMode.RANGED
-                    else -> XpMode.MAGIC
-                }
-            }
-
-            else -> XpMode.ATTACK
+    /**
+     * The button the player currently has selected on the Combat Options tab, resolved
+     * through [WeaponStyles] from the equipped weapon's type and the raw style index.
+     *
+     * Falls back to the panel's first button when the selected index is not one this weapon
+     * has, which happens for real when a player switches from a four-button weapon to a
+     * three-button one without touching the tab - the style index is not reset by the switch
+     * itself. `null` only for a weapon type with no panel at all.
+     */
+    private fun selectedStyle(player: Player): WeaponStyles.Style? {
+        val style = WeaponStyles.getOrFirst(player.getWeaponType(), player.getAttackStyle()) ?: return null
+        if (style.combatStyle != CombatStyle.MAGIC || player.attr.has(Combat.CASTING_SPELL)) {
+            return style
         }
+        /*
+         * A magic style with no spell behind it. Powered staves and Nature's reprisal attack
+         * with a spell that is built into the weapon rather than selected, and this server
+         * has no such spell: nothing ever writes [Combat.CASTING_SPELL] for them, and
+         * [MagicCombatStrategy] dereferences that attribute unconditionally, so reporting
+         * MAGIC here would hand it a null spell and raise a NullPointerException on the
+         * first attack.
+         *
+         * Until the built-in spells exist, these weapons keep the melee behaviour they have
+         * always had rather than crashing. The weapon type itself stays correct, so the
+         * Combat Options tab, [WeaponSounds] and MagicCombatFormula's powered-staff branch
+         * all still see a powered staff.
+         */
+        return SPELL_LESS_MAGIC_FALLBACK
     }
+
+    /**
+     * See [selectedStyle]. Crush with no style bonus, which is what a powered staff resolved
+     * to before it had a weapon type of its own.
+     */
+    private val SPELL_LESS_MAGIC_FALLBACK =
+        WeaponStyles.Style("Bash", CombatStyle.CRUSH, AttackStyle.NONE, XpMode.ATTACK)
 }

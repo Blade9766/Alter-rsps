@@ -25,7 +25,8 @@ class ArmadylCrossbowPlugin(
     server: Server,
 ) : KotlinPlugin(r, world, server) {
     init {
-        SpecialAttacks.register("item.armadyl_crossbow", SPECIAL_REQUIREMENT) {
+        // Both Armadyl crossbows - the ordinary one and the untradeable 23611.
+        SpecialAttacks.registerByName("Armadyl Eye") {
             player.animate(CROSSBOW_ATTACK_ANIMATION)
             world.spawn(AreaSound(tile = player.tile, id = CROSSBOW_SOUND, radius = 10, volume = 1))
 
@@ -47,7 +48,6 @@ class ArmadylCrossbowPlugin(
     }
 
     private companion object {
-        const val SPECIAL_REQUIREMENT = 50
 
         /** Matches CombatConfigs.getAttackAnimation's crossbow case. */
         const val CROSSBOW_ATTACK_ANIMATION = 4230

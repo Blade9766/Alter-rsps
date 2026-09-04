@@ -38,8 +38,8 @@ class ToxicBlowpipePlugin(
          * The blazing blowpipe is the Trailblazer Reloaded variant and behaves
          * identically.
          */
-        for (blowpipe in listOf("item.toxic_blowpipe", "item.blazing_blowpipe")) {
-            SpecialAttacks.register(blowpipe, SPECIAL_REQUIREMENT) {
+        run {
+            SpecialAttacks.registerByName("Toxic Siphon") {
                 player.animate(Animation.HUMAN_BLOWPIPE_ATTACK)
 
                 // Consumes a dart and rolls a scale exactly as an ordinary blowpipe
@@ -83,7 +83,6 @@ class ToxicBlowpipePlugin(
     }
 
     private companion object {
-        const val SPECIAL_REQUIREMENT = 50
 
         /** Wiki: "increases accuracy by 100% and damage by 50%". */
         const val ACCURACY_MULTIPLIER = 2.0

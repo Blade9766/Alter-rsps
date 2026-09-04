@@ -18,15 +18,9 @@ class AbyssalDaggerPlugin(
 
     init {
 
-        val SPECIAL_REQUIREMENT = 50
-
-        for(item in listOf(
-            "item.abyssal_dagger",
-            "item.abyssal_dagger_p",
-            "item.abyssal_dagger_p_13269",
-            "item.abyssal_dagger_p_13271"
-        )) {
-            SpecialAttacks.register(item, SPECIAL_REQUIREMENT) {
+        // Every abyssal dagger, poisoned grades and Bounty Hunter variants included.
+        run {
+            SpecialAttacks.registerByName("Abyssal Puncture") {
                 player.animate(id = 3300)
                 player.graphic(id = 1283)
                 world.spawn(AreaSound(tile = player.tile, id = 2537, radius = 10, volume = 1))

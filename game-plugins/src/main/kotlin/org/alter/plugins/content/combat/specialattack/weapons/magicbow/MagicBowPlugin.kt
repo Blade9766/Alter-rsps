@@ -28,13 +28,10 @@ class MagicBowPlugin(
     server: Server,
 ) : KotlinPlugin(r, world, server) {
     init {
-        for ((bow, energy) in
-            listOf(
-                "item.magic_shortbow" to 55,
-                "item.magic_shortbow_i" to 50,
-            )
-        ) {
-            SpecialAttacks.register(bow, energy) {
+        run {
+            // The shortbow, its imbued form and the untradeable 20558. Each is priced from the
+            // cache, which is where the imbued bow's cheaper 50% comes from.
+            SpecialAttacks.registerByName("Snapshot") {
                 player.animate(Animation.MAGIC_SHORTBOW_SPECIAL)
                 player.graphic(id = Graphic.MAGIC_SHORTBOW_SPECIAL_DRAWBACK, height = 96)
                 world.spawn(AreaSound(tile = player.tile, id = SHORTBOW_SPECIAL_SOUND, radius = 10, volume = 1))
@@ -63,7 +60,8 @@ class MagicBowPlugin(
             }
         }
 
-        SpecialAttacks.register("item.magic_longbow", 35) {
+        // The longbow and the magic composite bow, which share Powershot.
+        SpecialAttacks.registerByName("Powershot") {
             player.animate(Animation.HUMAN_BOW_ATTACK)
             world.spawn(AreaSound(tile = player.tile, id = LONGBOW_SPECIAL_SOUND, radius = 10, volume = 1))
 

@@ -17,9 +17,13 @@ class DragonDaggerPlugin(
         
     init {
 
-        val SPECIAL_REQUIREMENT = 25
-
-        SpecialAttacks.register("item.dragon_dagger", SPECIAL_REQUIREMENT) {
+        /*
+         * Bound by the cache's name for it, so all nine dragon daggers get it - the plain one, the
+         * three poisoned grades, the four (cr) ornaments and the untradeable 20407. Registering
+         * item.dragon_dagger alone, as this used to, left the poisoned daggers players actually
+         * carry with no special at all.
+         */
+        SpecialAttacks.registerByName("Puncture") {
             player.animate(id = 1062)
             player.graphic(id = 252, height = 92)
             world.spawn(AreaSound(tile = player.tile, id = 2537, radius = 10, volume = 1))
