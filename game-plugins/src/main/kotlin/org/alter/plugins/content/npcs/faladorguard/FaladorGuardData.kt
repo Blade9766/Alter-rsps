@@ -1,6 +1,7 @@
 package org.alter.plugins.content.npcs.faladorguard
 
 import org.alter.game.model.combat.CombatStyle
+import org.alter.plugins.content.combat.WeaponSounds
 
 /**
  * The city guards of Falador, from the OSRS Wiki's Falador `Infobox Monster` block - the
@@ -44,11 +45,26 @@ internal object FaladorGuardData {
         val strengthBonus: Int,
         val attackAnimation: Int,
         val blockAnimation: Int,
+        /**
+         * The weapon this group carries, which with [attackAnimation] picks the attack clip.
+         * The weapon is stated rather than the published attack style: the style decides
+         * which defence bonus the roll goes against, the sound is what is in the model's
+         * hand - so the battleaxe group sounds like an axe even though the wiki gives it
+         * Crush, and which clip of the axe set plays follows the animation, so the sound can
+         * never drift from the swing on screen. Block and death are the shared human clips -
+         * see
+         * [org.alter.plugins.content.npcs.guard.CityGuard.HUMAN_BLOCK_SOUND] for why any of
+         * this has to be stated at all.
+         */
+        val weapon: WeaponSounds.Weapon,
         /** Projectile spotanim, or -1 for the melee groups. */
         val projectile: Int = -1,
         /** Drawback spotanim, or -1 where the codebase's own ammo data defines none. */
         val drawback: Int = -1,
-    )
+    ) {
+        /** The clip this group's weapon makes performing [attackAnimation]. */
+        val attackSound: Int get() = WeaponSounds.forAnimation(weapon, attackAnimation)
+    }
 
     data class Spawn(val npcKey: String, val x: Int, val z: Int, val height: Int)
 
@@ -109,6 +125,7 @@ internal object FaladorGuardData {
             strengthBonus = 5,
             attackAnimation = SWORD_ATTACK,
             blockAnimation = SWORD_DEFEND,
+            weapon = WeaponSounds.Weapon.SWORD,
         )
 
     val CROSSBOW =
@@ -132,6 +149,7 @@ internal object FaladorGuardData {
             strengthBonus = 10,
             attackAnimation = CROSSBOW_ATTACK,
             blockAnimation = RANGED_DEFEND,
+            weapon = WeaponSounds.Weapon.CROSSBOW,
             projectile = BOLT_PROJECTILE,
         )
 
@@ -156,6 +174,7 @@ internal object FaladorGuardData {
             strengthBonus = 10,
             attackAnimation = AXE_ATTACK,
             blockAnimation = AXE_DEFEND,
+            weapon = WeaponSounds.Weapon.AXE,
         )
 
     val UNARMED =
@@ -164,6 +183,7 @@ internal object FaladorGuardData {
             npcKeys = listOf("npc.guard_11946"),
             attackAnimation = PUNCH_ATTACK,
             blockAnimation = PUNCH_DEFEND,
+            weapon = WeaponSounds.Weapon.UNARMED,
         )
 
     val LONGBOW =
@@ -187,6 +207,7 @@ internal object FaladorGuardData {
             strengthBonus = 10,
             attackAnimation = BOW_ATTACK,
             blockAnimation = RANGED_DEFEND,
+            weapon = WeaponSounds.Weapon.BOW,
             projectile = ARROW_PROJECTILE,
             drawback = ARROW_DRAWBACK,
         )

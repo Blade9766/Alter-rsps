@@ -27,6 +27,11 @@ import org.alter.game.plugin.PluginRepository
  *   one city and wrong in the other two.
  * - **No `ranged { }` blocks** - every version in all three cities is `range = 1`. Only
  *   Falador has archers.
+ * - **Combat sounds are set explicitly**, in a `sound { }` block. Nothing else supplies
+ *   them: `MonsterAnimationsPlugin` only preserves what is already set here (its
+ *   `takeIf { it > 0 }` fallbacks) and cannot derive any of its own for an npc named
+ *   `Guard` on this cache - see [CityGuard.HUMAN_BLOCK_SOUND] for why. Without this block
+ *   the guards fight in complete silence, which is what they did.
  * - Drops come from [GuardDrops], the single table the wiki publishes for every guard in
  *   the game.
  */
@@ -75,6 +80,25 @@ class CityGuardPlugin(
                         attack = city.attackAnimation
                         block = city.blockAnimation
                         death = city.deathAnimation
+                    }
+                    sound {
+                        // `attackArea` has to be assigned before `attackRadius`: the
+                        // radius setters `check(area)` and throw otherwise. Same for the
+                        // block and death pairs below.
+                        attackArea = true
+                        attackRadius = CityGuard.SOUND_RADIUS
+                        attackVolume = CityGuard.SOUND_LOOPS
+                        attackSound = city.attackSound
+
+                        blockArea = true
+                        blockRadius = CityGuard.SOUND_RADIUS
+                        blockVolume = CityGuard.SOUND_LOOPS
+                        blockSound = CityGuard.HUMAN_BLOCK_SOUND
+
+                        deathArea = true
+                        deathRadius = CityGuard.SOUND_RADIUS
+                        deathVolume = CityGuard.SOUND_LOOPS
+                        deathSound = CityGuard.HUMAN_DEATH_SOUND
                     }
                 }
 

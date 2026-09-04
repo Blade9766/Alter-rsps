@@ -32,6 +32,7 @@ class AhrimPlugin(
         setCombatDef("npc.ahrim_the_blighted") {
             configs {
                 attackSpeed = 6
+                attackRange = 8
                 respawnDelay = 50
             }
 

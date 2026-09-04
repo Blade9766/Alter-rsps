@@ -124,6 +124,12 @@ internal object Critters {
      * Miscellania, Falador Farm, Gordon and Mary's Farm), so all twelve ids are
      * mechanically identical and differ only in appearance - the same shape
      * `content/npcs/guard` handles for Varrock, Edgeville and Ardougne.
+     *
+     * Which of them stands where is [ChickenSpawns]' business, and it places eleven of the
+     * twelve: 9488 is left out because the wiki calls it combat level 1 with the other two
+     * normal chickens while this cache calls it level 3. It is defined here regardless, on
+     * the same terms as the goblin and critter versions that have no spawn yet - so that
+     * whoever does place it gets these stats rather than the 10-hitpoint default.
      */
     val CHICKEN_IDS =
         listOf(1173, 1174, 9488, 3661, 3662, 2804, 2805, 2806, 10494, 10495, 10496, 10497)

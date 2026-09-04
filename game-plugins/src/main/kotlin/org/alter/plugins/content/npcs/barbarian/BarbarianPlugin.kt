@@ -8,11 +8,11 @@ import org.alter.game.model.Direction
 import org.alter.game.model.World
 import org.alter.game.model.attr.KILLER_ATTR
 import org.alter.game.model.combat.CombatStyle
-import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Player
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.npcs.MonsterLoot
 import org.alter.plugins.content.npcs.barbarian.BarbarianData.DropTier
 import org.alter.rscm.RSCM.getRSCM
 
@@ -129,7 +129,7 @@ class BarbarianPlugin(
         }
 
         drops.forEach { (item, amount) ->
-            world.spawn(GroundItem(item = item, amount = amount, tile = npc.tile, owner = killer))
+            MonsterLoot.drop(world, killer, item, amount, npc.tile)
         }
     }
 

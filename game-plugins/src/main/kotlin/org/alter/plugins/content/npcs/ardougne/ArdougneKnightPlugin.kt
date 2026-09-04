@@ -6,12 +6,12 @@ import org.alter.game.Server
 import org.alter.game.model.Direction
 import org.alter.game.model.World
 import org.alter.game.model.attr.KILLER_ATTR
-import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Player
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.npcs.DropRoll
+import org.alter.plugins.content.npcs.MonsterLoot
 import org.alter.plugins.content.npcs.WeightedDrop
 import org.alter.rscm.RSCM.getRSCM
 
@@ -111,7 +111,7 @@ class ArdougneKnightPlugin(
         }
 
         drops.forEach { (item, amount) ->
-            world.spawn(GroundItem(item = item, amount = amount, tile = npc.tile, owner = killer))
+            MonsterLoot.drop(world, killer, item, amount, npc.tile)
         }
     }
 

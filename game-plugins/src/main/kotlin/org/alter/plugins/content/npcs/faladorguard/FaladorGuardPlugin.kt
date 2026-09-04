@@ -10,6 +10,7 @@ import org.alter.game.model.combat.CombatStyle
 import org.alter.game.model.entity.Npc
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.npcs.guard.CityGuard
 import org.alter.plugins.content.npcs.guard.GuardDrops
 
 /**
@@ -28,6 +29,11 @@ import org.alter.plugins.content.npcs.guard.GuardDrops
  * - **Combat style is set on spawn**, not in the combat def - `Npc.combatStyle` defaults to
  *   `STAB` and nothing in the engine copies a style out of `NpcCombatDef`, so the crush and
  *   ranged groups would otherwise roll against the wrong defence entirely.
+ * - **Combat sounds are set explicitly**, in a `sound { }` block, per group - the block
+ *   and death clips are the shared human ones, the attack clip follows each group's own
+ *   weapon. Nothing else supplies them; see
+ *   [org.alter.plugins.content.npcs.guard.CityGuard.HUMAN_BLOCK_SOUND] for why an npc
+ *   named `Guard` resolves no audio at all on this cache.
  * - **Pickpocketing them now works.** All eleven ids carry a real "Pickpocket" cache option,
  *   but the Thieving config only listed the generic `guard_397..400` ids, so spawning these
  *   would have given them a menu option that silently did nothing. The eleven Falador ids
@@ -84,6 +90,24 @@ class FaladorGuardPlugin(
                         attack = group.attackAnimation
                         block = group.blockAnimation
                         death = FaladorGuardData.DEATH_ANIMATION
+                    }
+                    sound {
+                        // `attackArea` has to be assigned before `attackRadius`: the radius
+                        // setters `check(area)` and throw otherwise. Same for block/death.
+                        attackArea = true
+                        attackRadius = CityGuard.SOUND_RADIUS
+                        attackVolume = CityGuard.SOUND_LOOPS
+                        attackSound = group.attackSound
+
+                        blockArea = true
+                        blockRadius = CityGuard.SOUND_RADIUS
+                        blockVolume = CityGuard.SOUND_LOOPS
+                        blockSound = CityGuard.HUMAN_BLOCK_SOUND
+
+                        deathArea = true
+                        deathRadius = CityGuard.SOUND_RADIUS
+                        deathVolume = CityGuard.SOUND_LOOPS
+                        deathSound = CityGuard.HUMAN_DEATH_SOUND
                     }
                     if (group.combatStyle == CombatStyle.RANGED) {
                         ranged {

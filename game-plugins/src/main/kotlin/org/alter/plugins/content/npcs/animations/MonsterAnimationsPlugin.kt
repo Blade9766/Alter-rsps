@@ -12,6 +12,7 @@ import org.alter.game.model.combat.NpcCombatDef
 import org.alter.game.model.entity.Npc
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.combat.WeaponSounds
 
 /**
  * Supplies cache-compatible combat animations to attackable NPCs that would otherwise use the
@@ -24,6 +25,7 @@ class MonsterAnimationsPlugin(
 ) : KotlinPlugin(r, world, server) {
     private val observedAnimations: Map<Int, List<Int>> = loadObservedAnimations()
     private val namedCombatMedia: Map<String, NamedCombatMedia> = loadNamedCombatMedia()
+    private val idCombatMedia: Map<Int, String> = loadIdCombatMedia()
 
     init {
         onGlobalNpcSpawn {
@@ -38,7 +40,7 @@ class MonsterAnimationsPlugin(
         npc: Npc,
         replaceFallbackAnimations: Boolean,
     ) {
-        val named = findNamedCombatMedia(npc.def.name)
+        val named = findCombatMedia(npc.id, npc.def.name)
         val resolved =
             if (replaceFallbackAnimations) {
                 if (named != null) {
@@ -60,7 +62,7 @@ class MonsterAnimationsPlugin(
                     death = npc.combatDef.deathAnimation.firstOrNull() ?: return,
                 )
             }
-        val attackSound = named?.attackSound?.let(::localSound) ?: soundFor(resolved.attack)
+        val attackSound = named?.attackSound?.let(::localSound) ?: soundFor(resolved.attack) ?: weaponSoundFor(resolved.attack)
         val blockSound = named?.blockSound?.let(::localSound) ?: soundFor(resolved.block)
         val deathSound = named?.deathSound?.let(::localSound) ?: soundFor(resolved.death)
         val current = npc.combatDef
@@ -95,7 +97,38 @@ class MonsterAnimationsPlugin(
         )
     }
 
+    /**
+     * Last resort for an npc that swings a *human weapon* animation: the clip that weapon
+     * and that swing make, from [WeaponSounds]. It catches every armed humanoid the two
+     * paths above miss - barbarians, White Knights, the armed dungeon monsters - which are
+     * otherwise silent, since their cache names match no entry in `named-combat-media.json`
+     * and no sequence in this cache carries embedded sound data.
+     *
+     * A monster's own bite or claw swipe is not a weapon animation and returns null here,
+     * so nothing is invented for creatures that should stay silent. Spawned as an area
+     * sound at the same radius/loops the player's own swing uses - you hear fights you walk
+     * past, and `loops` must be 1 or the swing plays over and over.
+     */
+    private fun weaponSoundFor(animationId: Int): CombatSound? =
+        WeaponSounds.forAnimation(animationId)?.let {
+            CombatSound(id = it, loops = 1, radius = WEAPON_SOUND_RADIUS)
+        }
+
     private fun localSound(id: Int) = CombatSound(id = id, loops = 1, radius = 0)
+
+    /**
+     * The media for one npc: its id-keyed override if it has one, otherwise its name-keyed entry.
+     *
+     * The id map exists for the case the name map cannot express - one cache name covering two
+     * different model rigs, or two different weapon states. Three of the game's `Ghost` ids are
+     * built from a model whose idle sequence sits in a different frame block from the other
+     * twenty-five, and the `ALT_GHOST` entry written for them could never be selected while the
+     * only key was the name they share. See `npc-animations/README.md`.
+     */
+    private fun findCombatMedia(
+        npcId: Int,
+        npcName: String,
+    ): NamedCombatMedia? = idCombatMedia[npcId]?.let(namedCombatMedia::get) ?: findNamedCombatMedia(npcName)
 
     private fun findNamedCombatMedia(npcName: String): NamedCombatMedia? {
         val normalized = npcName.uppercase().replace(Regex("[^A-Z0-9]+"), "_").trim('_')
@@ -134,6 +167,13 @@ class MonsterAnimationsPlugin(
         }
     }
 
+    private fun loadIdCombatMedia(): Map<Int, String> {
+        val stream = javaClass.getResourceAsStream(ID_MEDIA_RESOURCE) ?: return emptyMap()
+        return stream.use {
+            ObjectMapper().readValue(it, object : TypeReference<Map<Int, String>>() {})
+        }
+    }
+
     private data class NamedCombatMedia(
         val attackAnimation: Int = -1,
         val blockAnimation: Int = -1,
@@ -146,5 +186,9 @@ class MonsterAnimationsPlugin(
     private companion object {
         const val RESOURCE = "/npc-animations/openosrs-animations.json"
         const val NAMED_MEDIA_RESOURCE = "/npc-animations/named-combat-media.json"
+        const val ID_MEDIA_RESOURCE = "/npc-animations/id-combat-media.json"
+
+        /** Matches `MeleeCombatStrategy`'s own radius for a player's weapon swing. */
+        const val WEAPON_SOUND_RADIUS = 5
     }
 }

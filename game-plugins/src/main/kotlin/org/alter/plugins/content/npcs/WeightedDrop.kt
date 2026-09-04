@@ -27,14 +27,27 @@ internal data class WeightedDrop(
  * item's real rarity.
  */
 internal object DropRoll {
-    /** Picks one entry from [table] by relative weight. */
+    /**
+     * Picks one entry from [table] by relative weight.
+     *
+     * [skipNothing] drops the `Nothing` rows from the roll entirely and rescales what is left - the
+     * ring of wealth's effect on the *shared* tables. It is a parameter rather than a second table
+     * because the rescaling is the point: removing 63 of the gem table's 128 slots is what roughly
+     * doubles every remaining row. Only pass it for the shared rare, gem and mega-rare tables; a
+     * monster's own `Nothing` rows are not affected by the ring.
+     */
     fun pick(
         table: List<WeightedDrop>,
         world: World,
+        skipNothing: Boolean = false,
     ): WeightedDrop? {
-        val total = table.sumOf { it.weight }
+        val rows = if (skipNothing) table.filter { it.item != null } else table
+        val total = rows.sumOf { it.weight }
+        if (total <= 0) {
+            return null
+        }
         var roll = world.randomDouble() * total
-        for (drop in table) {
+        for (drop in rows) {
             if (roll < drop.weight) {
                 return drop
             }

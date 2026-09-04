@@ -5,12 +5,12 @@ import org.alter.api.ext.*
 import org.alter.game.Server
 import org.alter.game.model.World
 import org.alter.game.model.attr.KILLER_ATTR
-import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Player
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.npcs.DropRoll
+import org.alter.plugins.content.npcs.MonsterLoot
 import org.alter.rscm.RSCM.getRSCM
 
 /**
@@ -21,9 +21,13 @@ import org.alter.rscm.RSCM.getRSCM
  *
  * Spawns are not here - these three are scattered across most of the map and their
  * placement belongs with each area's own population, exactly as it already is for the
- * Lumbridge rats and the Falador Farm chickens. The Goblin Cave's boxes spawn them at
- * runtime instead (`areas/goblincave/objs/SearchBoxesPlugin`), which is what prompted
- * this file: they were being spawned aggressive, with 10 hitpoints and no stats.
+ * Lumbridge rats. The Goblin Cave's boxes spawn them at runtime instead
+ * (`areas/goblincave/objs/SearchBoxesPlugin`), which is what prompted this file: they were
+ * being spawned aggressive, with 10 hitpoints and no stats.
+ *
+ * The chickens are the exception, and [ChickenSpawns] says why: 28 published locations over
+ * four continents, only four of which have an area package, so they are spawned from one
+ * table by [ChickenPlugin] the way `content/npcs/banker` spawns the bankers.
  *
  * Notes on what is and is not declared:
  * - **`aggro { }` on the Stronghold of Security spider and on every giant spider and giant
@@ -144,7 +148,7 @@ class CritterPlugin(
         }
 
         loot.forEach { (item, amount) ->
-            world.spawn(GroundItem(item = item, amount = amount, tile = npc.tile, owner = killer))
+            MonsterLoot.drop(world, killer, item, amount, npc.tile)
         }
     }
 

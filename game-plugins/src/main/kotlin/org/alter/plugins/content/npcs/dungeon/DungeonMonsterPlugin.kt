@@ -5,12 +5,16 @@ import org.alter.api.ext.*
 import org.alter.game.Server
 import org.alter.game.model.World
 import org.alter.game.model.attr.KILLER_ATTR
-import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.items.jewellery.RingOfWealth
 import org.alter.plugins.content.npcs.DropRoll
 import org.alter.plugins.content.npcs.GemDropTable
+import org.alter.plugins.content.npcs.HerbDropTable
+import org.alter.plugins.content.npcs.MonsterLoot
+import org.alter.plugins.content.npcs.SeedDropTable
+import org.alter.plugins.content.npcs.slayer.SeedTable
 import org.alter.rscm.RSCM.getRSCM
 import org.alter.game.model.entity.Player
 
@@ -48,6 +52,9 @@ class DungeonMonsterPlugin(
                     configs {
                         attackSpeed = monster.attackSpeed
                         respawnDelay = monster.respawnCycles
+                        if (monster.poisonDamage > 0) {
+                            poisonDamage = monster.poisonDamage
+                        }
                     }
                     if (monster.aggroRadius > 0) {
                         aggro {
@@ -125,14 +132,50 @@ class DungeonMonsterPlugin(
 
         monster.gemTableChance?.let { chance ->
             if (world.randomDouble() <= chance) {
-                DropRoll.pick(GemDropTable.TABLE, world)?.let { picked ->
+                GemDropTable.roll(world, RingOfWealth.enhancesDropTables(killer))?.let { picked ->
                     picked.item?.let { loot.add(it to DropRoll.amount(picked, world)) }
                 }
             }
         }
 
+        monster.herbTableChance?.let { chance ->
+            if (world.randomDouble() <= chance) {
+                DropRoll.pick(HerbDropTable.TABLE, world)?.let { picked ->
+                    picked.item?.let { loot.add(it to DropRoll.amount(picked, world)) }
+                }
+            }
+        }
+
+        /*
+         * The general seed table needs the monster's own combat level - its sub-tables are chosen
+         * by a roll against it - which is why the level is passed through rather than the table
+         * being treated as a flat list. Same handling as `content/npcs/slayer`.
+         */
+        monster.seedRoll?.let { roll ->
+            if (world.randomDouble() <= roll.chance) {
+                repeat(roll.rolls) {
+                    val picked =
+                        when (roll.table) {
+                            SeedTable.ALLOTMENT -> DropRoll.pick(SeedDropTable.ALLOTMENT, world)
+                            SeedTable.RARE -> DropRoll.pick(SeedDropTable.RARE, world)
+                            SeedTable.GENERAL -> SeedDropTable.rollGeneral(monster.combatLevel, world)
+                        }
+                    picked?.item?.let { loot.add(it to DropRoll.amount(picked, world)) }
+                }
+            }
+        }
+
+        monster.tertiaryDrops.forEach { tertiary ->
+            if (tertiary.wildernessOnly && !killer.inWilderness()) {
+                return@forEach
+            }
+            if (world.randomDouble() <= tertiary.chance) {
+                loot.add(getRSCM(tertiary.item) to 1)
+            }
+        }
+
         loot.forEach { (item, amount) ->
-            world.spawn(GroundItem(item = item, amount = amount, tile = npc.tile, owner = killer))
+            MonsterLoot.drop(world, killer, item, amount, npc.tile)
         }
     }
 

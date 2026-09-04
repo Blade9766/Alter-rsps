@@ -35,6 +35,7 @@ class KbdConfigsPlugin(
 
             configs {
                 attackSpeed = 4
+                attackRange = 6
                 respawnDelay = 50
             }
 
