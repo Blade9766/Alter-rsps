@@ -1,8 +1,10 @@
 package org.alter.plugins.diag
 
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.SOUNDEFFECTS
 import org.alter.game.model.combat.CombatStyle
 import org.alter.plugins.content.npcs.faladorguard.FaladorGuardData
+import org.alter.plugins.content.npcs.guard.CityGuard
 import org.alter.plugins.content.npcs.whiteknight.WhiteKnightData
 import org.alter.rscm.RSCM
 import org.alter.rscm.RSCM.getRSCM
@@ -199,6 +201,34 @@ class FaladorCombatVerify {
                 config.contains("\"$key\""),
                 "$key is pickpocketable in the cache but missing from pickpockets.json",
             )
+        }
+    }
+
+    /**
+     * Every combat sound id must exist as an archive in cache index 4. A sound id with no
+     * archive behind it is written to the client and then dropped without a word, which is
+     * indistinguishable in game from the npc having had no sound configured at all - so
+     * this is the check that a "fixed" guard actually makes a noise.
+     *
+     * The ids also have to be stated in the first place. `MonsterAnimationsPlugin` resolves
+     * combat audio by npc name (`named-combat-media.json`) and then by whatever sound is
+     * baked into the resolved animation; guards are named the bare string `Guard`, which is
+     * in no entry, and this cache carries no embedded sound data on any sequence at all -
+     * the second assertion pins that down, since if a future cache ever did carry it the
+     * explicit ids here would stop being the only thing keeping guards audible.
+     */
+    @Test
+    fun `every guard combat sound resolves to a real cache archive`() {
+        val archives = CacheManager.cache.archives(SOUNDEFFECTS).toSet()
+        FaladorGuardData.GROUPS.forEach { group ->
+            listOf(
+                "attack" to group.attackSound,
+                "block" to CityGuard.HUMAN_BLOCK_SOUND,
+                "death" to CityGuard.HUMAN_DEATH_SOUND,
+            ).forEach { (kind, sound) ->
+                assertTrue(sound > 0, "the ${group.name} guards' $kind sound is unset, so nothing will play")
+                assertTrue(sound in archives, "the ${group.name} guards' $kind sound $sound has no cache archive")
+            }
         }
     }
 }

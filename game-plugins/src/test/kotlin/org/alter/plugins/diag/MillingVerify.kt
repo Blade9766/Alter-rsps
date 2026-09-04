@@ -112,9 +112,9 @@ class MillingVerify {
 
         // The whole point: what the mill produces is what the dough recipes consume, and
         // what dough hands back is what the mill takes.
-        val doughs = recipes.filter { it.primary == "item.pot_of_flour" }
+        val doughs = recipes.filter { it.ingredients[0] == "item.pot_of_flour" }
         assertTrue(doughs.isNotEmpty(), "no dough recipes consume a pot of flour")
-        assertTrue(doughs.all { it.primaryReplacement == "item.pot" }, "dough should hand back the pot the mill refills")
+        assertTrue(doughs.all { it.returns?.contains("item.pot") == true }, "dough should hand back the pot the mill refills")
     }
 
     @Test
@@ -136,7 +136,25 @@ class MillingVerify {
         val water =
             WaterSources.scan().keys.flatMap { obj -> WaterContainers.values().map { it.container.unfilled to obj } }.toSet()
 
-        val clash = milling intersect (cooking + water)
+        // DairyChurnPlugin is the fourth cache-scanning plugin in this registry: it binds a
+        // bucket of milk on every "Dairy churn" object.
+        val milkId = getRSCM("item.bucket_of_milk")
+        val churns =
+            CacheManager
+                .getObjects()
+                .filterValues { def ->
+                    def.name.equals("Dairy churn", ignoreCase = true) &&
+                        def.actions.filterNotNull().any { it.equals("Churn", ignoreCase = true) }
+                }.keys
+        assertTrue(churns.isNotEmpty(), "no dairy churns found in the cache")
+        val churning = churns.map { milkId to it }.toSet()
+
+        val everyoneElse = cooking + water + churning
+        val clash = milling intersect everyoneElse
+        assertTrue(
+            (churning intersect (cooking + water)).isEmpty(),
+            "the dairy churn collides with cooking or water bindings",
+        )
         assertTrue(
             clash.isEmpty(),
             "bindItemOnObject throws on a repeated (item, object) pair, crashing the server at boot: $clash",

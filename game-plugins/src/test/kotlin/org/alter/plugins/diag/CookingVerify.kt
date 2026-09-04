@@ -32,6 +32,56 @@ class CookingVerify {
         /** The "Cook-o-matic 100" in Lumbridge Castle's kitchen. */
         const val LUMBRIDGE_CASTLE_RANGE = 114
 
+        /**
+         * Chain ends that are deliberately not food.
+         *
+         * A mud pie is a Ranged weapon that saps run energy, not something you eat. Pitta
+         * bread heals nothing in OSRS - it exists to become a kebab. An unfermented wine
+         * is consumed by `CookingRecipePlugin`'s fermentation timer rather than by any
+         * recipe, so nothing else references it.
+         */
+        val TERMINAL_EXEMPTIONS =
+            setOf(
+                "item.mud_pie",
+                "item.pitta_bread",
+                "item.unfermented_wine",
+                // Gnome half-way stages. They are cooked items, but only ever on the way
+                // to the finished dish; eating one is not a thing in OSRS either.
+                "item.half_baked_crunchy",
+                "item.half_baked_batta",
+                "item.half_baked_bowl",
+                "item.unfinished_crunchy_9582",
+                "item.unfinished_crunchy_9580",
+                "item.unfinished_crunchy_9584",
+                "item.unfinished_crunchy_9578",
+                "item.unfinished_batta_9479",
+                "item.unfinished_batta_9481",
+                "item.unfinished_batta_9486",
+                "item.unfinished_batta_9484",
+                "item.unfinished_bowl_9560",
+                "item.unfinished_bowl_9562",
+                "item.unfinished_bowl_9564",
+                // Heating a poured cocktail. The drink is finished by CocktailPlugin's
+                // Add-ingreds option afterwards, not by anything in recipes.json.
+                "item.mixed_saturday_9573",
+                // Cocktail garnishes. CocktailPlugin consumes these through the shaker's
+                // Pour option, so recipes.json alone cannot see where they go.
+                "item.lemon_slices",
+                "item.lemon_chunks",
+                "item.lime_slices",
+                "item.lime_chunks",
+                "item.orange_slices",
+                "item.orange_chunks",
+                "item.pineapple_chunks",
+                "item.pineapple_ring",
+                // The botched kebab. It is edible in OSRS but with odd effects nobody has
+                // written down precisely, so it is produced but not wired into Food.
+                "item.ugthanki_kebab",
+            )
+
+        /** The three burnt items that mark a cook step as gnome cooking. */
+        val GNOME_BURNT = setOf("item.burnt_crunchies", "item.burnt_batta", "item.burnt_gnomebowl")
+
         /** Mirrors `CookingPlugin.FIRE_OBJECTS`. */
         val FIRE_OBJECTS =
             listOf(
@@ -50,6 +100,18 @@ class CookingVerify {
         }
     }
 
+    /**
+     * The pair the engine actually binds a recipe to - its explicit `bind` when it has one,
+     * and otherwise its first two ingredients. Slicing a lemon has only one ingredient, so
+     * reaching straight for `ingredients[1]` throws.
+     */
+    private fun boundPair(recipe: RecipeEntry): Pair<Int, Int> {
+        val keys = recipe.bind ?: recipe.ingredients.take(2)
+        val a = getRSCM(keys[0])
+        val b = getRSCM(keys[1])
+        return minOf(a, b) to maxOf(a, b)
+    }
+
     private val recipes: List<RecipeEntry> by lazy {
         Files.newBufferedReader(Paths.get("../data/cfg/cooking/recipes.json")).use {
             Gson().fromJson(it, object : TypeToken<List<RecipeEntry>>() {}.type)
@@ -58,7 +120,7 @@ class CookingVerify {
 
     @Test
     fun `config parses and every raw item appears exactly once`() {
-        assertEquals(43, foods.size, "expected 43 cookable foods, got ${foods.map { it.raw }}")
+        assertEquals(73, foods.size, "expected 73 cookable foods, got ${foods.map { it.raw }}")
 
         val duplicated = foods.groupBy { it.raw }.filterValues { it.size > 1 }.keys
         assertTrue(duplicated.isEmpty(), "raw items bound twice would crash bindItemOnObject: $duplicated")
@@ -67,7 +129,7 @@ class CookingVerify {
     @Test
     fun `every item key resolves to a real cache item`() {
         foods.forEach { food ->
-            listOf(food.raw, food.cooked, food.burnt).forEach { key ->
+            listOfNotNull(food.raw, food.cooked, food.burnt, food.returns).forEach { key ->
                 val id = getRSCM(key)
                 assertTrue(id > 0, "$key did not resolve")
                 assertNotNull(CacheManager.getItem(id), "$key resolved to $id, which is not in the cache")
@@ -158,7 +220,13 @@ class CookingVerify {
         // no meaningful fire level at all, so theirs mirrors the range one.)
         val rangeBeatsFire = foods.filter { it.rangeLevel != it.fireLevel }.map { it.raw }
         assertEquals(
-            listOf("item.raw_cod", "item.raw_swordfish", "item.raw_monkfish", "item.uncooked_curry").sorted(),
+            listOf(
+                "item.raw_cod",
+                "item.raw_swordfish",
+                "item.raw_monkfish",
+                "item.uncooked_curry",
+                "item.sliced_mushrooms",
+            ).sorted(),
             rangeBeatsFire.sorted(),
         )
 
@@ -195,13 +263,23 @@ class CookingVerify {
 
     @Test
     fun `range-only foods are exactly the baked goods`() {
-        val rangeOnly = foods.filter { it.rangeOnly }.map { it.cooked }.sorted()
+        // Gnome cooking is all range-only too, and all of it is reached through the three
+        // half-baked trays, so it is checked by family rather than listed dish by dish.
+        val gnome = foods.filter { it.rangeOnly && it.burnt in GNOME_BURNT }
+        assertEquals(
+            18,
+            gnome.size,
+            "three half-baked trays, one cook per dish, and the two heated cocktails",
+        )
+
+        val rangeOnly = foods.filter { it.rangeOnly && it.burnt !in GNOME_BURNT }.map { it.cooked }.sorted()
         assertEquals(
             listOf(
                 "item.admiral_pie",
                 "item.apple_pie",
                 "item.botanical_pie",
                 "item.bread",
+                "item.cake",
                 "item.dragonfruit_pie",
                 "item.fish_pie",
                 "item.garden_pie",
@@ -209,6 +287,7 @@ class CookingVerify {
                 "item.mud_pie",
                 "item.mushroom_pie",
                 "item.pitta_bread",
+                "item.plain_pizza",
                 "item.redberry_pie",
                 "item.summer_pie",
                 "item.wild_pie",
@@ -216,6 +295,45 @@ class CookingVerify {
             rangeOnly,
             "stew and curry cook on a fire; every pie and both breads need a range",
         )
+    }
+
+    @Test
+    fun `fire-only foods are exactly the spit roasts`() {
+        val fireOnly = foods.filter { it.fireOnly }.map { it.cooked }.sorted()
+        assertEquals(
+            listOf(
+                "item.cooked_chompy",
+                "item.roast_beast_meat",
+                "item.roast_bird_meat",
+                "item.roast_rabbit",
+            ),
+            fireOnly,
+            "spit-roasting is fire-only; every wiki recipe block reads facilities = Fire",
+        )
+        // And every one of them hands the iron spit back.
+        foods.filter { it.fireOnly }.forEach {
+            assertEquals("item.iron_spit", it.returns, "${it.cooked} should return the spit")
+        }
+    }
+
+    @Test
+    fun `nothing is both range-only and fire-only`() {
+        val impossible = foods.filter { it.rangeOnly && it.fireOnly }.map { it.cooked }
+        assertTrue(impossible.isEmpty(), "these could never be cooked at all: $impossible")
+    }
+
+    @Test
+    fun `both routes to an uncooked curry are gated the same`() {
+        // The wiki gives level 60 and no experience for the spice route and the
+        // curry-leaf route alike; the leaf route wants three leaves, the spice one.
+        val curries = recipes.filter { it.product == "item.uncooked_curry" }
+        assertEquals(2, curries.size, "spice and curry leaves")
+        curries.forEach { assertEquals(60, it.level, "${it.ingredients} should need level 60") }
+
+        val leaves = curries.first { "item.curry_leaf" in it.ingredients }
+        assertEquals(listOf(1, 3), leaves.amounts, "three curry leaves, one stew")
+        val spice = curries.first { "item.spice" in it.ingredients }
+        assertEquals(null, spice.amounts, "one spice, one stew")
     }
 
     @Test
@@ -231,15 +349,12 @@ class CookingVerify {
 
     @Test
     fun `recipe config parses and every item key resolves`() {
-        assertEquals(38, recipes.size, "expected 38 recipes, got ${recipes.map { it.product }}")
+        assertEquals(122, recipes.size, "expected 122 recipes, got ${recipes.map { it.product }}")
 
         recipes.forEach { recipe ->
-            listOfNotNull(
-                recipe.primary,
-                recipe.secondary,
-                recipe.product,
-                recipe.primaryReplacement,
-                recipe.secondaryReplacement,
+            (
+                recipe.ingredients + recipe.product +
+                    (recipe.returns ?: emptyList()) + (recipe.tools ?: emptyList())
             ).forEach { key ->
                 val id = getRSCM(key)
                 assertTrue(id > 0, "$key did not resolve")
@@ -254,47 +369,95 @@ class CookingVerify {
         // bindItemOnItem throws on a duplicate pair, so a clash here is a startup crash.
         // Flour on water is the one pair that legitimately has three products behind it,
         // and it appears once per water container.
-        val grouped =
-            recipes.groupBy {
-                val a = getRSCM(it.primary)
-                val b = getRSCM(it.secondary)
-                minOf(a, b) to maxOf(a, b)
-            }
+        val grouped = recipes.groupBy { boundPair(it) }
         val multi = grouped.filterValues { it.size > 1 }
-        assertEquals(3, multi.size, "only the three flour+water pairs may have several products")
-        multi.values.forEach { group ->
+
+        // A shared pair is a choice in the chatbox, not a bug - but every product behind
+        // one has to be distinct, or a recipe would be unreachable.
+        multi.forEach { (pair, group) ->
+            val products = group.map { it.product }
+            assertEquals(products.distinct(), products, "pair $pair makes the same thing twice")
+        }
+
+        val doughs = multi.values.filter { it.first().ingredients.first() == "item.pot_of_flour" }
+        assertEquals(3, doughs.size, "one flour+water pair per water container")
+        doughs.forEach { group ->
             assertEquals(
-                listOf("item.bread_dough", "item.pastry_dough", "item.pitta_dough"),
+                listOf("item.bread_dough", "item.pastry_dough", "item.pitta_dough", "item.pizza_base"),
                 group.map { it.product },
             )
-            assertTrue(group.all { it.primary == "item.pot_of_flour" })
+            // Only the pizza base is gated; the three doughs are free to anyone.
+            assertEquals(listOf(0, 0, 0, 35), group.map { it.level })
         }
+
+        // The other legitimate choice: equa leaves on a half baked batta could be heading
+        // for either a fruit batta or a toad batta.
+        val battas = multi.values.filter { it.first().ingredients.first() == "item.half_baked_batta" }
+        assertEquals(1, battas.size)
+        assertEquals(
+            listOf("item.half_made_batta", "item.half_made_batta_9482"),
+            battas.single().map { it.product }.sorted(),
+        )
     }
 
     @Test
-    fun `every recipe chain ends at something cookable`() {
-        // Walk each chain forward from the pie shell / bowl of water and check the last
-        // product is a raw item the food table knows how to cook - otherwise a player can
-        // build an item with nowhere to take it.
-        val products = recipes.map { it.product }.toSet()
-        // Consumed by a later step, as either half of the pair - pastry dough is the
-        // *secondary* of the pie shell recipe, not its primary.
-        val consumed = recipes.flatMap { listOf(it.primary, it.secondary) }.toSet()
+    fun `every chain ends at something edible`() {
+        // The real invariant, and a stronger one than "is used somewhere": follow every
+        // recipe and every cook forward, and whatever falls out the end must be food a
+        // player can actually eat. This is what catches a cookable item nobody wired into
+        // the Food enum - cooked rabbit and anchovies were both in that state.
+        val edible = edibleItems()
+        val consumed = recipes.flatMap { it.ingredients }.toSet()
         val cookable = foods.map { it.raw }.toSet()
 
-        val deadEnds = products.filter { it !in consumed && it !in cookable }
-        assertTrue(deadEnds.isEmpty(), "these recipe products can be made but never used: $deadEnds")
+        val terminal = (recipes.map { it.product } + foods.map { it.cooked }).toSet() - consumed - cookable
+        val notEdible =
+            terminal.filter { it !in edible && it !in TERMINAL_EXEMPTIONS }
+        assertTrue(
+            notEdible.isEmpty(),
+            "these can be made but are neither an ingredient, cookable, nor edible: $notEdible",
+        )
+    }
+
+    @Test
+    fun `every cooked food is edible`() {
+        val edible = edibleItems()
+        val missing = foods.map { it.cooked }.distinct().filter { it !in edible && it !in TERMINAL_EXEMPTIONS }
+        assertTrue(missing.isEmpty(), "cookable but nothing happens when eaten: $missing")
+    }
+
+    /**
+     * Every item the `Food` enum can consume, read straight out of its source.
+     *
+     * Parsing the enum rather than depending on it keeps this test honest about the thing
+     * that actually matters - what a player can put in their mouth - without the test
+     * having to construct a `Player`.
+     */
+    private fun edibleItems(): Set<String> {
+        val source =
+            Files.readString(
+                Paths.get("src/main/kotlin/org/alter/plugins/content/items/consumables/food/Food.kt"),
+            )
+        val found =
+            Regex("""item\s*=\s*"(item\.[a-z0-9_]+)"""")
+                .findAll(source)
+                .map { it.groupValues[1] }
+                .toSet()
+        // Guards against the regex silently matching nothing and every check above
+        // passing vacuously.
+        assertTrue(found.size > 50, "only parsed ${found.size} edible items out of Food.kt; the regex has drifted")
+        return found
     }
 
     @Test
     fun `the three-part pies use the ingredient order the wiki's instructions give`() {
         fun chain(shellIngredient: String): List<String> {
             val steps = mutableListOf<String>()
-            var current = recipes.first { it.primary == "item.pie_shell" && it.secondary == shellIngredient }
-            steps += current.secondary
+            var current = recipes.first { it.ingredients == listOf("item.pie_shell", shellIngredient) }
+            steps += current.ingredients[1]
             while (true) {
-                val next = recipes.firstOrNull { it.primary == current.product } ?: break
-                steps += next.secondary
+                val next = recipes.firstOrNull { it.ingredients[0] == current.product } ?: break
+                steps += next.ingredients[1]
                 current = next
             }
             return steps
@@ -310,15 +473,15 @@ class CookingVerify {
 
     @Test
     fun `dough recipes hand back the emptied containers`() {
-        val doughs = recipes.filter { it.primary == "item.pot_of_flour" }
-        assertEquals(9, doughs.size, "three doughs times three water containers")
+        val doughs = recipes.filter { it.ingredients[0] == "item.pot_of_flour" }
+        assertEquals(12, doughs.size, "four products times three water containers")
         doughs.forEach {
-            assertEquals("item.pot", it.primaryReplacement, "${it.product} should leave an empty pot")
-            assertNotNull(it.secondaryReplacement, "${it.product} should leave the emptied water container")
+            assertEquals("item.pot", it.returns?.get(0), "${it.product} should leave an empty pot")
+            assertEquals(2, it.returns?.size, "${it.product} should leave the pot and the water container")
         }
         assertEquals(
             setOf("item.bucket", "item.jug", "item.bowl"),
-            doughs.mapNotNull { it.secondaryReplacement }.toSet(),
+            doughs.mapNotNull { it.returns?.get(1) }.toSet(),
         )
     }
 

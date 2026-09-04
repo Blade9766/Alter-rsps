@@ -101,7 +101,14 @@ class WaterCookingBindingVerify {
     fun `water and cooking never bind the same item-on-item pair`() {
         fun key(a: Int, b: Int) = minOf(a, b) to maxOf(a, b)
 
-        val cookingPairs = recipes.map { key(getRSCM(it.primary), getRSCM(it.secondary)) }.toSet()
+        // A recipe's binding pair is its explicit `bind` when it has one - slicing a lemon
+        // has a single ingredient and binds against the knife, which is a tool.
+        val cookingPairs =
+            recipes
+                .map { recipe ->
+                    val keys = recipe.bind ?: recipe.ingredients.take(2)
+                    key(getRSCM(keys[0]), getRSCM(keys[1]))
+                }.toSet()
 
         val waterPairs = mutableListOf<Pair<Int, Int>>()
         val toySink = getRSCM("item.sink")
@@ -131,15 +138,17 @@ class WaterCookingBindingVerify {
         // reachable, and the emptied container the recipe hands back must be one the
         // player can refill.
         val fillable = WaterContainers.values().associate { it.container.filled to it.container.unfilled }
-        val doughs = recipes.filter { it.primary == "item.pot_of_flour" }
+        val doughs = recipes.filter { it.ingredients[0] == "item.pot_of_flour" }
         assertTrue(doughs.isNotEmpty(), "no dough recipes found")
 
         doughs.forEach { recipe ->
-            val water = getRSCM(recipe.secondary)
-            assertTrue(water in fillable, "${recipe.secondary} is not a container WaterPlugin can fill")
+            val waterKey = recipe.ingredients[1]
+            val water = getRSCM(waterKey)
+            assertTrue(water in fillable, "$waterKey is not a container WaterPlugin can fill")
+            val handedBack = recipe.returns?.get(1)
             assertTrue(
-                getRSCM(recipe.secondaryReplacement!!) == fillable[water],
-                "${recipe.product} hands back ${recipe.secondaryReplacement}, which is not the empty form of ${recipe.secondary}",
+                handedBack != null && getRSCM(handedBack) == fillable[water],
+                "${recipe.product} hands back $handedBack, which is not the empty form of $waterKey",
             )
         }
     }

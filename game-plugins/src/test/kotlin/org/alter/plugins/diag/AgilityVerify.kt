@@ -6,8 +6,13 @@ import dev.openrune.cache.CacheManager
 import dev.openrune.cache.MAPS
 import dev.openrune.cache.filestore.TileData
 import dev.openrune.cache.filestore.loadTerrain
+import org.alter.game.model.Tile
 import org.alter.plugins.content.skills.agility.CourseEntry
+import org.alter.plugins.content.skills.agility.CourseTerrain
 import org.alter.plugins.content.skills.agility.DestinationMode
+import org.alter.plugins.content.skills.agility.landingFrom
+import org.alter.plugins.content.skills.agility.throughLandingFrom
+import org.alter.tools.CacheCollision
 import org.alter.rscm.RSCM
 import org.alter.rscm.RSCM.getRSCM
 import org.junit.BeforeClass
@@ -54,6 +59,12 @@ class AgilityVerify {
         val hasFloor = data.overlayId.toInt() != 0 || data.underlayId.toInt() != 0
         return !blocked && hasFloor
     }
+
+    /**
+     * The predicate the plugin guards obstacle landings with: somewhere the collision map lets a
+     * player stand, that the cache also draws a floor at.
+     */
+    private fun landingIsUsable(tile: Tile): Boolean = scene.canStandOn(tile) && CourseTerrain.hasFloor(tile)
 
     private val courses: List<CourseEntry> by lazy {
         Files.newBufferedReader(Paths.get("../data/cfg/agility/courses.json")).use { reader ->
@@ -112,8 +123,9 @@ class AgilityVerify {
      * against the cache's own terrain: a tile the player is dropped onto must have a floor and must
      * not be flagged BLOCK_WALK. This is what catches a landing tile authored one column off.
      *
-     * [DestinationMode.THROUGH] landings depend on where the player approached from, so only the
-     * fixed tiles - SPAN endpoints, TILE destinations, fall tiles and mark spawns - are checked.
+     * [DestinationMode.THROUGH] landings depend on where the player approached from, so they are
+     * covered separately below; this test takes the fixed tiles - SPAN endpoints, TILE destinations,
+     * fall tiles and mark spawns.
      */
     @Test
     fun `every fixed landing tile is walkable floor in the cache`() {
@@ -144,6 +156,191 @@ class AgilityVerify {
                 assertTrue(isWalkable(tile), "${course.name}: mark spawn #$i ${tile} is not walkable floor.")
             }
         }
+    }
+
+    /**
+     * The collision map for every region the courses touch, plus a ring of neighbours so an obstacle
+     * sitting just over a region border is still found. Built from the cache the same way
+     * [org.alter.game.fs.DefinitionSet] builds the live one.
+     */
+    private val scene: CacheCollision.Scene by lazy {
+        val regions = HashSet<Int>()
+        courses.forEach { course ->
+            val tiles = buildList {
+                course.obstacles.forEach { obstacle ->
+                    obstacle.start?.let { add(it) }
+                    obstacle.end?.let { add(it) }
+                    obstacle.fail?.let { add(it.tile) }
+                }
+                course.markOfGrace?.tiles?.let { addAll(it) }
+            }
+            tiles.forEach { (x, z, _) ->
+                for (dx in -1..1) {
+                    for (dz in -1..1) {
+                        regions.add(CacheCollision.regionOf(x + dx * 64, z + dz * 64))
+                    }
+                }
+            }
+        }
+        CacheCollision.load(regions)
+    }
+
+    /**
+     * A [DestinationMode.THROUGH] obstacle has no authored landing tile: it throws the player
+     * [org.alter.plugins.content.skills.agility.ObstacleEntry.distance] tiles along the axis
+     * pointing at the object, so where they end up depends on which side they clicked it from. The
+     * route finder decides that, and it will happily leave a player at the *end* of a net or wall
+     * rather than in front of it, where the crossing aims along the obstacle instead of through it.
+     *
+     * So rather than one tile per obstacle this walks every tile the engine can leave a player on -
+     * `ReachStrategy` against the real collision map - and asserts two things:
+     *
+     *  - the plugin never drops a player somewhere they cannot stand, and
+     *  - it still accepts enough approaches for the obstacle to be usable at all, so the guard that
+     *    delivers the first point cannot quietly disable a whole obstacle.
+     */
+    @Test
+    fun `no THROUGH approach lands the player somewhere they cannot stand`() {
+        // Negative control, so a green run cannot be vacuous: the tile Draynor's Wall obstacle sits
+        // on is scenery, and the one the Gnome nets' west end projects into is inside the fence.
+        assertFalse(scene.canStandOn(Tile(3088, 3256, 3)), "The Wall obstacle's own tile should be blocked.")
+        assertFalse(scene.canStandOn(Tile(2472, 3425, 1)), "The tile inside the Gnome net should be blocked.")
+
+        // Collected rather than asserted one at a time: a single run should name every bad approach.
+        val stranded = ArrayList<String>()
+        val unusable = ArrayList<String>()
+        var accepted = 0
+        var refused = 0
+
+        courses.forEach { course ->
+            course.obstacles.filter { it.destination == DestinationMode.THROUGH }.forEach { obstacle ->
+                obstacle.objects.forEach { rscm ->
+                    val locs = scene.locsOf(getRSCM(rscm))
+                    assertTrue(
+                        locs.isNotEmpty(),
+                        "${course.name} / ${obstacle.name}: $rscm was not found in the scanned regions, " +
+                            "so this obstacle is unverified.",
+                    )
+
+                    locs.forEach { loc ->
+                        val approaches = scene.approachTiles(loc)
+                        assertTrue(
+                            approaches.isNotEmpty(),
+                            "${course.name} / ${obstacle.name}: the copy at ${loc.tile} has no tile " +
+                                "a player can stand on and interact from.",
+                        )
+
+                        var usable = 0
+                        approaches.forEach { from ->
+                            val landing = obstacle.throughLandingFrom(from, loc.tile, ::landingIsUsable)
+                            if (landing == null) {
+                                refused++
+                                return@forEach
+                            }
+                            accepted++
+                            usable++
+                            // Re-checked independently of the guard rather than trusted from it, so
+                            // that removing the guard fails this test rather than silently widening
+                            // what counts as a landing. The terrain check is the stricter half: it
+                            // also rejects a tile with no floor at that height, which is how a
+                            // landing one level out shows up.
+                            val safe = scene.canStandOn(landing) &&
+                                isWalkable(listOf(landing.x, landing.z, landing.height))
+                            if (!safe) {
+                                stranded += "${course.name} / ${obstacle.name}: ${loc.tile} from $from " +
+                                    "-> $landing, which is not walkable floor"
+                            }
+                        }
+                        if (usable == 0) {
+                            unusable += "${course.name} / ${obstacle.name}: the copy at ${loc.tile} " +
+                                "cannot be crossed from any of its ${approaches.size} approach tiles"
+                        }
+                    }
+                }
+            }
+        }
+
+        assertTrue(accepted > 0, "No THROUGH landings were accepted - the courses or the scene are empty.")
+        assertTrue(
+            stranded.isEmpty(),
+            "${stranded.size} of $accepted accepted THROUGH crossings strand the player:" +
+                stranded.joinToString(separator = "") { "\n  - $it" },
+        )
+        assertTrue(
+            unusable.isEmpty(),
+            "${unusable.size} THROUGH obstacles cannot be crossed from anywhere " +
+                "($refused approaches refused in total):" + unusable.joinToString(separator = "") { "\n  - $it" },
+        )
+    }
+
+    /**
+     * Every check above looks at one obstacle in isolation, which cannot see the failure that
+     * actually ends a lap: an obstacle that drops the player somewhere the *next* one cannot be
+     * reached from - a landing on the wrong roof, one plane out, or the far side of a gap.
+     *
+     * So this walks each course the way a player does. It carries forward the set of tiles the
+     * player can be standing on, and for each obstacle in lap order asks the same two questions the
+     * engine does: can any of its objects be reached from there (the route finder, over the real
+     * collision map), and where does crossing it leave them. A course breaks at the first obstacle
+     * for which the answer to the first question is no.
+     *
+     * Heights matter here and are not fudged: [org.alter.tools.CacheCollision.Scene.canReach] works
+     * within one plane, so an obstacle that lands the player on the wrong level fails this outright.
+     */
+    @Test
+    fun `every course can be walked obstacle by obstacle in lap order`() {
+        val broken = ArrayList<String>()
+        var steps = 0
+
+        courses.forEach { course ->
+            val locsPerObstacle = course.obstacles.map { obstacle ->
+                val locs = obstacle.objects.flatMap { scene.locsOf(getRSCM(it)) }
+                assertTrue(
+                    locs.isNotEmpty(),
+                    "${course.name} / ${obstacle.name}: none of ${obstacle.objects} were found in the " +
+                        "scanned regions, so the course cannot be walked.",
+                )
+                locs
+            }
+
+            // Seeded with the first obstacle's own approach tiles: how the player got to the start of
+            // the course is not this test's business, only that the lap runs from there.
+            var positions: Set<Tile> = locsPerObstacle.first().flatMap { scene.approachTiles(it) }.toSet()
+            assertTrue(
+                positions.isNotEmpty(),
+                "${course.name}: the first obstacle has nowhere to stand and use it from.",
+            )
+
+            for ((index, obstacle) in course.obstacles.withIndex()) {
+                val reachable = locsPerObstacle[index].filter { loc -> positions.any { scene.canReach(it, loc) } }
+                if (reachable.isEmpty()) {
+                    val previous = if (index == 0) "the start" else course.obstacles[index - 1].name
+                    broken += "${course.name}: ${obstacle.name} (#$index) cannot be reached after " +
+                        "$previous, which leaves the player on ${positions.sortedBy { it.x }.take(4)}"
+                    break
+                }
+
+                val landings = reachable.flatMap { loc ->
+                    scene.approachTiles(loc).mapNotNull { from ->
+                        obstacle.landingFrom(from, loc.tile, ::landingIsUsable)
+                    }
+                }.toSet()
+                if (landings.isEmpty()) {
+                    broken += "${course.name}: ${obstacle.name} (#$index) can be reached but cannot be " +
+                        "crossed from any approach tile"
+                    break
+                }
+
+                steps++
+                positions = landings
+            }
+        }
+
+        assertTrue(steps > 0, "No course steps were walked - the courses or the scene are empty.")
+        assertTrue(
+            broken.isEmpty(),
+            "${broken.size} course(s) cannot be completed:" + broken.joinToString(separator = "") { "\n  - $it" },
+        )
     }
 
     @Test
