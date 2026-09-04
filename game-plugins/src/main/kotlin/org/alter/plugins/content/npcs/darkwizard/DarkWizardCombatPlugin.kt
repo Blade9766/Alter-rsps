@@ -16,9 +16,11 @@ import org.alter.game.model.entity.Player
 import org.alter.game.model.move.hasMoveDestination
 import org.alter.game.model.move.walkTo
 import org.alter.game.model.queue.QueueTask
+import org.alter.game.model.timer.TimerKey
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.combat.*
+import org.alter.plugins.content.combat.SingleCombat
 import org.alter.plugins.content.combat.formula.MagicCombatFormula
 import org.alter.plugins.content.combat.strategy.MagicCombatStrategy
 import org.alter.plugins.content.combat.strategy.playSpellSound
@@ -59,22 +61,24 @@ import org.alter.rscm.RSCM.getRSCM
  *
  * **Only one wizard attacks a given target at a time.** Several spawn locations place
  * many wizards within aggro range of each other (the Varrock stone circle and Dark
- * Wizards' Tower rooms especially), and this codebase has no engine-level single/multi
- * -combat zone enforcement at all - `setMultiCombatRegion`/`Tile.isMulti` only ever
- * drive the client's multi-combat icon varbit ([org.alter.plugins.content.mechanics.multi.MultiwayCombatPlugin]),
- * they don't gate whether more than one NPC can simultaneously engage the same target
- * (confirmed by reading `Combat.canEngage` - it has no such check). Without a claim
- * system every nearby wizard would independently attack the instant it's in range,
- * which reads as "attacks way too fast, all at once" even though each individual
- * wizard's own attack speed is correct. [claimAttackSlot] has each wizard record itself
- * as the target's attacker via [ENGAGED_BY]; a wizard that isn't holding the claim (and
- * can't take over a stale one - the holder died, despawned, or moved on) faces the
- * target and shuffles about near its spawn instead of attacking (see [idleShuffle];
- * it used to stand perfectly still, which read as a row of statues). This is a
- * simplification, not a real
- * single-combat-zone implementation: it applies everywhere, including the Wilderness
- * spawns, where real OSRS *would* let several wizards pile on at once - traded off
- * deliberately since "wizards no longer dogpile" was the actual complaint being fixed.
+ * Wizards' Tower rooms especially), and without a claim system every nearby wizard
+ * attacks the instant it is in range, which reads as "attacks way too fast, all at
+ * once" even though each individual wizard's own attack speed is correct. A wizard that
+ * is not holding the claim faces the target and shuffles about near its spawn instead
+ * of attacking (see [idleShuffle]; it used to stand perfectly still, which read as a
+ * row of statues).
+ *
+ * The rule is [org.alter.plugins.content.combat.SingleCombat] now, not a local one. This
+ * plugin wrote the first implementation of it, `content/npcs/slayer` copied that method
+ * verbatim for its casters, and the second bestiary pass added a third at the aggression
+ * layer; the two copies each had their **own private** `ENGAGED_BY` key, so a wizard and
+ * an aberrant spectre could hold the same player at the same time and neither saw the
+ * other. All three ask one object against one attribute now.
+ *
+ * That merge also retired the caveat this note used to carry - that the claim "applies
+ * everywhere, including the Wilderness spawns, where real OSRS *would* let several
+ * wizards pile on at once". [org.alter.plugins.content.combat.SingleCombat] respects
+ * multi-combat areas, so in one they pile on again, correctly.
  */
 class DarkWizardCombatPlugin(
     r: PluginRepository,
@@ -97,9 +101,9 @@ class DarkWizardCombatPlugin(
         while (canEngageCombat(target)) {
             facePawn(target)
             val attacking =
-                moveToAttackRange(task, target, distance = 8, projectile = true) &&
+                moveToAttackRange(task, target, distance = Combat.npcAttackRange(this, FALLBACK_ATTACK_RANGE), projectile = true) &&
                     isAttackDelayReady() &&
-                    claimAttackSlot(target)
+                    SingleCombat.claim(this, target)
             if (attacking) {
                 if (id in lowTierIds) {
                     castSpellPair(target, strikeSpell = CombatSpell.WATER_STRIKE, curse = CONFUSE)
@@ -107,16 +111,14 @@ class DarkWizardCombatPlugin(
                     castSpellPair(target, strikeSpell = CombatSpell.EARTH_STRIKE, curse = WEAKEN)
                 }
                 postAttackLogic(target)
-            } else if (target.attr[ENGAGED_BY] != index) {
+            } else if (!SingleCombat.holds(this, target)) {
                 idleShuffle()
             }
             task.wait(1)
             target = getCombatTarget() ?: break
         }
 
-        if (target.attr[ENGAGED_BY] == index) {
-            target.attr.remove(ENGAGED_BY)
-        }
+        SingleCombat.release(this, target)
         resetFacePawn()
         removeCombatTarget()
     }
@@ -125,7 +127,7 @@ class DarkWizardCombatPlugin(
      * A little idle movement for a wizard that is engaged but isn't the one actually
      * attacking.
      *
-     * Without this such a wizard is a statue: [claimAttackSlot] means only one wizard
+     * Without this such a wizard is a statue: the single-way claim means only one wizard
      * attacks a given target, but every *other* engaged wizard still runs this loop,
      * re-faces the target every tick and does nothing else. It doesn't wander either,
      * because [org.alter.plugins.content.mechanics.npcwalk.NpcRandomWalkPlugin] - which
@@ -157,24 +159,6 @@ class DarkWizardCombatPlugin(
         walkTo(dest)
     }
 
-    /**
-     * Claims (or keeps) the right to attack [target] this cycle. A held claim is only
-     * given up if its holder is no longer actually a threat - dead, despawned, or moved
-     * on to a different target - so a wizard that dies mid-fight doesn't permanently
-     * lock its target out of being attacked by anything else.
-     */
-    private fun Npc.claimAttackSlot(target: Pawn): Boolean {
-        val holderIndex = target.attr[ENGAGED_BY]
-        if (holderIndex != null && holderIndex != index) {
-            val holder = world.npcs[holderIndex]
-            val holderStillEngaging = holder != null && holder.isSpawned() && holder.isAlive() && holder.getCombatTarget() == target
-            if (holderStillEngaging) {
-                return false
-            }
-        }
-        target.attr[ENGAGED_BY] = index
-        return true
-    }
 
     private fun Npc.castSpellPair(
         target: Pawn,
@@ -188,8 +172,17 @@ class DarkWizardCombatPlugin(
         }
     }
 
+    /**
+     * Whether a curse may be cast at [target] at all - the wiki's "can only be cast if the
+     * opponent's stats haven't already been lowered", read across all five combat stats because its
+     * wording is plural.
+     *
+     * A curse still travelling towards the target counts as a drain: its effect has not been
+     * applied yet, so the stats alone would still read undrained. See [castCurse].
+     */
     private fun hasNoActiveStatDrain(target: Player): Boolean =
-        COMBAT_STATS.none { target.getSkills().getCurrentLevel(it) < target.getSkills().getBaseLevel(it) }
+        !target.timers.has(CURSE_IN_FLIGHT) &&
+            COMBAT_STATS.none { target.getSkills().getCurrentLevel(it) < target.getSkills().getBaseLevel(it) }
 
     private fun Npc.castStrike(
         target: Pawn,
@@ -218,7 +211,7 @@ class DarkWizardCombatPlugin(
             target
                 .hit(damage = world.random(spell.maxHit), type = HitType.HIT, delay = hitDelay)
                 .addAction { playSpellSound(this@castStrike, target, spell.impactSound) }
-            spell.impactGfx?.let { target.graphic(Graphic(it.id, it.height, hitDelay)) }
+            spell.impactGfx?.let { target.graphic(Graphic(it.id, it.height, projectile.impactDelay)) }
         } else {
             target.hit(damage = 0, type = HitType.BLOCK, delay = hitDelay)
         }
@@ -239,12 +232,40 @@ class DarkWizardCombatPlugin(
         val hitDelay = MagicCombatStrategy.getHitDelay(getFrontFacingTile(target), target.getCentreTile())
         val landed = MagicCombatFormula.getAccuracy(this, target) >= world.randomDouble()
         val curseHit = target.hit(damage = 0, type = if (landed) HitType.HIT else HitType.BLOCK, delay = hitDelay)
+
         if (landed) {
-            curseHit.addAction { playSpellSound(this@castCurse, target, curse.impactSound) }
-            target.graphic(id = curse.impactGfx, height = 124, delay = hitDelay)
-            val current = target.getSkills().getCurrentLevel(curse.drainedSkill)
-            val reduction = (current * DRAIN_PERCENT).toInt().coerceAtLeast(1)
-            target.getSkills().alterCurrentLevel(curse.drainedSkill, -reduction)
+            /*
+             * A drain is now on its way, and does not exist yet. [hasNoActiveStatDrain] counts that
+             * as a drain already being active, because otherwise moving the drain onto the landing
+             * would open a window it closes: a wizard attacks every 4 cycles and a curse takes up
+             * to 5 to arrive at eight tiles, so the *next* cast would be chosen before this one
+             * landed, read the target's stats as untouched, and curse a second time - stacking two
+             * drains on a target the wiki says can carry only one.
+             *
+             * Only a curse that actually landed is marked. A miss drains nothing, so there is
+             * nothing in the air to wait for and the next cast is free to curse.
+             *
+             * A plain [TimerKey] with no persistence key is transient and identity-keyed: it is
+             * never written to a save file, and it counts itself down and is dropped, so nothing
+             * strands the target un-cursable if the hit never lands - the target died, or the
+             * wizard did.
+             */
+            target.timers[CURSE_IN_FLIGHT] = hitDelay
+            target.graphic(id = curse.impactGfx, height = 124, delay = projectile.impactDelay)
+            /*
+             * The drain lands *with* the spell, not when it leaves the wizard's hands. It used to
+             * be applied here directly, which dropped the target's stat up to five cycles - three
+             * seconds - before the projectile reached them, and dropped it even if they died or
+             * broke off in between. Same place the impact sound already fired, and the same place
+             * [org.alter.plugins.content.combat.strategy.MagicCombatStrategy] applies a spell's
+             * own `curseEffect`.
+             */
+            curseHit.addAction {
+                playSpellSound(this@castCurse, target, curse.impactSound)
+                val current = target.getSkills().getCurrentLevel(curse.drainedSkill)
+                val reduction = (current * DRAIN_PERCENT).toInt().coerceAtLeast(1)
+                target.getSkills().alterCurrentLevel(curse.drainedSkill, -reduction)
+            }
         }
     }
 
@@ -261,13 +282,22 @@ class DarkWizardCombatPlugin(
     )
 
     private companion object {
+        /** Only a fallback - the live value is `attackRange` in DarkWizardConfigsPlugin. */
+        const val FALLBACK_ATTACK_RANGE = 8
+
         /** Idle steps stay within this many tiles of the wizard's spawn tile. */
         const val IDLE_RADIUS = 2
 
         /** 1-in-N chance per tick of a bystander taking an idle step (~7s average). */
         const val IDLE_STEP_ODDS = 12
 
-        val ENGAGED_BY = AttributeKey<Int>()
+
+        /**
+         * Set on a target for as long as a curse is travelling towards it. Transient by
+         * construction - a [TimerKey] with no persistence key is never saved - and self-expiring,
+         * so a curse whose hit never lands cannot leave a target permanently un-cursable.
+         */
+        val CURSE_IN_FLIGHT = TimerKey()
         val COMBAT_STATS = listOf(Skills.ATTACK, Skills.STRENGTH, Skills.DEFENCE, Skills.MAGIC, Skills.RANGED)
         const val DRAIN_PERCENT = 0.05
 

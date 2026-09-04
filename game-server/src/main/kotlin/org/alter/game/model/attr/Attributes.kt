@@ -94,6 +94,23 @@ val CURRENT_SHOP_ATTR = AttributeKey<Shop>()
 val COMBAT_TARGET_FOCUS_ATTR = AttributeKey<WeakReference<Pawn>>()
 
 /**
+ * The npc that has claimed this pawn in **single-way combat** - the one aggressive monster allowed
+ * to be fighting them at a time outside a multi-combat area.
+ *
+ * Written by [org.alter.plugins.content.mechanics.aggro.NpcAggroPlugin] the moment an aggressive
+ * npc engages, and never cleared: it is validated on read instead, against whether the npc it names
+ * is still active and still has this pawn as its own combat target. That is what makes it safe
+ * without a clear-down path on every route out of combat - death, leashing, logout, teleporting
+ * away and simply losing interest all drop the npc's combat target, and the claim goes stale with
+ * it.
+ *
+ * Deliberately *not* consulted for retaliation. Being hit and hitting back is not the same thing as
+ * a second monster picking you unprompted, and blocking it would leave a monster you attacked
+ * standing there taking it.
+ */
+val SINGLE_COMBAT_ATTACKER_ATTR = AttributeKey<WeakReference<Pawn>>()
+
+/**
  * The [Pawn] that killed another pawn.
  */
 val KILLER_ATTR = AttributeKey<WeakReference<Pawn>>()
@@ -136,6 +153,22 @@ val DEFENCE_CAPE_EFFECT_ATTR = AttributeKey<Boolean>(persistenceKey = "defence_c
  * system does not exist here, so the "Toggle Respawn" option is left as a free preference.
  */
 val DEFENCE_CAPE_ARDOUGNE_RESPAWN_ATTR = AttributeKey<Boolean>(persistenceKey = "defence_cape_ardougne_respawn")
+
+/**
+ * Whether the ring of life's save teleports to East Ardougne instead of the player's normal respawn
+ * point - the ring's own "Toggle-respawn" inventory option, which the cache gives it. Kept separate
+ * from [DEFENCE_CAPE_ARDOUGNE_RESPAWN_ATTR] because OSRS toggles the two items independently, even
+ * though the same medium Ardougne diary unlocks both.
+ */
+val RING_OF_LIFE_ARDOUGNE_RESPAWN_ATTR = AttributeKey<Boolean>(persistenceKey = "ring_of_life_ardougne_respawn")
+
+/*
+ * The charge pools for the perk jewellery - ring of recoil, dodgy necklace, ring of forging,
+ * bracelet of clay, the two Slayer bracelets and the amulet of chemistry - are declared on
+ * `org.alter.plugins.content.items.jewellery.PerkJewellery` instead of here. All seven are the same
+ * shape and belong to that one table; their persistence keys are "<item>_charges", except the ring
+ * of recoil's, which is "ring_of_recoil_damage_left".
+ */
 
 /**
  * The command that the player has submitted to the server using the '::' prefix.
@@ -259,3 +292,34 @@ val CHANGE_LOGGING = AttributeKey<Boolean>()
  * Instead of running tp
  */
 val CLIENT_KEY_COMBINATION = AttributeKey<Int>()
+
+/**
+ * Burn damage still owed by a pawn, and who owes it to them.
+ *
+ * The Varlamore demonbane weapons' burn, held as a counter that
+ * [org.alter.game.model.timer.SPECIAL_ATTACK_BURN_TIMER] works through rather than as a run of
+ * pre-queued hits, so the eclipse atlatl can cut it short and roll the remainder into its own hit.
+ *
+ * The source is weak: burn outlives the attack, and crediting damage to a player who has since
+ * logged out would keep them on the target's damage map.
+ */
+val SPECIAL_ATTACK_BURN_ATTR = AttributeKey<Int>()
+val SPECIAL_ATTACK_BURN_SOURCE_ATTR = AttributeKey<WeakReference<Pawn>>()
+
+/**
+ * Soul stacks on the soulreaper axe, and sunlight stacks on the sunlight spear.
+ *
+ * Both are the same idea - a counter the weapon builds up over ordinary attacks and its special
+ * spends - and both are dropped when the weapon comes off.
+ */
+val SOUL_STACKS_ATTR = AttributeKey<Int>()
+val SUNLIGHT_STACKS_ATTR = AttributeKey<Int>()
+
+/**
+ * Owner-only cheat: every attack this player lands on an npc kills it outright.
+ *
+ * Read in the one place all damage is dealt from - `Pawn.dealExactHit` - so it covers
+ * specials and multi-hit attacks as well as ordinary swings. Deliberately npc-only, so
+ * leaving it on cannot one-shot another player.
+ */
+val ONE_HIT_KILL_ATTR = AttributeKey<Boolean>(persistenceKey = "one_hit_kill")

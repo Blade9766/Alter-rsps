@@ -15,6 +15,7 @@ import org.alter.game.model.queue.*
 import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
+import org.alter.plugins.content.combat.SingleCombat
 import org.alter.plugins.content.combat.getCombatTarget
 import org.alter.plugins.content.combat.isAttacking
 
@@ -29,7 +30,24 @@ class NpcAggroPlugin(
     init {
         onGlobalNpcSpawn {
             if (npc.combatDef.aggressiveRadius > 0 && npc.combatDef.aggroTargetDelay > 0) {
-                npc.aggroCheck = defaultAggressiveness
+                /*
+                 * Only when the npc has not already been given one. This hook is *global*, and
+                 * global spawn hooks run after per-npc ones - so an unconditional assignment here
+                 * silently discarded any `aggroCheck` a monster plugin installed for itself, and
+                 * there was no other place for one to live.
+                 *
+                 * That is what a page like the battle mage's needs: `aggressive = Yes, unless
+                 * wearing the same cape as the battle mage` is a per-monster exemption on top of
+                 * the ordinary rules, not a replacement for the aggression system. See
+                 * `content/npcs/battlemage`.
+                 *
+                 * Nothing else changes: `Npc.aggroCheck` starts null and only a plugin can set it,
+                 * so every monster that does not sets the default exactly as before. A respawn
+                 * re-runs the per-npc hook first, so a monster that wants its own check keeps it.
+                 */
+                if (npc.aggroCheck == null) {
+                    npc.aggroCheck = defaultAggressiveness
+                }
                 npc.timers[AGGRO_CHECK_TIMER] = npc.combatDef.aggroTargetDelay
             }
         }
@@ -44,20 +62,14 @@ class NpcAggroPlugin(
     
 
 
-val defaultAggressiveness: (Npc, Player) -> Boolean = boolean@{ n, p ->
-    if (n.combatDef.aggressiveTimer == Int.MAX_VALUE) {
-        return@boolean true
-    } else if (n.combatDef.aggressiveTimer == Int.MIN_VALUE) {
-        return@boolean false
-    }
-
-    if (Math.abs(world.currentCycle - p.lastMapBuildTime) > n.combatDef.aggressiveTimer) {
-        return@boolean false
-    }
-
-    val npcLvl = n.def.combatLevel
-    return@boolean p.combatLevel <= npcLvl * 2
-}
+/**
+ * The engine's ordinary aggressiveness check, as a class member so the plugin can install it.
+ *
+ * The rule itself lives in the top-level [defaultNpcAggressiveness] so that a monster plugin
+ * wanting to *compose* an exemption on top of it - the battle mages' matching-cape rule, say - can
+ * reach it. A class member cannot be imported; a top-level function can.
+ */
+val defaultAggressiveness: (Npc, Player) -> Boolean = ::defaultNpcAggressiveness
 
 fun checkRadius(npc: Npc) {
     val radius = npc.combatDef.aggressiveRadius
@@ -81,6 +93,14 @@ fun checkRadius(npc: Npc) {
             val target = targets.random()
             if (npc.getCombatTarget() != target) {
                 npc.attack(target)
+                /*
+                 * Claim the target for single-way combat. `Pawn.attack` sets this npc's own combat
+                 * focus synchronously, so the claim is already verifiable by the time the next
+                 * npc's aggro timer fires later in this same cycle - which is exactly the case that
+                 * matters, because a row of monsters spawned together share an aggro delay and
+                 * would otherwise all engage on the same tick.
+                 */
+                SingleCombat.claim(npc, target)
             }
             break@mainLoop
         }
@@ -94,7 +114,51 @@ fun canAttack(
     if (!target.isOnline || target.invisible) {
         return false
     }
+    if (!singleCombatAllows(npc, target)) {
+        return false
+    }
     return npc.aggroCheck == null || npc.aggroCheck?.invoke(npc, target) == true
 }
 
+/**
+ * Single-way combat, at the aggression layer: outside a multi-combat area a monster will not pick a
+ * player who is already fighting, or who another monster has already claimed.
+ *
+ * The rule itself lives in [SingleCombat], which is also what the dark wizards' and slayer casters'
+ * own attack loops ask - it was implemented three separate times before it was implemented once, and
+ * two of those copies could not even see each other's claims. This is the aggression-layer half of
+ * it; see that object for the whole story.
+ */
+fun singleCombatAllows(
+    npc: Npc,
+    target: Player,
+): Boolean = SingleCombat.mayEngage(npc, target)
+
+}
+
+/**
+ * Whether [n] is aggressive towards [p] under the engine's ordinary rules: the two sentinel
+ * `aggressiveTimer` values, then the timer since the player entered the area, then the standard
+ * "npcs stop caring about anyone above twice their combat level".
+ *
+ * Top level rather than a member of [NpcAggroPlugin] so that a monster with a *published* exemption
+ * can put its own check in front of this one instead of replacing the whole thing. `world` comes
+ * from the npc rather than from the plugin, which is what makes that possible.
+ */
+fun defaultNpcAggressiveness(
+    n: Npc,
+    p: Player,
+): Boolean {
+    if (n.combatDef.aggressiveTimer == Int.MAX_VALUE) {
+        return true
+    } else if (n.combatDef.aggressiveTimer == Int.MIN_VALUE) {
+        return false
+    }
+
+    if (Math.abs(n.world.currentCycle - p.lastMapBuildTime) > n.combatDef.aggressiveTimer) {
+        return false
+    }
+
+    val npcLvl = n.def.combatLevel
+    return p.combatLevel <= npcLvl * 2
 }
