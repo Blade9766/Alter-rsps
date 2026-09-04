@@ -137,7 +137,7 @@ class CookingPlugin(
             player.inventory
                 .filterNotNull()
                 .mapNotNull { service.lookup(it.id) }
-                .filter { !it.rangeOnly || source != HeatSource.FIRE }
+                .filter { if (source == HeatSource.FIRE) !it.rangeOnly else !it.fireOnly }
                 .distinct()
                 .sortedBy { it.level }
                 .take(PRODUCE_BOX_CAPACITY)
@@ -182,6 +182,10 @@ class CookingPlugin(
             player.message("You need to cook this on a range.")
             return
         }
+        if (entry.fireOnly && source != HeatSource.FIRE) {
+            player.message("You need to cook this over a fire.")
+            return
+        }
         if (player.getSkills().getCurrentLevel(Skills.COOKING) < entry.level) {
             player.message("You need a Cooking level of ${entry.level} to cook this.")
             return
@@ -214,6 +218,10 @@ class CookingPlugin(
             player.message("You need to cook this on a range.")
             return
         }
+        if (entry.fireOnly && source != HeatSource.FIRE) {
+            player.message("You need to cook this over a fire.")
+            return
+        }
 
         if (player.getSkills().getCurrentLevel(Skills.COOKING) < entry.level) {
             player.message("You need a Cooking level of ${entry.level} to cook this.")
@@ -225,6 +233,14 @@ class CookingPlugin(
 
         while (made < requested && !player.hasMoveDestination()) {
             if (!player.inventory.contains(entry.rawItemId)) {
+                break
+            }
+
+            // A cake gives back its tin as well as the cake, so that one needs a spare
+            // slot. Checked before the raw item is removed rather than after, so a full
+            // inventory can't swallow the tin.
+            if (entry.returnItemId != -1 && player.inventory.freeSlotCount < 1) {
+                player.message("You don't have enough inventory space to do that.")
                 break
             }
 
@@ -253,6 +269,12 @@ class CookingPlugin(
                 } else {
                     player.message("You successfully cook the ${entry.name.lowercase()}.")
                 }
+            }
+
+            // The cake tin and the iron spit both come back whichever way the cook went -
+            // burning the meat doesn't consume the spit it was on.
+            if (entry.returnItemId != -1) {
+                player.inventory.add(item = entry.returnItemId, amount = 1)
             }
 
             made++

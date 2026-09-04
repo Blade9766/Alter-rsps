@@ -1,0 +1,61 @@
+[
+  {
+    "name": "Unicorn horn dust",
+    "input": "item.unicorn_horn",
+    "product": "item.unicorn_horn_dust"
+  },
+  {
+    "name": "Chocolate dust",
+    "input": "item.chocolate_bar",
+    "product": "item.chocolate_dust"
+  },
+  {
+    "name": "Dragon scale dust",
+    "input": "item.blue_dragon_scale",
+    "product": "item.dragon_scale_dust"
+  },
+  {
+    "name": "Goat horn dust",
+    "input": "item.desert_goat_horn",
+    "product": "item.goat_horn_dust"
+  },
+  {
+    "name": "Kebbit teeth dust",
+    "input": "item.kebbit_teeth",
+    "product": "item.kebbit_teeth_dust"
+  },
+  {
+    "name": "Crushed nest",
+    "input": "item.bird_nest_5075",
+    "product": "item.crushed_nest"
+  },
+  {
+    "name": "Crushed superior dragon bones",
+    "input": "item.superior_dragon_bones",
+    "product": "item.crushed_superior_dragon_bones"
+  },
+  {
+    "name": "Nihil dust",
+    "input": "item.nihil_shard",
+    "product": "item.nihil_dust"
+  },
+  {
+    "name": "Gorak claw powder",
+    "input": "item.gorak_claws",
+    "product": "item.gorak_claw_powder"
+  },
+  {
+    "name": "Crystal dust",
+    "input": "item.crystal_shard",
+    "product": "item.crystal_dust",
+    "minAmount": 10,
+    "maxAmount": 10
+  },
+  {
+    "name": "Lava scale shard",
+    "input": "item.lava_scale",
+    "product": "item.lava_scale_shard",
+    "minAmount": 3,
+    "maxAmount": 6
+  }
+]

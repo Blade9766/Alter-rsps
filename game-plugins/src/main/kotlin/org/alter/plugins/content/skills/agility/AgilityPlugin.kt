@@ -9,6 +9,7 @@ import org.alter.game.model.ForcedMovement
 import org.alter.game.model.Tile
 import org.alter.game.model.World
 import org.alter.game.model.attr.AttributeKey
+import org.alter.game.model.collision.canOccupy
 import org.alter.game.model.entity.GameObject
 import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Player
@@ -17,7 +18,6 @@ import org.alter.game.model.timer.TimerKey
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
 import org.alter.rscm.RSCM.getRSCM
-import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -130,8 +130,8 @@ class AgilityPlugin(
     }
 
     /**
-     * Slides the player to [landing] over [ticks] cycles. [Player.forceMove] owns the lock for the
-     * duration and drops it again once the movement resolves.
+     * Slides the player to [landing] over [ticks] game cycles. [Player.forceMove] owns the lock for
+     * the duration and drops it again once the movement resolves.
      */
     private suspend fun moveAcross(
         task: QueueTask,
@@ -143,14 +143,19 @@ class AgilityPlugin(
         val direction = Direction.between(source, landing)
         val angle = if (direction == Direction.NONE) Direction.SOUTH.angle else direction.angle
 
-        // Client delays are 30ms units, so one walked tile per game cycle is 20 units per tick.
-        val clientDuration = ticks * 20
+        // The two delays are *arrival* times, not durations: the client holds the avatar at the
+        // first waypoint (here the tile the player set off from) until the first, then slides it to
+        // the second over the difference. Passing the same value for both left no window to slide
+        // in, so the player stood still for the whole crossing and then snapped to the far side.
+        //
+        // Delays are counted in client cycles of 20ms, so a 600ms game cycle is 30 of them - the
+        // same conversion Player.forceMove uses for its default cycleDuration.
         val movement =
             ForcedMovement.of(
                 src = source,
                 dst = landing,
-                clientDuration1 = clientDuration,
-                clientDuration2 = clientDuration,
+                clientDuration1 = 0,
+                clientDuration2 = ticks * CLIENT_CYCLES_PER_TICK,
                 directionAngle = angle,
             )
         player.forceMove(task, movement, cycleDuration = ticks)
@@ -158,55 +163,19 @@ class AgilityPlugin(
 
     /**
      * Resolves where an obstacle drops the player, or `null` when it cannot be used from where they
-     * are standing.
+     * are standing - which `cross` reports as "You can't get onto that from here."
+     *
+     * The decision itself lives in AgilityData so `AgilityVerify` can walk whole courses through the
+     * same code the player goes through.
      */
     private fun destinationFor(
         player: Player,
         obj: GameObject,
         obstacle: ObstacleEntry,
-    ): Tile? {
-        val from = player.tile
-        return when (obstacle.destination) {
-            DestinationMode.TILE -> obstacle.end!!.toTile()
-
-            DestinationMode.SPAN -> {
-                val start = obstacle.start!!.toTile()
-                val end = obstacle.end!!.toTile()
-                // Cross towards whichever end is further away, so the obstacle works both ways.
-                if (from.getDistance(start) <= from.getDistance(end)) end else start
-            }
-
-            DestinationMode.THROUGH -> {
-                // Head straight through the obstacle, along the axis pointing from player to object.
-                val direction = axisTowards(from, obj.tile) ?: return null
-                Tile(
-                    x = from.x + direction.getDeltaX() * obstacle.distance,
-                    z = from.z + direction.getDeltaZ() * obstacle.distance,
-                    height = from.height + obstacle.heightChange,
-                )
-            }
+    ): Tile? =
+        obstacle.landingFrom(player.tile, obj.tile) { tile ->
+            player.world.collision.canOccupy(tile) && CourseTerrain.hasFloor(tile)
         }
-    }
-
-    /**
-     * The cardinal direction from [from] to [towards], collapsed onto whichever axis dominates.
-     *
-     * The route finder can leave the player on a tile that is diagonal to the obstacle - beside a
-     * pipe mouth rather than in front of it - and a diagonal crossing would carry them off sideways,
-     * so the smaller component is dropped. `null` when the player is standing on the object itself.
-     */
-    private fun axisTowards(
-        from: Tile,
-        towards: Tile,
-    ): Direction? {
-        val deltaX = towards.x - from.x
-        val deltaZ = towards.z - from.z
-        return when {
-            deltaX == 0 && deltaZ == 0 -> null
-            abs(deltaX) > abs(deltaZ) -> if (deltaX > 0) Direction.EAST else Direction.WEST
-            else -> if (deltaZ > 0) Direction.NORTH else Direction.SOUTH
-        }
-    }
 
     private fun awardLapProgress(
         player: Player,
@@ -277,8 +246,6 @@ class AgilityPlugin(
         player.attr.remove(PROGRESS_ATTR)
     }
 
-    private fun List<Int>.toTile(): Tile = Tile(this[0], this[1], this[2])
-
     companion object {
         /** Name of the course the player is part-way around, if any. */
         private val COURSE_ATTR = AttributeKey<String>()
@@ -288,5 +255,8 @@ class AgilityPlugin(
 
         /** Blocks further mark of grace rolls until it lapses. */
         private val MARK_COOLDOWN_TIMER = TimerKey()
+
+        /** A 600ms game cycle is 30 of the client's own 20ms cycles, which time exact movement. */
+        private const val CLIENT_CYCLES_PER_TICK = 30
     }
 }

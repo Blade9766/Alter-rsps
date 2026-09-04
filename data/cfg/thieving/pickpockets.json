@@ -1,21 +1,43 @@
 [
   {
     "npcs": [
+      "npc.man_3014",
       "npc.man_3106",
       "npc.man_3107",
       "npc.man_3108",
       "npc.man_3109",
+      "npc.man_3110",
+      "npc.man_3261",
+      "npc.man_3264",
+      "npc.man_3265",
+      "npc.man_3298",
+      "npc.man_3652",
+      "npc.man_6815",
+      "npc.man_6818",
+      "npc.man_6987",
+      "npc.man_6988",
+      "npc.man_6989",
+      "npc.man_11057",
+      "npc.man_11058",
+      "npc.woman_3015",
       "npc.woman_3111",
       "npc.woman_3112",
       "npc.woman_3113",
-      "npc.woman_3015"
+      "npc.woman_3268",
+      "npc.woman_3299",
+      "npc.woman_6990",
+      "npc.woman_6991",
+      "npc.woman_6992",
+      "npc.woman_10728",
+      "npc.woman_11053",
+      "npc.woman_11054"
     ],
     "level": 1,
     "experience": 8.0,
     "baseSuccess": 0.55,
     "successBonusPerLevel": 0.015,
     "stun": {
-      "ticks": 7,
+      "ticks": 8,
       "damage": {
         "min": 1,
         "max": 1
@@ -25,14 +47,8 @@
       {
         "item": "item.coins_995",
         "min": 3,
-        "max": 12,
-        "weight": 75.00
-      },
-      {
-        "item": "item.bronze_bolts",
-        "min": 1,
-        "max": 2,
-        "weight": 25.00
+        "max": 3,
+        "weight": 100.00
       }
     ]
   },

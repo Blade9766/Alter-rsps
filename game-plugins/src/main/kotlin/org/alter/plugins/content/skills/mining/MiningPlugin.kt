@@ -15,6 +15,7 @@ import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.queue.TaskPriority
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.items.jewellery.JewelleryPerks
 import org.alter.rscm.RSCM.getRSCM
 
 /**
@@ -145,7 +146,9 @@ class MiningPlugin(
 
             if (player.world.randomDouble() <= mineChance(level, entry, pickaxe)) {
                 player.addXp(Skills.MINING, entry.experience)
-                player.inventory.add(item = entry.oreItemId, amount = 1)
+                // A bracelet of clay turns clay soft as it comes out of the rock; everything else
+                // yields what the rock says it does.
+                player.inventory.add(item = JewelleryPerks.miningYield(player, entry.oreItemId), amount = 1)
                 player.message("You manage to mine some ${entry.name}.")
 
                 // Every one of these ore rocks yields a single ore and then depletes -

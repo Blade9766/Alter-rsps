@@ -26,6 +26,12 @@ data class FoodEntry(
     val raw: String,
     val cooked: String,
     val burnt: String,
+    /**
+     * An extra item handed back when this is cooked, on top of the food itself. Only the
+     * cake tin: the wiki notes that "once baked, the cake tin will separate from the
+     * cooked cake, unlike the pie dish, where it comes with the pie". Null everywhere else.
+     */
+    val returns: String? = null,
     /** Cooking level needed to cook this at all. */
     val level: Int,
     val experience: Double,
@@ -37,6 +43,12 @@ data class FoodEntry(
      * pins down exactly which those are.
      */
     val rangeOnly: Boolean,
+    /**
+     * The mirror of [rangeOnly]: food only a fire can cook. Just the four spit-roasts,
+     * whose wiki recipe blocks all read `facilities = Fire`. Setting both this and
+     * [rangeOnly] would make a food uncookable, which [CookingService] rejects.
+     */
+    val fireOnly: Boolean = false,
     /**
      * Stop-burning level on an open fire; -1 = never. Meaningless when [rangeOnly] is
      * set, where it simply mirrors [rangeLevel].
@@ -62,51 +74,102 @@ data class FoodEntry(
 
     @Transient
     var burntItemId: Int = -1
+
+    @Transient
+    var returnItemId: Int = -1
 }
 
 /**
  * One item-on-item combination on the way to something cookable, loaded from
  * `data/cfg/cooking/recipes.json`: flour and water into dough, dough into a pie shell, a
- * filling into a shell, a potato into a bowl of water.
+ * filling into a shell, a bowl of water into a stew, three ingredients into a cake tin.
  *
- * None of these grant Cooking experience or carry a level requirement - in OSRS the gate
- * is on baking the result, not on assembling it, which is why a level 1 player can build
- * a raw summer pie they have no hope of cooking.
+ * [ingredients] holds everything consumed, and its **first two entries are the pair the
+ * engine binds** - item-on-item takes exactly two items, so a cake, which wants a tin, an
+ * egg, a bucket of milk and a pot of flour, is expressed as three recipes that each pair
+ * the tin with a different one of the three and carry the rest behind it. Any of the three
+ * clicked onto the tin then works, which is how OSRS behaves.
  *
- * [primary] and [secondary] are only labels for readability: the engine's item-on-item
- * binding is symmetric, so either may be the one clicked. Where several recipes share the
- * same pair - the three doughs - [CookingRecipePlugin] offers them in the game's own
- * skill-multi chatbox instead of picking one.
+ * Most of these have no requirement and give nothing: [level] 0 and [experience] 0.0 are
+ * both the JSON default and the right answer for dough, shells and fillings, where the
+ * gate is on baking the result rather than assembling it. The exceptions are real Cooking
+ * actions that happen off the heat - a pizza base needs 35, and topping a cooked pizza or
+ * chocolating a cake both need a level and pay out.
  *
  * As with [FoodEntry], Gson allocates these without running the constructor, so
- * [CookingService] validates rather than relying on defaults.
+ * [CookingService] validates rather than relying on defaults; [returns] is nullable for
+ * that reason, since a missing JSON list arrives as null rather than as an empty one.
  */
 data class RecipeEntry(
     /** The product's name, for the "what would you like to make?" chatbox. */
     val name: String,
-    val primary: String,
-    val secondary: String,
+    /** Everything consumed. The first two are the pair bound as item-on-item. */
+    val ingredients: List<String>,
+    /**
+     * How many of each entry in [ingredients] is consumed, positionally aligned with it.
+     * Null - the common case - means one of each. Only gnome cooking needs this: a
+     * chocolate bomb wants four chocolate bars, a worm hole four king worms.
+     *
+     * Kept as a parallel list rather than folding an amount into [ingredients] so that the
+     * eighty-odd recipes that consume one of everything stay readable, and so the whole
+     * config did not have to be reshaped to add four dishes' worth of quantities.
+     */
+    val amounts: List<Int>? = null,
     val product: String,
-    /** What [primary] leaves behind, e.g. a pot of flour leaving an empty pot. */
-    val primaryReplacement: String? = null,
-    /** What [secondary] leaves behind, e.g. a bucket of water leaving a bucket. */
-    val secondaryReplacement: String? = null,
+    /** Items handed back, e.g. the emptied pot and bucket a dough leaves. */
+    val returns: List<String>? = null,
+    /**
+     * Items that must be held but are not consumed - only ever a knife, which is what
+     * chops an onion into a bowl or minces cooked meat. The wiki lists these as `tools`
+     * rather than `mat`s in a recipe block, and that distinction is the whole point: a
+     * knife consumed per chop would be absurd.
+     */
+    val tools: List<String>? = null,
+    /**
+     * The two items the engine binds this recipe to, when they aren't the first two
+     * [ingredients]. Slicing a lemon needs it: the only items involved are the knife and
+     * the fruit, and the knife is a tool rather than something consumed, so there is no
+     * second ingredient to bind against.
+     */
+    val bind: List<String>? = null,
+    /** Cooking level needed; 0 for the assembly steps that have no requirement. */
+    val level: Int = 0,
+    /**
+     * What a failed attempt produces instead of [product]. Only the ugthanki kebab, which
+     * the wiki says succeeds about 46% of the time at level 1 and always from
+     * [neverFailsLevel]. Null means the recipe cannot fail.
+     */
+    val failProduct: String? = null,
+    /** The level at which [failProduct] stops happening; 0 when the recipe can't fail. */
+    val neverFailsLevel: Int = 0,
+    /** Cooking experience paid out; 0.0 for the steps that give none. */
+    val experience: Double = 0.0,
     val message: String,
 ) {
     @Transient
-    var primaryItemId: Int = -1
+    var ingredientIds: IntArray = intArrayOf()
 
     @Transient
-    var secondaryItemId: Int = -1
+    var ingredientAmounts: IntArray = intArrayOf()
 
     @Transient
     var productItemId: Int = -1
 
     @Transient
-    var primaryReplacementId: Int = -1
+    var returnIds: IntArray = intArrayOf()
 
     @Transient
-    var secondaryReplacementId: Int = -1
+    var toolIds: IntArray = intArrayOf()
+
+    @Transient
+    var failProductId: Int = -1
+
+    @Transient
+    var bindIds: IntArray = intArrayOf()
+
+    /** The two items the engine binds this recipe to. */
+    val boundPair: Pair<Int, Int>
+        get() = if (bindIds.isNotEmpty()) bindIds[0] to bindIds[1] else ingredientIds[0] to ingredientIds[1]
 }
 
 /** Where the food is being cooked, which decides both stop-level and burn chance. */

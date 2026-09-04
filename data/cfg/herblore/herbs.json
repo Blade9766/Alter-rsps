@@ -1,0 +1,172 @@
+[
+  {
+    "name": "Guam leaf",
+    "grimy": "item.grimy_guam_leaf",
+    "clean": "item.guam_leaf",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5,
+    "unfinished": "item.guam_potion_unf",
+    "unfinishedLevel": 3
+  },
+  {
+    "name": "Marrentill",
+    "grimy": "item.grimy_marrentill",
+    "clean": "item.marrentill",
+    "cleanLevel": 5,
+    "cleanExperience": 3.8,
+    "unfinished": "item.marrentill_potion_unf",
+    "unfinishedLevel": 5
+  },
+  {
+    "name": "Tarromin",
+    "grimy": "item.grimy_tarromin",
+    "clean": "item.tarromin",
+    "cleanLevel": 11,
+    "cleanExperience": 5.0,
+    "unfinished": "item.tarromin_potion_unf",
+    "unfinishedLevel": 12
+  },
+  {
+    "name": "Harralander",
+    "grimy": "item.grimy_harralander",
+    "clean": "item.harralander",
+    "cleanLevel": 20,
+    "cleanExperience": 6.3,
+    "unfinished": "item.harralander_potion_unf",
+    "unfinishedLevel": 22
+  },
+  {
+    "name": "Ranarr weed",
+    "grimy": "item.grimy_ranarr_weed",
+    "clean": "item.ranarr_weed",
+    "cleanLevel": 25,
+    "cleanExperience": 7.5,
+    "unfinished": "item.ranarr_potion_unf",
+    "unfinishedLevel": 30
+  },
+  {
+    "name": "Toadflax",
+    "grimy": "item.grimy_toadflax",
+    "clean": "item.toadflax",
+    "cleanLevel": 30,
+    "cleanExperience": 8.0,
+    "unfinished": "item.toadflax_potion_unf",
+    "unfinishedLevel": 34
+  },
+  {
+    "name": "Irit leaf",
+    "grimy": "item.grimy_irit_leaf",
+    "clean": "item.irit_leaf",
+    "cleanLevel": 40,
+    "cleanExperience": 8.8,
+    "unfinished": "item.irit_potion_unf",
+    "unfinishedLevel": 45
+  },
+  {
+    "name": "Avantoe",
+    "grimy": "item.grimy_avantoe",
+    "clean": "item.avantoe",
+    "cleanLevel": 48,
+    "cleanExperience": 10.0,
+    "unfinished": "item.avantoe_potion_unf",
+    "unfinishedLevel": 50
+  },
+  {
+    "name": "Kwuarm",
+    "grimy": "item.grimy_kwuarm",
+    "clean": "item.kwuarm",
+    "cleanLevel": 54,
+    "cleanExperience": 11.3,
+    "unfinished": "item.kwuarm_potion_unf",
+    "unfinishedLevel": 55
+  },
+  {
+    "name": "Huasca",
+    "grimy": "item.grimy_huasca",
+    "clean": "item.huasca",
+    "cleanLevel": 58,
+    "cleanExperience": 11.8,
+    "unfinished": "item.huasca_potion_unf",
+    "unfinishedLevel": 58
+  },
+  {
+    "name": "Snapdragon",
+    "grimy": "item.grimy_snapdragon",
+    "clean": "item.snapdragon",
+    "cleanLevel": 59,
+    "cleanExperience": 11.8,
+    "unfinished": "item.snapdragon_potion_unf",
+    "unfinishedLevel": 63
+  },
+  {
+    "name": "Cadantine",
+    "grimy": "item.grimy_cadantine",
+    "clean": "item.cadantine",
+    "cleanLevel": 65,
+    "cleanExperience": 12.5,
+    "unfinished": "item.cadantine_potion_unf",
+    "unfinishedLevel": 66
+  },
+  {
+    "name": "Lantadyme",
+    "grimy": "item.grimy_lantadyme",
+    "clean": "item.lantadyme",
+    "cleanLevel": 67,
+    "cleanExperience": 13.1,
+    "unfinished": "item.lantadyme_potion_unf",
+    "unfinishedLevel": 69
+  },
+  {
+    "name": "Dwarf weed",
+    "grimy": "item.grimy_dwarf_weed",
+    "clean": "item.dwarf_weed",
+    "cleanLevel": 70,
+    "cleanExperience": 13.8,
+    "unfinished": "item.dwarf_weed_potion_unf",
+    "unfinishedLevel": 72
+  },
+  {
+    "name": "Torstol",
+    "grimy": "item.grimy_torstol",
+    "clean": "item.torstol",
+    "cleanLevel": 75,
+    "cleanExperience": 15.0,
+    "unfinished": "item.torstol_potion_unf",
+    "unfinishedLevel": 78
+  },
+  {
+    "name": "Snake weed",
+    "grimy": "item.grimy_snake_weed",
+    "clean": "item.snake_weed",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5
+  },
+  {
+    "name": "Ardrigal",
+    "grimy": "item.grimy_ardrigal",
+    "clean": "item.ardrigal",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5
+  },
+  {
+    "name": "Sito foil",
+    "grimy": "item.grimy_sito_foil",
+    "clean": "item.sito_foil",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5
+  },
+  {
+    "name": "Volencia moss",
+    "grimy": "item.grimy_volencia_moss",
+    "clean": "item.volencia_moss",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5
+  },
+  {
+    "name": "Rogue's purse",
+    "grimy": "item.grimy_rogues_purse",
+    "clean": "item.rogues_purse",
+    "cleanLevel": 3,
+    "cleanExperience": 2.5
+  }
+]

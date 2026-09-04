@@ -13,6 +13,7 @@ import org.alter.game.model.entity.Player
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.items.jewellery.JewelleryPerks
 import org.alter.rscm.RSCM.getRSCM
 
 class PickpocketPlugin(
@@ -105,6 +106,16 @@ class PickpocketPlugin(
             npc.facePawn(player)
         } else {
             npc.resetFacePawn()
+        }
+
+        /*
+         * A dodgy necklace absorbs the whole failure - the stun and the damage both - a quarter of
+         * the time, and only spends a charge when it does. Checked before either is applied, and
+         * after the "Hands off!" and the facing above, which happen either way.
+         */
+        if (JewelleryPerks.dodgyNecklaceSaves(player)) {
+            npc.resetFacePawn()
+            return
         }
 
         val damageRange = entry.stun.damage

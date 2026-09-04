@@ -13,6 +13,7 @@ import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.queue.TaskPriority
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.items.jewellery.JewelleryPerks
 
 /**
  * Smithing, half one: smelting ore into bars at a furnace.
@@ -119,7 +120,14 @@ class SmeltingPlugin(
             }
             entry.ingredients.forEach { player.inventory.remove(item = it.itemId, amount = it.amount) }
 
-            if (player.world.randomDouble() <= entry.successChance) {
+            /*
+             * A ring of forging makes an iron smelt certain. It is asked *before* the roll rather
+             * than only on a failure because a charge goes on every iron ore smelted while the ring
+             * is worn, whether or not the ore would have refined anyway.
+             */
+            val forged = JewelleryPerks.ringOfForgingGuarantees(player, entry.barItemId)
+
+            if (forged || player.world.randomDouble() <= entry.successChance) {
                 player.inventory.add(item = entry.barItemId, amount = 1)
                 player.addXp(Skills.SMITHING, entry.experience)
                 player.message("You retrieve a bar of ${entry.name.removeSuffix(" bar").lowercase()}.")

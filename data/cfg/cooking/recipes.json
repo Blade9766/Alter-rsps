@@ -1,298 +1,1456 @@
 [
   {
     "name": "Bread dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bucket_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bucket_of_water"
+    ],
     "product": "item.bread_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bucket",
+    "returns": [
+      "item.pot",
+      "item.bucket"
+    ],
     "message": "You mix the flour and water into a ball of dough."
   },
   {
     "name": "Pastry dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bucket_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bucket_of_water"
+    ],
     "product": "item.pastry_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bucket",
+    "returns": [
+      "item.pot",
+      "item.bucket"
+    ],
     "message": "You mix the flour and water into a ball of pastry dough."
   },
   {
     "name": "Pitta dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bucket_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bucket_of_water"
+    ],
     "product": "item.pitta_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bucket",
+    "returns": [
+      "item.pot",
+      "item.bucket"
+    ],
     "message": "You mix the flour and water into a ball of pitta dough."
   },
-
+  {
+    "name": "Pizza base",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bucket_of_water"
+    ],
+    "product": "item.pizza_base",
+    "returns": [
+      "item.pot",
+      "item.bucket"
+    ],
+    "level": 35,
+    "message": "You knead the dough out into a pizza base."
+  },
   {
     "name": "Bread dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.jug_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.jug_of_water"
+    ],
     "product": "item.bread_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.jug",
+    "returns": [
+      "item.pot",
+      "item.jug"
+    ],
     "message": "You mix the flour and water into a ball of dough."
   },
   {
     "name": "Pastry dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.jug_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.jug_of_water"
+    ],
     "product": "item.pastry_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.jug",
+    "returns": [
+      "item.pot",
+      "item.jug"
+    ],
     "message": "You mix the flour and water into a ball of pastry dough."
   },
   {
     "name": "Pitta dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.jug_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.jug_of_water"
+    ],
     "product": "item.pitta_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.jug",
+    "returns": [
+      "item.pot",
+      "item.jug"
+    ],
     "message": "You mix the flour and water into a ball of pitta dough."
   },
-
+  {
+    "name": "Pizza base",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.jug_of_water"
+    ],
+    "product": "item.pizza_base",
+    "returns": [
+      "item.pot",
+      "item.jug"
+    ],
+    "level": 35,
+    "message": "You knead the dough out into a pizza base."
+  },
   {
     "name": "Bread dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bowl_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bowl_of_water"
+    ],
     "product": "item.bread_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bowl",
+    "returns": [
+      "item.pot",
+      "item.bowl"
+    ],
     "message": "You mix the flour and water into a ball of dough."
   },
   {
     "name": "Pastry dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bowl_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bowl_of_water"
+    ],
     "product": "item.pastry_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bowl",
+    "returns": [
+      "item.pot",
+      "item.bowl"
+    ],
     "message": "You mix the flour and water into a ball of pastry dough."
   },
   {
     "name": "Pitta dough",
-    "primary": "item.pot_of_flour",
-    "secondary": "item.bowl_of_water",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bowl_of_water"
+    ],
     "product": "item.pitta_dough",
-    "primaryReplacement": "item.pot",
-    "secondaryReplacement": "item.bowl",
+    "returns": [
+      "item.pot",
+      "item.bowl"
+    ],
     "message": "You mix the flour and water into a ball of pitta dough."
   },
-
+  {
+    "name": "Pizza base",
+    "ingredients": [
+      "item.pot_of_flour",
+      "item.bowl_of_water"
+    ],
+    "product": "item.pizza_base",
+    "returns": [
+      "item.pot",
+      "item.bowl"
+    ],
+    "level": 35,
+    "message": "You knead the dough out into a pizza base."
+  },
   {
     "name": "Pie shell",
-    "primary": "item.pie_dish",
-    "secondary": "item.pastry_dough",
+    "ingredients": [
+      "item.pie_dish",
+      "item.pastry_dough"
+    ],
     "product": "item.pie_shell",
     "message": "You put the pastry dough into the pie dish."
   },
-
   {
     "name": "Uncooked berry pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.redberries",
+    "ingredients": [
+      "item.pie_shell",
+      "item.redberries"
+    ],
     "product": "item.uncooked_berry_pie",
     "message": "You put the redberries into the pie shell."
   },
   {
     "name": "Uncooked meat pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.cooked_meat",
+    "ingredients": [
+      "item.pie_shell",
+      "item.cooked_meat"
+    ],
     "product": "item.uncooked_meat_pie",
     "message": "You put the cooked meat into the pie shell."
   },
   {
     "name": "Uncooked apple pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.cooking_apple",
+    "ingredients": [
+      "item.pie_shell",
+      "item.cooking_apple"
+    ],
     "product": "item.uncooked_apple_pie",
     "message": "You put the apple into the pie shell."
   },
   {
     "name": "Uncooked botanical pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.golovanova_fruit_top",
+    "ingredients": [
+      "item.pie_shell",
+      "item.golovanova_fruit_top"
+    ],
     "product": "item.uncooked_botanical_pie",
     "message": "You put the golovanova fruit top into the pie shell."
   },
   {
     "name": "Uncooked mushroom pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.sulliuscep_cap",
+    "ingredients": [
+      "item.pie_shell",
+      "item.sulliuscep_cap"
+    ],
     "product": "item.uncooked_mushroom_pie",
     "message": "You put the sulliuscep cap into the pie shell."
   },
   {
     "name": "Uncooked dragonfruit pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.dragonfruit",
+    "ingredients": [
+      "item.pie_shell",
+      "item.dragonfruit"
+    ],
     "product": "item.uncooked_dragonfruit_pie",
     "message": "You put the dragonfruit into the pie shell."
   },
-
   {
     "name": "Part mud pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.compost",
+    "ingredients": [
+      "item.pie_shell",
+      "item.compost"
+    ],
     "product": "item.part_mud_pie",
     "message": "You put the compost into the pie shell."
   },
   {
     "name": "Part mud pie",
-    "primary": "item.part_mud_pie",
-    "secondary": "item.bucket_of_water",
+    "ingredients": [
+      "item.part_mud_pie",
+      "item.bucket_of_water"
+    ],
     "product": "item.part_mud_pie_7166",
-    "secondaryReplacement": "item.bucket",
+    "returns": [
+      "item.bucket"
+    ],
     "message": "You pour the water into the pie."
   },
   {
     "name": "Raw mud pie",
-    "primary": "item.part_mud_pie_7166",
-    "secondary": "item.clay",
+    "ingredients": [
+      "item.part_mud_pie_7166",
+      "item.clay"
+    ],
     "product": "item.raw_mud_pie",
     "message": "You put the clay into the pie."
   },
-
   {
     "name": "Part garden pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.tomato",
+    "ingredients": [
+      "item.pie_shell",
+      "item.tomato"
+    ],
     "product": "item.part_garden_pie",
     "message": "You put the tomato into the pie shell."
   },
   {
     "name": "Part garden pie",
-    "primary": "item.part_garden_pie",
-    "secondary": "item.onion",
+    "ingredients": [
+      "item.part_garden_pie",
+      "item.onion"
+    ],
     "product": "item.part_garden_pie_7174",
     "message": "You put the onion into the pie."
   },
   {
     "name": "Raw garden pie",
-    "primary": "item.part_garden_pie_7174",
-    "secondary": "item.cabbage",
+    "ingredients": [
+      "item.part_garden_pie_7174",
+      "item.cabbage"
+    ],
     "product": "item.raw_garden_pie",
     "message": "You put the cabbage into the pie."
   },
-
   {
     "name": "Part fish pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.trout",
+    "ingredients": [
+      "item.pie_shell",
+      "item.trout"
+    ],
     "product": "item.part_fish_pie",
     "message": "You put the trout into the pie shell."
   },
   {
     "name": "Part fish pie",
-    "primary": "item.part_fish_pie",
-    "secondary": "item.cod",
+    "ingredients": [
+      "item.part_fish_pie",
+      "item.cod"
+    ],
     "product": "item.part_fish_pie_7184",
     "message": "You put the cod into the pie."
   },
   {
     "name": "Raw fish pie",
-    "primary": "item.part_fish_pie_7184",
-    "secondary": "item.potato",
+    "ingredients": [
+      "item.part_fish_pie_7184",
+      "item.potato"
+    ],
     "product": "item.raw_fish_pie",
     "message": "You put the potato into the pie."
   },
-
   {
     "name": "Part admiral pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.salmon",
+    "ingredients": [
+      "item.pie_shell",
+      "item.salmon"
+    ],
     "product": "item.part_admiral_pie",
     "message": "You put the salmon into the pie shell."
   },
   {
     "name": "Part admiral pie",
-    "primary": "item.part_admiral_pie",
-    "secondary": "item.tuna",
+    "ingredients": [
+      "item.part_admiral_pie",
+      "item.tuna"
+    ],
     "product": "item.part_admiral_pie_7194",
     "message": "You put the tuna into the pie."
   },
   {
     "name": "Raw admiral pie",
-    "primary": "item.part_admiral_pie_7194",
-    "secondary": "item.potato",
+    "ingredients": [
+      "item.part_admiral_pie_7194",
+      "item.potato"
+    ],
     "product": "item.raw_admiral_pie",
     "message": "You put the potato into the pie."
   },
-
   {
     "name": "Part wild pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.raw_bear_meat",
+    "ingredients": [
+      "item.pie_shell",
+      "item.raw_bear_meat"
+    ],
     "product": "item.part_wild_pie",
     "message": "You put the raw bear meat into the pie shell."
   },
   {
     "name": "Part wild pie",
-    "primary": "item.part_wild_pie",
-    "secondary": "item.raw_chompy",
+    "ingredients": [
+      "item.part_wild_pie",
+      "item.raw_chompy"
+    ],
     "product": "item.part_wild_pie_7204",
     "message": "You put the raw chompy into the pie."
   },
   {
     "name": "Raw wild pie",
-    "primary": "item.part_wild_pie_7204",
-    "secondary": "item.raw_rabbit",
+    "ingredients": [
+      "item.part_wild_pie_7204",
+      "item.raw_rabbit"
+    ],
     "product": "item.raw_wild_pie",
     "message": "You put the raw rabbit into the pie."
   },
-
   {
     "name": "Part summer pie",
-    "primary": "item.pie_shell",
-    "secondary": "item.strawberry",
+    "ingredients": [
+      "item.pie_shell",
+      "item.strawberry"
+    ],
     "product": "item.part_summer_pie",
     "message": "You put the strawberry into the pie shell."
   },
   {
     "name": "Part summer pie",
-    "primary": "item.part_summer_pie",
-    "secondary": "item.watermelon",
+    "ingredients": [
+      "item.part_summer_pie",
+      "item.watermelon"
+    ],
     "product": "item.part_summer_pie_7214",
     "message": "You put the watermelon into the pie."
   },
   {
     "name": "Raw summer pie",
-    "primary": "item.part_summer_pie_7214",
-    "secondary": "item.cooking_apple",
+    "ingredients": [
+      "item.part_summer_pie_7214",
+      "item.cooking_apple"
+    ],
     "product": "item.raw_summer_pie",
     "message": "You put the apple into the pie."
   },
-
+  {
+    "name": "Incomplete pizza",
+    "ingredients": [
+      "item.pizza_base",
+      "item.tomato"
+    ],
+    "product": "item.incomplete_pizza",
+    "message": "You put the tomato on the pizza base."
+  },
+  {
+    "name": "Uncooked pizza",
+    "ingredients": [
+      "item.incomplete_pizza",
+      "item.cheese"
+    ],
+    "product": "item.uncooked_pizza",
+    "message": "You put the cheese on the pizza."
+  },
+  {
+    "name": "Meat pizza",
+    "ingredients": [
+      "item.plain_pizza",
+      "item.cooked_meat"
+    ],
+    "product": "item.meat_pizza",
+    "level": 45,
+    "experience": 26.0,
+    "message": "You put the cooked meat on the pizza."
+  },
+  {
+    "name": "Meat pizza",
+    "ingredients": [
+      "item.plain_pizza",
+      "item.cooked_chicken"
+    ],
+    "product": "item.meat_pizza",
+    "level": 45,
+    "experience": 26.0,
+    "message": "You put the cooked chicken on the pizza."
+  },
+  {
+    "name": "Anchovy pizza",
+    "ingredients": [
+      "item.plain_pizza",
+      "item.anchovies"
+    ],
+    "product": "item.anchovy_pizza",
+    "level": 55,
+    "experience": 39.0,
+    "message": "You put the anchovies on the pizza."
+  },
+  {
+    "name": "Pineapple pizza",
+    "ingredients": [
+      "item.plain_pizza",
+      "item.pineapple_chunks"
+    ],
+    "product": "item.pineapple_pizza",
+    "level": 65,
+    "experience": 45.0,
+    "message": "You put the pineapple chunks on the pizza."
+  },
+  {
+    "name": "Pineapple pizza",
+    "ingredients": [
+      "item.plain_pizza",
+      "item.pineapple_ring"
+    ],
+    "product": "item.pineapple_pizza",
+    "level": 65,
+    "experience": 45.0,
+    "message": "You put the pineapple rings on the pizza."
+  },
+  {
+    "name": "Uncooked cake",
+    "ingredients": [
+      "item.cake_tin",
+      "item.egg",
+      "item.bucket_of_milk",
+      "item.pot_of_flour"
+    ],
+    "product": "item.uncooked_cake",
+    "returns": [
+      "item.bucket",
+      "item.pot"
+    ],
+    "message": "You mix the milk, flour and egg together into a cake mix."
+  },
+  {
+    "name": "Uncooked cake",
+    "ingredients": [
+      "item.cake_tin",
+      "item.bucket_of_milk",
+      "item.egg",
+      "item.pot_of_flour"
+    ],
+    "product": "item.uncooked_cake",
+    "returns": [
+      "item.bucket",
+      "item.pot"
+    ],
+    "message": "You mix the milk, flour and egg together into a cake mix."
+  },
+  {
+    "name": "Uncooked cake",
+    "ingredients": [
+      "item.cake_tin",
+      "item.pot_of_flour",
+      "item.egg",
+      "item.bucket_of_milk"
+    ],
+    "product": "item.uncooked_cake",
+    "returns": [
+      "item.bucket",
+      "item.pot"
+    ],
+    "message": "You mix the milk, flour and egg together into a cake mix."
+  },
+  {
+    "name": "Chocolate cake",
+    "ingredients": [
+      "item.cake",
+      "item.chocolate_bar"
+    ],
+    "product": "item.chocolate_cake",
+    "level": 50,
+    "experience": 30.0,
+    "message": "You cover the cake in chocolate."
+  },
   {
     "name": "Incomplete stew",
-    "primary": "item.bowl_of_water",
-    "secondary": "item.potato",
+    "ingredients": [
+      "item.bowl_of_water",
+      "item.potato"
+    ],
     "product": "item.incomplete_stew",
     "message": "You put the potato into the bowl of water."
   },
   {
     "name": "Uncooked stew",
-    "primary": "item.incomplete_stew",
-    "secondary": "item.cooked_meat",
+    "ingredients": [
+      "item.incomplete_stew",
+      "item.cooked_meat"
+    ],
     "product": "item.uncooked_stew",
     "message": "You put the cooked meat into the stew."
   },
   {
     "name": "Uncooked stew",
-    "primary": "item.incomplete_stew",
-    "secondary": "item.cooked_chicken",
+    "ingredients": [
+      "item.incomplete_stew",
+      "item.cooked_chicken"
+    ],
     "product": "item.uncooked_stew",
     "message": "You put the cooked chicken into the stew."
   },
   {
     "name": "Uncooked curry",
-    "primary": "item.uncooked_stew",
-    "secondary": "item.spice",
+    "ingredients": [
+      "item.uncooked_stew",
+      "item.spice"
+    ],
     "product": "item.uncooked_curry",
+    "level": 60,
     "message": "You add the spice to the stew."
+  },
+  {
+    "name": "Uncooked curry",
+    "ingredients": [
+      "item.uncooked_stew",
+      "item.curry_leaf"
+    ],
+    "amounts": [
+      1,
+      3
+    ],
+    "product": "item.uncooked_curry",
+    "level": 60,
+    "message": "You add the curry leaves to the stew."
+  },
+  {
+    "name": "Unfermented wine",
+    "ingredients": [
+      "item.jug_of_water",
+      "item.grapes"
+    ],
+    "product": "item.unfermented_wine",
+    "level": 35,
+    "message": "You squeeze the grapes into the jug of water."
+  },
+  {
+    "name": "Chopped onion",
+    "ingredients": [
+      "item.bowl",
+      "item.onion"
+    ],
+    "product": "item.chopped_onion",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the onion into the bowl."
+  },
+  {
+    "name": "Sliced mushrooms",
+    "ingredients": [
+      "item.bowl",
+      "item.mushroom"
+    ],
+    "product": "item.sliced_mushrooms",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You slice the mushroom into the bowl."
+  },
+  {
+    "name": "Chopped tuna",
+    "ingredients": [
+      "item.bowl",
+      "item.tuna"
+    ],
+    "product": "item.chopped_tuna",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the tuna into the bowl."
+  },
+  {
+    "name": "Chopped garlic",
+    "ingredients": [
+      "item.bowl",
+      "item.garlic"
+    ],
+    "product": "item.chopped_garlic",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the garlic into the bowl."
+  },
+  {
+    "name": "Minced meat",
+    "ingredients": [
+      "item.bowl",
+      "item.cooked_meat"
+    ],
+    "product": "item.minced_meat",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You mince the meat into the bowl."
+  },
+  {
+    "name": "Uncooked egg",
+    "ingredients": [
+      "item.bowl",
+      "item.egg"
+    ],
+    "product": "item.uncooked_egg",
+    "level": 13,
+    "message": "You break the egg into the bowl."
+  },
+  {
+    "name": "Spicy sauce",
+    "ingredients": [
+      "item.chopped_garlic",
+      "item.gnome_spice"
+    ],
+    "product": "item.spicy_sauce",
+    "level": 9,
+    "experience": 25.0,
+    "message": "You mix the garlic and spice into a spicy sauce."
+  },
+  {
+    "name": "Chilli con carne",
+    "ingredients": [
+      "item.spicy_sauce",
+      "item.minced_meat"
+    ],
+    "product": "item.chilli_con_carne",
+    "returns": [
+      "item.bowl"
+    ],
+    "level": 11,
+    "message": "You mix the minced meat into the spicy sauce."
+  },
+  {
+    "name": "Egg and tomato",
+    "ingredients": [
+      "item.scrambled_egg",
+      "item.tomato"
+    ],
+    "product": "item.egg_and_tomato",
+    "level": 23,
+    "message": "You mix the tomato into the scrambled egg."
+  },
+  {
+    "name": "Mushroom & onion",
+    "ingredients": [
+      "item.fried_mushrooms",
+      "item.fried_onions"
+    ],
+    "product": "item.mushroom__onion",
+    "returns": [
+      "item.bowl"
+    ],
+    "level": 57,
+    "message": "You tip the fried onions in with the mushrooms."
+  },
+  {
+    "name": "Tuna and corn",
+    "ingredients": [
+      "item.cooked_sweetcorn",
+      "item.chopped_tuna"
+    ],
+    "product": "item.tuna_and_corn",
+    "returns": [
+      "item.bowl"
+    ],
+    "level": 67,
+    "message": "You mix the tuna in with the sweetcorn."
+  },
+  {
+    "name": "Potato with butter",
+    "ingredients": [
+      "item.baked_potato",
+      "item.pat_of_butter"
+    ],
+    "product": "item.potato_with_butter",
+    "level": 39,
+    "experience": 40.0,
+    "message": "You butter the potato."
+  },
+  {
+    "name": "Chilli potato",
+    "ingredients": [
+      "item.potato_with_butter",
+      "item.chilli_con_carne"
+    ],
+    "product": "item.chilli_potato",
+    "level": 41,
+    "experience": 15.0,
+    "message": "You top the potato with the chilli con carne."
+  },
+  {
+    "name": "Potato with cheese",
+    "ingredients": [
+      "item.potato_with_butter",
+      "item.cheese"
+    ],
+    "product": "item.potato_with_cheese",
+    "level": 47,
+    "experience": 40.0,
+    "message": "You top the potato with the cheese."
+  },
+  {
+    "name": "Egg potato",
+    "ingredients": [
+      "item.potato_with_butter",
+      "item.egg_and_tomato"
+    ],
+    "product": "item.egg_potato",
+    "level": 51,
+    "experience": 45.0,
+    "message": "You top the potato with the egg and tomato."
+  },
+  {
+    "name": "Mushroom potato",
+    "ingredients": [
+      "item.potato_with_butter",
+      "item.mushroom__onion"
+    ],
+    "product": "item.mushroom_potato",
+    "level": 64,
+    "experience": 55.0,
+    "message": "You top the potato with the mushroom & onion."
+  },
+  {
+    "name": "Tuna potato",
+    "ingredients": [
+      "item.potato_with_butter",
+      "item.tuna_and_corn"
+    ],
+    "product": "item.tuna_potato",
+    "level": 68,
+    "experience": 10.0,
+    "message": "You top the potato with the tuna and corn."
+  },
+  {
+    "name": "Skewered bird meat",
+    "ingredients": [
+      "item.iron_spit",
+      "item.raw_bird_meat"
+    ],
+    "product": "item.skewered_bird_meat",
+    "message": "You skewer the bird meat on the iron spit."
+  },
+  {
+    "name": "Skewered beast meat",
+    "ingredients": [
+      "item.iron_spit",
+      "item.raw_beast_meat"
+    ],
+    "product": "item.skewered_beast",
+    "message": "You skewer the beast meat on the iron spit."
+  },
+  {
+    "name": "Skewered rabbit",
+    "ingredients": [
+      "item.iron_spit",
+      "item.raw_rabbit"
+    ],
+    "product": "item.skewered_rabbit",
+    "message": "You skewer the rabbit on the iron spit."
+  },
+  {
+    "name": "Skewered chompy",
+    "ingredients": [
+      "item.iron_spit",
+      "item.raw_chompy"
+    ],
+    "product": "item.skewered_chompy",
+    "message": "You skewer the chompy on the iron spit."
+  },
+  {
+    "name": "Chopped tomato",
+    "ingredients": [
+      "item.bowl",
+      "item.tomato"
+    ],
+    "product": "item.chopped_tomato",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the tomato into the bowl."
+  },
+  {
+    "name": "Chopped ugthanki",
+    "ingredients": [
+      "item.bowl",
+      "item.ugthanki_meat"
+    ],
+    "product": "item.chopped_ugthanki",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the ugthanki meat into the bowl."
+  },
+  {
+    "name": "Onion & tomato",
+    "ingredients": [
+      "item.chopped_tomato",
+      "item.onion"
+    ],
+    "product": "item.onion__tomato",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the onion into the bowl."
+  },
+  {
+    "name": "Onion & tomato",
+    "ingredients": [
+      "item.chopped_onion",
+      "item.tomato"
+    ],
+    "product": "item.onion__tomato",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the tomato into the bowl."
+  },
+  {
+    "name": "Ugthanki & onion",
+    "ingredients": [
+      "item.chopped_ugthanki",
+      "item.onion"
+    ],
+    "product": "item.ugthanki__onion",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the onion into the bowl."
+  },
+  {
+    "name": "Ugthanki & onion",
+    "ingredients": [
+      "item.chopped_onion",
+      "item.ugthanki_meat"
+    ],
+    "product": "item.ugthanki__onion",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the ugthanki meat into the bowl."
+  },
+  {
+    "name": "Ugthanki & tomato",
+    "ingredients": [
+      "item.chopped_ugthanki",
+      "item.tomato"
+    ],
+    "product": "item.ugthanki__tomato",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the tomato into the bowl."
+  },
+  {
+    "name": "Ugthanki & tomato",
+    "ingredients": [
+      "item.chopped_tomato",
+      "item.ugthanki_meat"
+    ],
+    "product": "item.ugthanki__tomato",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the ugthanki meat into the bowl."
+  },
+  {
+    "name": "Kebab mix",
+    "ingredients": [
+      "item.onion__tomato",
+      "item.ugthanki_meat"
+    ],
+    "product": "item.kebab_mix",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the ugthanki meat into the bowl."
+  },
+  {
+    "name": "Kebab mix",
+    "ingredients": [
+      "item.ugthanki__onion",
+      "item.tomato"
+    ],
+    "product": "item.kebab_mix",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the tomato into the bowl."
+  },
+  {
+    "name": "Kebab mix",
+    "ingredients": [
+      "item.ugthanki__tomato",
+      "item.onion"
+    ],
+    "product": "item.kebab_mix",
+    "tools": [
+      "item.knife"
+    ],
+    "message": "You chop the onion into the bowl."
+  },
+  {
+    "name": "Ugthanki kebab",
+    "ingredients": [
+      "item.pitta_bread",
+      "item.kebab_mix"
+    ],
+    "product": "item.ugthanki_kebab_1885",
+    "returns": [
+      "item.bowl"
+    ],
+    "level": 1,
+    "experience": 40.0,
+    "failProduct": "item.ugthanki_kebab",
+    "neverFailsLevel": 37,
+    "message": "You fill the pitta bread with the kebab mix."
+  },
+  {
+    "name": "Raw crunchies",
+    "ingredients": [
+      "item.crunchy_tray",
+      "item.gianne_dough"
+    ],
+    "product": "item.raw_crunchies",
+    "experience": 30.0,
+    "message": "You put the gianne dough into the crunchy tray."
+  },
+  {
+    "name": "Raw batta",
+    "ingredients": [
+      "item.batta_tin",
+      "item.gianne_dough"
+    ],
+    "product": "item.raw_batta",
+    "experience": 30.0,
+    "message": "You put the gianne dough into the batta tin."
+  },
+  {
+    "name": "Raw gnomebowl",
+    "ingredients": [
+      "item.gnomebowl_mould",
+      "item.gianne_dough"
+    ],
+    "product": "item.raw_gnomebowl",
+    "experience": 30.0,
+    "message": "You put the gianne dough into the gnomebowl mould."
+  },
+  {
+    "name": "Half made crunchy (toad)",
+    "ingredients": [
+      "item.half_baked_crunchy",
+      "item.toads_legs",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_crunchy_9581",
+    "amounts": [
+      1,
+      2,
+      1
+    ],
+    "level": 10,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked crunchy."
+  },
+  {
+    "name": "Toad Crunchies",
+    "ingredients": [
+      "item.unfinished_crunchy_9582",
+      "item.equa_leaves"
+    ],
+    "product": "item.toad_crunchies",
+    "level": 10,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made crunchy (spicy)",
+    "ingredients": [
+      "item.half_baked_crunchy",
+      "item.equa_leaves",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_crunchy_9579",
+    "amounts": [
+      1,
+      2,
+      1
+    ],
+    "level": 12,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked crunchy."
+  },
+  {
+    "name": "Spicy Crunchies",
+    "ingredients": [
+      "item.unfinished_crunchy_9580",
+      "item.gnome_spice"
+    ],
+    "product": "item.spicy_crunchies",
+    "level": 12,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made crunchy (worm)",
+    "ingredients": [
+      "item.half_baked_crunchy",
+      "item.king_worm",
+      "item.equa_leaves",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_crunchy_9583",
+    "amounts": [
+      1,
+      2,
+      1,
+      1
+    ],
+    "level": 14,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked crunchy."
+  },
+  {
+    "name": "Worm Crunchies",
+    "ingredients": [
+      "item.unfinished_crunchy_9584",
+      "item.gnome_spice"
+    ],
+    "product": "item.worm_crunchies",
+    "level": 14,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made crunchy (chocchip)",
+    "ingredients": [
+      "item.half_baked_crunchy",
+      "item.chocolate_bar",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_crunchy",
+    "amounts": [
+      1,
+      2,
+      1
+    ],
+    "level": 16,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked crunchy."
+  },
+  {
+    "name": "Chocchip Crunchies",
+    "ingredients": [
+      "item.unfinished_crunchy_9578",
+      "item.chocolate_dust"
+    ],
+    "product": "item.chocchip_crunchies",
+    "level": 16,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made batta (fruit)",
+    "ingredients": [
+      "item.half_baked_batta",
+      "item.equa_leaves",
+      "item.lime_chunks",
+      "item.orange_chunks",
+      "item.pineapple_chunks"
+    ],
+    "product": "item.half_made_batta",
+    "amounts": [
+      1,
+      4,
+      1,
+      1,
+      1
+    ],
+    "level": 25,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked batta."
+  },
+  {
+    "name": "Fruit Batta",
+    "ingredients": [
+      "item.unfinished_batta_9479",
+      "item.gnome_spice"
+    ],
+    "product": "item.fruit_batta",
+    "level": 25,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made batta (toad)",
+    "ingredients": [
+      "item.half_baked_batta",
+      "item.equa_leaves",
+      "item.cheese",
+      "item.toads_legs",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_batta_9482",
+    "level": 26,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked batta."
+  },
+  {
+    "name": "Half made batta (worm)",
+    "ingredients": [
+      "item.half_baked_batta",
+      "item.king_worm",
+      "item.cheese",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_batta_9480",
+    "level": 27,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked batta."
+  },
+  {
+    "name": "Worm Batta",
+    "ingredients": [
+      "item.unfinished_batta_9481",
+      "item.equa_leaves"
+    ],
+    "product": "item.worm_batta",
+    "level": 27,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made batta (vegetable)",
+    "ingredients": [
+      "item.half_baked_batta",
+      "item.tomato",
+      "item.dwellberries",
+      "item.onion",
+      "item.cheese",
+      "item.cabbage"
+    ],
+    "product": "item.half_made_batta_9485",
+    "amounts": [
+      1,
+      2,
+      1,
+      1,
+      1,
+      1
+    ],
+    "level": 28,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked batta."
+  },
+  {
+    "name": "Vegetable Batta",
+    "ingredients": [
+      "item.unfinished_batta_9486",
+      "item.equa_leaves"
+    ],
+    "product": "item.vegetable_batta",
+    "level": 28,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made batta (cheese+tom)",
+    "ingredients": [
+      "item.half_baked_batta",
+      "item.cheese",
+      "item.tomato"
+    ],
+    "product": "item.half_made_batta_9483",
+    "level": 29,
+    "experience": 40.0,
+    "message": "You add the ingredients to the half baked batta."
+  },
+  {
+    "name": "Cheesetom Batta",
+    "ingredients": [
+      "item.unfinished_batta_9484",
+      "item.equa_leaves"
+    ],
+    "product": "item.cheesetom_batta",
+    "level": 29,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made bowl (worm hole)",
+    "ingredients": [
+      "item.half_baked_bowl",
+      "item.king_worm",
+      "item.onion",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_bowl_9559",
+    "amounts": [
+      1,
+      4,
+      2,
+      1
+    ],
+    "level": 30,
+    "experience": 50.0,
+    "message": "You add the ingredients to the half baked bowl."
+  },
+  {
+    "name": "Worm Hole",
+    "ingredients": [
+      "item.unfinished_bowl_9560",
+      "item.equa_leaves"
+    ],
+    "product": "item.worm_hole",
+    "level": 30,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made bowl (veg ball)",
+    "ingredients": [
+      "item.half_baked_bowl",
+      "item.onion",
+      "item.potato",
+      "item.gnome_spice"
+    ],
+    "product": "item.half_made_bowl_9561",
+    "amounts": [
+      1,
+      2,
+      2,
+      1
+    ],
+    "level": 35,
+    "experience": 50.0,
+    "message": "You add the ingredients to the half baked bowl."
+  },
+  {
+    "name": "Veg Ball",
+    "ingredients": [
+      "item.unfinished_bowl_9562",
+      "item.equa_leaves"
+    ],
+    "product": "item.veg_ball",
+    "level": 35,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Half made bowl (toad legs)",
+    "ingredients": [
+      "item.half_baked_bowl",
+      "item.toads_legs",
+      "item.cheese",
+      "item.equa_leaves",
+      "item.gnome_spice",
+      "item.dwellberries"
+    ],
+    "product": "item.half_made_bowl",
+    "amounts": [
+      1,
+      4,
+      2,
+      2,
+      1,
+      1
+    ],
+    "level": 40,
+    "experience": 50.0,
+    "message": "You add the ingredients to the half baked bowl."
+  },
+  {
+    "name": "Half made bowl (choc bomb)",
+    "ingredients": [
+      "item.half_baked_bowl",
+      "item.chocolate_bar",
+      "item.equa_leaves"
+    ],
+    "product": "item.half_made_bowl_9563",
+    "amounts": [
+      1,
+      4,
+      1
+    ],
+    "level": 42,
+    "experience": 50.0,
+    "message": "You add the ingredients to the half baked bowl."
+  },
+  {
+    "name": "Chocolate Bomb",
+    "ingredients": [
+      "item.unfinished_bowl_9564",
+      "item.pot_of_cream",
+      "item.chocolate_dust"
+    ],
+    "product": "item.chocolate_bomb",
+    "amounts": [
+      1,
+      2,
+      1
+    ],
+    "level": 42,
+    "message": "You add the finishing touches."
+  },
+  {
+    "name": "Lemon slices",
+    "ingredients": [
+      "item.lemon"
+    ],
+    "product": "item.lemon_slices",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.lemon"
+    ],
+    "message": "You slice the lemon."
+  },
+  {
+    "name": "Lemon chunks",
+    "ingredients": [
+      "item.lemon"
+    ],
+    "product": "item.lemon_chunks",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.lemon"
+    ],
+    "message": "You dice the lemon."
+  },
+  {
+    "name": "Lime slices",
+    "ingredients": [
+      "item.lime"
+    ],
+    "product": "item.lime_slices",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.lime"
+    ],
+    "message": "You slice the lime."
+  },
+  {
+    "name": "Lime chunks",
+    "ingredients": [
+      "item.lime"
+    ],
+    "product": "item.lime_chunks",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.lime"
+    ],
+    "message": "You dice the lime."
+  },
+  {
+    "name": "Orange slices",
+    "ingredients": [
+      "item.orange"
+    ],
+    "product": "item.orange_slices",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.orange"
+    ],
+    "message": "You slice the orange."
+  },
+  {
+    "name": "Orange chunks",
+    "ingredients": [
+      "item.orange"
+    ],
+    "product": "item.orange_chunks",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.orange"
+    ],
+    "message": "You dice the orange."
+  },
+  {
+    "name": "Pineapple chunks",
+    "ingredients": [
+      "item.pineapple"
+    ],
+    "product": "item.pineapple_chunks",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.pineapple"
+    ],
+    "message": "You dice the pineapple."
+  },
+  {
+    "name": "Pineapple ring",
+    "ingredients": [
+      "item.pineapple"
+    ],
+    "product": "item.pineapple_ring",
+    "tools": [
+      "item.knife"
+    ],
+    "bind": [
+      "item.knife",
+      "item.pineapple"
+    ],
+    "message": "You slice the pineapple into rings."
   }
 ]

@@ -13,6 +13,7 @@ import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.queue.TaskPriority
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.skills.strength.Strength
 import org.alter.rscm.RSCM.getRSCM
 
 /**
@@ -138,27 +139,55 @@ class FishingPlugin(
         }
     }
 
-    private data class Fish(val name: String, val itemId: Int, val level: Int, val experience: Double, val message: String)
+    /**
+     * One catchable fish.
+     *
+     * [strengthLevel] and [strengthExperience] are only ever non-default for the barehanded
+     * catches: every other way of fishing asks nothing of Strength and pays nothing into it.
+     */
+    private data class Fish(
+        val name: String,
+        val itemId: Int,
+        val level: Int,
+        val experience: Double,
+        val message: String,
+        val strengthLevel: Int = 1,
+        val strengthExperience: Double = 0.0,
+    )
 
-    /** Net / harpoon / cage fishing: a held tool, no bait consumption. */
+    /**
+     * Net / harpoon / cage fishing: a held tool, no bait consumption.
+     *
+     * [tool] is null for barehanded fishing, the one method with no tool at all - the arm is the
+     * bait. That method is also the only one whose catches carry a Strength requirement, so the
+     * eligible set is filtered on both skills rather than on Fishing alone and the roll is handed
+     * the already-filtered list; otherwise a player past the Fishing level but short of the
+     * Strength one would land fish they cannot pull in.
+     */
     private suspend fun fishWithTool(
         task: QueueTask,
         player: Player,
         spot: Npc,
-        tool: Int,
+        tool: Int?,
         toolName: String,
         animation: Int,
         sound: Int,
         catches: List<Fish>,
     ) {
-        if (!player.inventory.contains(tool) && !player.equipment.contains(tool)) {
+        if (tool != null && !player.inventory.contains(tool) && !player.equipment.contains(tool)) {
             player.message("You need a $toolName to fish here.")
             return
         }
         val level = player.getSkills().getCurrentLevel(Skills.FISHING)
-        val minLevel = catches.minOf { it.level }
-        if (level < minLevel) {
-            player.message("You need a Fishing level of $minLevel to fish here.")
+        val strength = player.getSkills().getCurrentLevel(Skills.STRENGTH)
+        val eligible = catches.filter { level >= it.level && strength >= it.strengthLevel }
+        if (eligible.isEmpty()) {
+            val easiest = catches.minByOrNull { it.level }!!
+            if (level < easiest.level) {
+                player.message("You need a Fishing level of ${easiest.level} to fish here.")
+            } else {
+                player.message("You need a Strength level of ${easiest.strengthLevel} to fish here.")
+            }
             return
         }
         if (player.inventory.isFull) {
@@ -173,19 +202,38 @@ class FishingPlugin(
             task.wait(4)
 
             if (player.world.randomDouble() <= catchChance(level)) {
-                val caught = rollFish(level, catches, player.world)
+                val caught = rollFish(level, eligible, player.world)
                 player.addXp(Skills.FISHING, caught.experience)
+                if (caught.strengthExperience > 0.0) {
+                    player.addXp(Skills.STRENGTH, caught.strengthExperience)
+                }
                 player.inventory.add(item = caught.itemId, amount = 1)
                 player.message(caught.message)
             }
         }
     }
 
+    /**
+     * Harpooning, or barehanded fishing when there is no harpoon to hand.
+     *
+     * The client sends the same "Harpoon" option either way - barehanded fishing adds no menu
+     * entry of its own - so the choice is made here: a player carrying a harpoon uses it, and a
+     * player with none who has been taught by Otto Godblessed fishes with their arm instead.
+     * Without the lesson the harpoon branch runs and says what is missing, as it always did.
+     */
     private suspend fun fishHarpoon(
         task: QueueTask,
         player: Player,
         spot: Npc,
-    ) = fishWithTool(task, player, spot, getRSCM("item.harpoon"), "harpoon", HARPOON_ANIMATION, Sound.FISH_SPLASH, HARPOON_CATCHES)
+    ) {
+        val harpoon = getRSCM("item.harpoon")
+        val carrying = player.inventory.contains(harpoon) || player.equipment.contains(harpoon)
+        if (!carrying && Strength.hasBarehandFishing(player)) {
+            fishWithTool(task, player, spot, null, "harpoon", BAREHAND_ANIMATION, Sound.FISH_SPLASH, BAREHAND_CATCHES)
+            return
+        }
+        fishWithTool(task, player, spot, harpoon, "harpoon", HARPOON_ANIMATION, Sound.FISH_SPLASH, HARPOON_CATCHES)
+    }
 
     private suspend fun fishCage(
         task: QueueTask,
@@ -323,6 +371,14 @@ class FishingPlugin(
         const val HARPOON_ANIMATION = 618 // AnimationID.HUMAN_HARPOON
         const val CAGE_ANIMATION = 619 // AnimationID.HUMAN_LOBSTER
 
+        /**
+         * RuneLite's AnimationID.FISHING_BAREHAND. The catch-specific follow-ups it names
+         * alongside this one - 6705-6708, 6710 and 6711, a pair per fish - are not played: the
+         * loop below has a single animation slot, and a reeling-in animation only reads right
+         * when it follows a successful catch, which needs its own timing pass.
+         */
+        const val BAREHAND_ANIMATION = 6709
+
         const val DRAYNOR_SPOT = "npc.fishing_spot_1499" // real Net+Bait combo variant
         const val SMALL_NET_BAIT_SPOT = "npc.fishing_spot_1497" // real Small Net+Bait combo variant
         const val ROD_FISHING_SPOT = "npc.rod_fishing_spot" // real Lure+Bait variant
@@ -344,7 +400,31 @@ class FishingPlugin(
         val SARDINE_HERRING_CATCHES = listOf(SARDINE, HERRING)
         val FULL_BAIT_CATCHES = listOf(SARDINE, HERRING, PIKE)
         val FLY_CATCHES = listOf(TROUT, SALMON, RAINBOW_FISH)
+        /**
+         * Barehanded tuna and swordfish: twenty Fishing levels above the harpoon versions, a
+         * Strength requirement equal to the harpoon version's Fishing level, and a Strength
+         * payout of a tenth of the Fishing experience. Shark is the third barehanded catch in
+         * the live game (96 Fishing / 76 Strength) but is left out because harpooning cannot
+         * catch one here either - it belongs with a pass that puts sharks at the spots that
+         * actually have them.
+         */
+        val TUNA_BAREHAND =
+            TUNA.copy(
+                level = 55,
+                strengthLevel = 35,
+                strengthExperience = 8.0,
+                message = "You catch a tuna with your bare hands.",
+            )
+        val SWORDFISH_BAREHAND =
+            SWORDFISH.copy(
+                level = 70,
+                strengthLevel = 50,
+                strengthExperience = 10.0,
+                message = "You catch a swordfish with your bare hands.",
+            )
+
         val HARPOON_CATCHES = listOf(TUNA, SWORDFISH)
+        val BAREHAND_CATCHES = listOf(TUNA_BAREHAND, SWORDFISH_BAREHAND)
         val CAGE_CATCHES = listOf(LOBSTER)
 
         // Draynor Village riverbank (real Net+Bait: shrimp/anchovy, sardine/herring).

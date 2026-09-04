@@ -1,5 +1,9 @@
 package org.alter.plugins.content.skills.agility
 
+import org.alter.game.model.Direction
+import org.alter.game.model.Tile
+import kotlin.math.abs
+
 /**
  * Immutable configuration for one Agility course, loaded from `data/cfg/agility/courses.json`.
  *
@@ -172,3 +176,91 @@ data class ObstacleFail(
 }
 
 private fun List<Int>?.isTile(): Boolean = this != null && size == 3
+
+/**
+ * The cardinal direction from [from] to [towards], collapsed onto whichever axis dominates.
+ *
+ * The route finder can leave the player on a tile that is diagonal to the obstacle - beside a pipe
+ * mouth rather than in front of it - and a diagonal crossing would carry them off sideways, so the
+ * smaller component is dropped. `null` when the player is standing on the object itself.
+ */
+internal fun axisTowards(
+    from: Tile,
+    towards: Tile,
+): Direction? {
+    val deltaX = towards.x - from.x
+    val deltaZ = towards.z - from.z
+    return when {
+        deltaX == 0 && deltaZ == 0 -> null
+        abs(deltaX) > abs(deltaZ) -> if (deltaX > 0) Direction.EAST else Direction.WEST
+        else -> if (deltaZ > 0) Direction.NORTH else Direction.SOUTH
+    }
+}
+
+/**
+ * The tile a [DestinationMode.THROUGH] obstacle would throw a player standing on [from] to when they
+ * interact with a loc whose south-west tile is [objectTile]: straight through, [ObstacleEntry.distance]
+ * tiles along the axis pointing at the object. `null` when the player is standing on the object itself.
+ *
+ * This is pure geometry and does not ask whether the result is somewhere a player can be - see
+ * [throughLandingFrom] for the guarded version the plugin actually uses.
+ */
+internal fun ObstacleEntry.rawThroughLandingFrom(
+    from: Tile,
+    objectTile: Tile,
+): Tile? {
+    val direction = axisTowards(from, objectTile) ?: return null
+    return Tile(
+        x = from.x + direction.getDeltaX() * distance,
+        z = from.z + direction.getDeltaZ() * distance,
+        height = from.height + heightChange,
+    )
+}
+
+/**
+ * Where a [DestinationMode.THROUGH] obstacle drops a player standing on [from], or `null` when it
+ * cannot be crossed from there.
+ *
+ * The landing depends on which side the player approached from, and the route finder is happy to
+ * leave them at the *end* of a net or wall rather than in front of it. Projecting the crossing from
+ * there aims it straight along the obstacle instead of through it, which lands the player inside the
+ * scenery the obstacle is part of - stuck on a blocked tile with no obstacle to take them back out.
+ * The Gnome Stronghold nets and pipes each have several such approaches.
+ *
+ * So the landing is only offered when [canStandOn] accepts it; otherwise the caller reports that the
+ * obstacle cannot be used from where the player is standing. `AgilityVerify` checks this holds for
+ * every tile the engine can leave a player on.
+ */
+internal fun ObstacleEntry.throughLandingFrom(
+    from: Tile,
+    objectTile: Tile,
+    canStandOn: (Tile) -> Boolean,
+): Tile? = rawThroughLandingFrom(from, objectTile)?.takeIf(canStandOn)
+
+/** `[x, z, height]` as authored in the config. */
+internal fun List<Int>.toTile(): Tile = Tile(this[0], this[1], this[2])
+
+/**
+ * Where [this] obstacle drops a player standing on [from] who interacts with a loc whose south-west
+ * tile is [objectTile], or `null` when it cannot be crossed from there.
+ *
+ * Shared with `AgilityVerify` so the course-connectivity check follows the same branch the player
+ * does for each [DestinationMode], rather than a copy of it that can drift.
+ */
+internal fun ObstacleEntry.landingFrom(
+    from: Tile,
+    objectTile: Tile,
+    canStandOn: (Tile) -> Boolean,
+): Tile? =
+    when (destination) {
+        DestinationMode.TILE -> end!!.toTile()
+
+        DestinationMode.SPAN -> {
+            val spanStart = start!!.toTile()
+            val spanEnd = end!!.toTile()
+            // Cross towards whichever end is further away, so the obstacle works both ways.
+            if (from.getDistance(spanStart) <= from.getDistance(spanEnd)) spanEnd else spanStart
+        }
+
+        DestinationMode.THROUGH -> throughLandingFrom(from, objectTile, canStandOn)
+    }

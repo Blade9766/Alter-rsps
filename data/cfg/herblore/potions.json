@@ -1,0 +1,541 @@
+[
+  {
+    "name": "Antidote+ (unf)",
+    "base": "item.coconut_milk",
+    "secondary": "item.toadflax",
+    "product": "item.antidote_unf",
+    "level": 68,
+    "experience": 0.0
+  },
+  {
+    "name": "Weapon poison+ (unf)",
+    "base": "item.coconut_milk",
+    "secondary": "item.cactus_spine",
+    "product": "item.weapon_poison_unf",
+    "level": 73,
+    "experience": 0.0
+  },
+  {
+    "name": "Antidote++ (unf)",
+    "base": "item.coconut_milk",
+    "secondary": "item.irit_leaf",
+    "product": "item.antidote_unf_5951",
+    "level": 79,
+    "experience": 0.0
+  },
+  {
+    "name": "Cadantine blood potion (unf)",
+    "base": "item.vial_of_blood",
+    "secondary": "item.cadantine",
+    "product": "item.cadantine_blood_potion_unf",
+    "level": 80,
+    "experience": 0.0
+  },
+  {
+    "name": "Weapon poison++ (unf)",
+    "base": "item.coconut_milk",
+    "secondary": "item.cave_nightshade",
+    "product": "item.weapon_poison_unf_5939",
+    "level": 82,
+    "experience": 0.0
+  },
+
+  {
+    "name": "Attack potion",
+    "base": "item.guam_potion_unf",
+    "secondary": "item.eye_of_newt",
+    "product": "item.attack_potion3",
+    "level": 3,
+    "experience": 25.0
+  },
+  {
+    "name": "Antipoison",
+    "base": "item.marrentill_potion_unf",
+    "secondary": "item.unicorn_horn_dust",
+    "product": "item.antipoison3",
+    "level": 5,
+    "experience": 37.5
+  },
+  {
+    "name": "Relicym's balm",
+    "base": "item.vial_of_water",
+    "secondary": "item.rogues_purse",
+    "extras": ["item.snake_weed"],
+    "product": "item.relicyms_balm3",
+    "level": 8,
+    "experience": 40.0
+  },
+  {
+    "name": "Strength potion",
+    "base": "item.tarromin_potion_unf",
+    "secondary": "item.limpwurt_root",
+    "product": "item.strength_potion3",
+    "level": 12,
+    "experience": 50.0
+  },
+  {
+    "name": "Serum 207",
+    "base": "item.tarromin_potion_unf",
+    "secondary": "item.ashes",
+    "product": "item.serum_207_3",
+    "level": 15,
+    "experience": 50.0
+  },
+  {
+    "name": "Compost potion",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.volcanic_ash",
+    "product": "item.compost_potion3",
+    "level": 22,
+    "experience": 60.0
+  },
+  {
+    "name": "Restore potion",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.red_spiders_eggs",
+    "product": "item.restore_potion3",
+    "level": 22,
+    "experience": 62.5
+  },
+  {
+    "name": "Blamish oil",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.blamish_snail_slime",
+    "product": "item.blamish_oil",
+    "level": 25,
+    "experience": 80.0
+  },
+  {
+    "name": "Energy potion",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.chocolate_dust",
+    "product": "item.energy_potion3",
+    "level": 26,
+    "experience": 67.5
+  },
+  {
+    "name": "Defence potion",
+    "base": "item.ranarr_potion_unf",
+    "secondary": "item.white_berries",
+    "product": "item.defence_potion3",
+    "level": 30,
+    "experience": 75.0
+  },
+  {
+    "name": "Agility potion",
+    "base": "item.toadflax_potion_unf",
+    "secondary": "item.toads_legs",
+    "product": "item.agility_potion3",
+    "level": 34,
+    "experience": 80.0
+  },
+  {
+    "name": "Combat potion",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.goat_horn_dust",
+    "product": "item.combat_potion3",
+    "level": 36,
+    "experience": 84.0
+  },
+  {
+    "name": "Prayer potion",
+    "base": "item.ranarr_potion_unf",
+    "secondary": "item.snape_grass",
+    "product": "item.prayer_potion3",
+    "level": 38,
+    "experience": 87.5
+  },
+  {
+    "name": "Super attack",
+    "base": "item.irit_potion_unf",
+    "secondary": "item.eye_of_newt",
+    "product": "item.super_attack3",
+    "level": 45,
+    "experience": 100.0
+  },
+  {
+    "name": "Superantipoison",
+    "base": "item.irit_potion_unf",
+    "secondary": "item.unicorn_horn_dust",
+    "product": "item.superantipoison3",
+    "level": 48,
+    "experience": 106.3
+  },
+  {
+    "name": "Fishing potion",
+    "base": "item.avantoe_potion_unf",
+    "secondary": "item.snape_grass",
+    "product": "item.fishing_potion3",
+    "level": 50,
+    "experience": 112.5
+  },
+  {
+    "name": "Super energy",
+    "base": "item.avantoe_potion_unf",
+    "secondary": "item.mort_myre_fungus",
+    "product": "item.super_energy3",
+    "level": 52,
+    "experience": 117.5
+  },
+  {
+    "name": "Hunter potion",
+    "base": "item.avantoe_potion_unf",
+    "secondary": "item.kebbit_teeth_dust",
+    "product": "item.hunter_potion3",
+    "level": 53,
+    "experience": 120.0
+  },
+  {
+    "name": "Goading potion",
+    "base": "item.harralander_potion_unf",
+    "secondary": "item.aldarium",
+    "product": "item.goading_potion3",
+    "level": 54,
+    "experience": 132.0
+  },
+  {
+    "name": "Super strength",
+    "base": "item.kwuarm_potion_unf",
+    "secondary": "item.limpwurt_root",
+    "product": "item.super_strength3",
+    "level": 55,
+    "experience": 125.0
+  },
+  {
+    "name": "Prayer regeneration potion",
+    "base": "item.huasca_potion_unf",
+    "secondary": "item.aldarium",
+    "product": "item.prayer_regeneration_potion3",
+    "level": 58,
+    "experience": 132.0
+  },
+  {
+    "name": "Weapon poison",
+    "base": "item.kwuarm_potion_unf",
+    "secondary": "item.dragon_scale_dust",
+    "product": "item.weapon_poison",
+    "level": 60,
+    "experience": 137.5
+  },
+  {
+    "name": "Super restore",
+    "base": "item.snapdragon_potion_unf",
+    "secondary": "item.red_spiders_eggs",
+    "product": "item.super_restore3",
+    "level": 63,
+    "experience": 142.5
+  },
+  {
+    "name": "Sanfew serum",
+    "base": "item.super_restore4",
+    "secondary": "item.unicorn_horn_dust",
+    "extras": ["item.snake_weed", "item.nail_beast_nails"],
+    "product": "item.sanfew_serum4",
+    "level": 65,
+    "experience": 160.0
+  },
+  {
+    "name": "Sanfew serum",
+    "base": "item.super_restore4",
+    "secondary": "item.snake_weed",
+    "extras": ["item.unicorn_horn_dust", "item.nail_beast_nails"],
+    "product": "item.sanfew_serum4",
+    "level": 65,
+    "experience": 160.0
+  },
+  {
+    "name": "Sanfew serum",
+    "base": "item.super_restore4",
+    "secondary": "item.nail_beast_nails",
+    "extras": ["item.unicorn_horn_dust", "item.snake_weed"],
+    "product": "item.sanfew_serum4",
+    "level": 65,
+    "experience": 160.0
+  },
+  {
+    "name": "Super defence",
+    "base": "item.cadantine_potion_unf",
+    "secondary": "item.white_berries",
+    "product": "item.super_defence3",
+    "level": 66,
+    "experience": 150.0
+  },
+  {
+    "name": "Antidote+",
+    "base": "item.antidote_unf",
+    "secondary": "item.yew_roots",
+    "product": "item.antidote4",
+    "level": 68,
+    "experience": 155.0
+  },
+  {
+    "name": "Antifire potion",
+    "base": "item.lantadyme_potion_unf",
+    "secondary": "item.dragon_scale_dust",
+    "product": "item.antifire_potion3",
+    "level": 69,
+    "experience": 157.5
+  },
+  {
+    "name": "Ranging potion",
+    "base": "item.dwarf_weed_potion_unf",
+    "secondary": "item.wine_of_zamorak",
+    "product": "item.ranging_potion3",
+    "level": 72,
+    "experience": 162.5
+  },
+  {
+    "name": "Weapon poison(+)",
+    "base": "item.weapon_poison_unf",
+    "secondary": "item.red_spiders_eggs",
+    "product": "item.weapon_poison_5937",
+    "level": 73,
+    "experience": 190.0
+  },
+  {
+    "name": "Magic potion",
+    "base": "item.lantadyme_potion_unf",
+    "secondary": "item.potato_cactus",
+    "product": "item.magic_potion3",
+    "level": 76,
+    "experience": 172.5
+  },
+  {
+    "name": "Zamorak brew",
+    "base": "item.torstol_potion_unf",
+    "secondary": "item.jangerberries",
+    "product": "item.zamorak_brew3",
+    "level": 78,
+    "experience": 175.0
+  },
+  {
+    "name": "Antidote++",
+    "base": "item.antidote_unf_5951",
+    "secondary": "item.magic_roots",
+    "product": "item.antidote4_5952",
+    "level": 79,
+    "experience": 177.5
+  },
+  {
+    "name": "Bastion potion",
+    "base": "item.cadantine_blood_potion_unf",
+    "secondary": "item.wine_of_zamorak",
+    "product": "item.bastion_potion3",
+    "level": 80,
+    "experience": 155.0
+  },
+  {
+    "name": "Battlemage potion",
+    "base": "item.cadantine_blood_potion_unf",
+    "secondary": "item.potato_cactus",
+    "product": "item.battlemage_potion3",
+    "level": 80,
+    "experience": 155.0
+  },
+  {
+    "name": "Saradomin brew",
+    "base": "item.toadflax_potion_unf",
+    "secondary": "item.crushed_nest",
+    "product": "item.saradomin_brew3",
+    "level": 81,
+    "experience": 180.0
+  },
+  {
+    "name": "Weapon poison(++)",
+    "base": "item.weapon_poison_unf_5939",
+    "secondary": "item.poison_ivy_berries",
+    "product": "item.weapon_poison_5940",
+    "level": 82,
+    "experience": 190.0
+  },
+  {
+    "name": "Ancient brew",
+    "base": "item.dwarf_weed_potion_unf",
+    "secondary": "item.nihil_dust",
+    "product": "item.ancient_brew3",
+    "level": 85,
+    "experience": 190.0
+  },
+  {
+    "name": "Menaphite remedy",
+    "base": "item.dwarf_weed_potion_unf",
+    "secondary": "item.lily_of_the_sands",
+    "product": "item.menaphite_remedy3",
+    "level": 88,
+    "experience": 200.0
+  },
+  {
+    "name": "Super combat potion",
+    "base": "item.super_attack4",
+    "secondary": "item.torstol",
+    "extras": ["item.super_strength4", "item.super_defence4"],
+    "product": "item.super_combat_potion4",
+    "level": 90,
+    "experience": 150.0
+  },
+  {
+    "name": "Super combat potion",
+    "base": "item.super_strength4",
+    "secondary": "item.torstol",
+    "extras": ["item.super_attack4", "item.super_defence4"],
+    "product": "item.super_combat_potion4",
+    "level": 90,
+    "experience": 150.0
+  },
+  {
+    "name": "Super combat potion",
+    "base": "item.super_defence4",
+    "secondary": "item.torstol",
+    "extras": ["item.super_attack4", "item.super_strength4"],
+    "product": "item.super_combat_potion4",
+    "level": 90,
+    "experience": 150.0
+  },
+  {
+    "name": "Super antifire potion",
+    "base": "item.antifire_potion4",
+    "secondary": "item.crushed_superior_dragon_bones",
+    "product": "item.super_antifire_potion4",
+    "level": 92,
+    "experience": 130.0
+  },
+  {
+    "name": "Anti-venom+",
+    "base": "item.antivenom4",
+    "secondary": "item.torstol",
+    "product": "item.antivenom4_12913",
+    "level": 94,
+    "experience": 125.0
+  },
+  {
+    "name": "Extended super antifire",
+    "base": "item.extended_antifire4",
+    "secondary": "item.crushed_superior_dragon_bones",
+    "product": "item.extended_super_antifire4",
+    "level": 98,
+    "experience": 180.0
+  },
+
+  {
+    "name": "Divine super attack potion",
+    "baseFamily": "item.super_attack",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_super_attack_potion",
+    "level": 70,
+    "experience": 0.5
+  },
+  {
+    "name": "Divine super defence potion",
+    "baseFamily": "item.super_defence",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_super_defence_potion",
+    "level": 70,
+    "experience": 0.5
+  },
+  {
+    "name": "Divine super strength potion",
+    "baseFamily": "item.super_strength",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_super_strength_potion",
+    "level": 70,
+    "experience": 0.5
+  },
+  {
+    "name": "Divine ranging potion",
+    "baseFamily": "item.ranging_potion",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_ranging_potion",
+    "level": 74,
+    "experience": 0.5
+  },
+  {
+    "name": "Stamina potion",
+    "baseFamily": "item.super_energy",
+    "secondary": "item.amylase_crystal",
+    "secondaryPerDose": 1,
+    "productFamily": "item.stamina_potion",
+    "level": 77,
+    "experience": 25.5
+  },
+  {
+    "name": "Divine magic potion",
+    "baseFamily": "item.magic_potion",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_magic_potion",
+    "level": 78,
+    "experience": 0.5
+  },
+  {
+    "name": "Extended antifire",
+    "baseFamily": "item.antifire_potion",
+    "secondary": "item.lava_scale_shard",
+    "secondaryPerDose": 1,
+    "productFamily": "item.extended_antifire",
+    "level": 84,
+    "experience": 27.5
+  },
+  {
+    "name": "Divine bastion potion",
+    "baseFamily": "item.bastion_potion",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_bastion_potion",
+    "level": 86,
+    "experience": 0.5
+  },
+  {
+    "name": "Divine battlemage potion",
+    "baseFamily": "item.battlemage_potion",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_battlemage_potion",
+    "level": 86,
+    "experience": 0.5
+  },
+  {
+    "name": "Anti-venom",
+    "baseDoses": [
+      "item.antidote1_5958",
+      "item.antidote2_5956",
+      "item.antidote3_5954",
+      "item.antidote4_5952"
+    ],
+    "secondary": "item.zulrahs_scales",
+    "secondaryPerDose": 5,
+    "productFamily": "item.antivenom",
+    "level": 87,
+    "experience": 30.0
+  },
+  {
+    "name": "Forgotten brew",
+    "baseFamily": "item.ancient_brew",
+    "secondary": "item.ancient_essence",
+    "secondaryPerDose": 20,
+    "productFamily": "item.forgotten_brew",
+    "level": 91,
+    "experience": 36.25
+  },
+  {
+    "name": "Divine super combat potion",
+    "baseFamily": "item.super_combat_potion",
+    "secondary": "item.crystal_dust",
+    "secondaryPerDose": 1,
+    "productFamily": "item.divine_super_combat_potion",
+    "level": 97,
+    "experience": 0.5
+  },
+  {
+    "name": "Extended super antifire",
+    "baseFamily": "item.super_antifire_potion",
+    "secondary": "item.lava_scale_shard",
+    "secondaryPerDose": 1,
+    "productFamily": "item.extended_super_antifire",
+    "level": 98,
+    "experience": 40.0
+  }
+]
