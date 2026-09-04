@@ -17,7 +17,7 @@ import org.alter.rscm.RSCM.getRSCM
  * they are reproduced that way rather than re-grouped by combat level:
  *
  * - **[Table.ONE]** - the unarmed level 2 goblins (everything around Lumbridge) and the
- *   level 13s. Cheap: mostly a hammer, small coin piles, and a 38/128 "Nothing".
+ *   level 13s. Cheap: mostly a hammer, small coin piles, and a 35/128 "Nothing".
  * - **[Table.TWO]** - the armed level 2 goblins and every level 5. Noticeably better -
  *   bronze weapons, nature and chaos runes, and only an 8/128 "Nothing".
  *
@@ -37,6 +37,24 @@ import org.alter.rscm.RSCM.getRSCM
  * with no numerator on either table. They get weight 1 each - the rarest labelled tier on
  * the same table - the same approximation the dark wizard table already makes for the
  * identical missing value.
+ *
+ * That weight has to come from somewhere, because [DropRoll.pick] weights each row against
+ * the **table total**, not against 128: a table that sums to anything else silently rescales
+ * every row on it. The two tables pay for the potions differently, because the page leaves
+ * different amounts of room:
+ *
+ * - **Table 2** publishes 128 across its `n/128` rows including a free-to-play-only 10 coin
+ *   row worth 2/128. Dropping that row (see the members-world note below) frees exactly the
+ *   2 the two potions need, so every other row keeps its published rate untouched.
+ * - **Table 1** publishes a full 128 with no removable row, so its three potions have
+ *   nowhere to go - the page is over-subscribed by 3. The 3 is taken out of the `Nothing`
+ *   filler, 38 -> 35, which is the only row that can pay it without moving a real item off
+ *   its published `n/128`. A filler row existing at all is what makes the denominator real;
+ *   see `DungeonDropsVerify`, which fails any table that does not add up.
+ *
+ * The alternative was to drop the potions the way the herb sub-table below is dropped. They
+ * are kept because, unlike the herbs, the items exist here and the page does list them - only
+ * their rarity is missing, not their membership.
  *
  * **Members-world reading** matches the rest of the monster files: `{{(m)}}` rows (bronze
  * spear, goblin book, bronze javelin) are kept and the `{{(f)}}` free-to-play-only 10
@@ -77,7 +95,7 @@ internal object GoblinDrops {
             WeightedDrop(getRSCM("item.energy_potion1"), 1, weight = 1),
             WeightedDrop(getRSCM("item.energy_potion2"), 1, weight = 1),
             WeightedDrop(getRSCM("item.energy_potion4"), 1, weight = 1),
-            WeightedDrop(item = null, weight = 38),
+            WeightedDrop(item = null, weight = 35),
         )
 
     /** Accessed by the armed level 2 goblins and every level 5. */
