@@ -113,33 +113,49 @@ object MagicSpells {
             val spellItems = spellBookEnum.values.values.map { it as Int }
 
             for (item in spellItems) {
-                val itemDef = getItem(item)
-                val params = itemDef.params ?: continue
-
-                val spellbook = params[SPELL_SPELLBOOK_KEY] as Int
-                val name = params[SPELL_NAME_KEY] as String
-                val lvl = params[SPELL_LVL_REQ_KEY] as Int
-                val componentHash = params[SPELL_COMPONENT_HASH_KEY] as Int
-                val spellType = params[SPELL_TYPE_KEY] as Int
-
-                val interfaceId = componentHash shr 16
-                val component = componentHash and 0xFFFF
-                val runes = mutableListOf<Item>()
-
-                if (params.containsKey(SPELL_RUNE1_ID_KEY)) {
-                    runes.add(Item(params[SPELL_RUNE1_ID_KEY] as Int, params[SPELL_RUNE1_AMT_KEY] as Int))
-                }
-                if (params.containsKey(SPELL_RUNE2_ID_KEY)) {
-                    runes.add(Item(params[SPELL_RUNE2_ID_KEY] as Int, params[SPELL_RUNE2_AMT_KEY] as Int))
-                }
-                if (params.containsKey(SPELL_RUNE3_ID_KEY)) {
-                    runes.add(Item(params[SPELL_RUNE3_ID_KEY] as Int, params[SPELL_RUNE3_AMT_KEY] as Int))
-                }
-
-                val spell = SpellMetadata(interfaceId, component, item, spellbook, spellType, name, lvl, runes)
+                val spell = readSpell(item) ?: continue
                 metadata[item] = spell
             }
         }
+    }
+
+    /**
+     * The metadata for one spell, read straight off that spell's own item params and cached.
+     *
+     * [loadSpellRequirements] only walks the four top-level spellbook enums, so a spell that lives
+     * behind one of the book's *sub-pages* is never indexed by it. The seven jewellery enchants are
+     * exactly that case: the standard book's enum holds a single "Jewellery Enchantments" entry
+     * (item 27089) and the client's own scripts open the page listing Lvl-1 through Lvl-7. Their
+     * params are ordinary spell params all the same, which is what lets them be read on demand
+     * here rather than having their level, runes and component hardcoded in a plugin.
+     */
+    fun loadSpell(spellItem: Int): SpellMetadata? = metadata[spellItem] ?: readSpell(spellItem)?.also { metadata[spellItem] = it }
+
+    private fun readSpell(item: Int): SpellMetadata? {
+        val itemDef = getItem(item)
+        val params = itemDef.params ?: return null
+        val name = params[SPELL_NAME_KEY] as? String ?: return null
+
+        val spellbook = params[SPELL_SPELLBOOK_KEY] as Int
+        val lvl = params[SPELL_LVL_REQ_KEY] as Int
+        val componentHash = params[SPELL_COMPONENT_HASH_KEY] as Int
+        val spellType = params[SPELL_TYPE_KEY] as Int
+
+        val interfaceId = componentHash shr 16
+        val component = componentHash and 0xFFFF
+        val runes = mutableListOf<Item>()
+
+        if (params.containsKey(SPELL_RUNE1_ID_KEY)) {
+            runes.add(Item(params[SPELL_RUNE1_ID_KEY] as Int, params[SPELL_RUNE1_AMT_KEY] as Int))
+        }
+        if (params.containsKey(SPELL_RUNE2_ID_KEY)) {
+            runes.add(Item(params[SPELL_RUNE2_ID_KEY] as Int, params[SPELL_RUNE2_AMT_KEY] as Int))
+        }
+        if (params.containsKey(SPELL_RUNE3_ID_KEY)) {
+            runes.add(Item(params[SPELL_RUNE3_ID_KEY] as Int, params[SPELL_RUNE3_AMT_KEY] as Int))
+        }
+
+        return SpellMetadata(interfaceId, component, item, spellbook, spellType, name, lvl, runes)
     }
 
     // fun KotlinPlugin.on_magic_spell_button(name: String, plugin: Plugin.(SpellMetadata) -> Unit) {

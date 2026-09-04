@@ -20,7 +20,7 @@ fun Player.canTeleport(type: TeleportType): Boolean {
 
     if (currWildLvl > wildLvlRestriction) {
         message("A mysterious force blocks your teleport spell!")
-        message("You can't use this teleport after level $wildLvlRestriction wilderness.")
+        message("You can't teleport out of the Wilderness above level $wildLvlRestriction.")
         return false
     }
 
