@@ -16,6 +16,7 @@ import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
 import org.alter.plugins.content.interfaces.bank.openBank
+import org.alter.plugins.content.mechanics.grandexchange.openGrandExchangeCollectionBox
 
 class BankBoothsPlugin(
     r: PluginRepository,
@@ -80,9 +81,12 @@ class BankBoothsPlugin(
         }
     }
 
+/**
+ * Interface 402 is built entirely by client scripts, so opening it on its own draws an empty box;
+ * [openGrandExchangeCollectionBox] runs the init script and pushes the offers behind it.
+ */
 fun open_collect(p: Player) {
-    p.setInterfaceUnderlay(color = -1, transparency = -1)
-    p.openInterface(interfaceId = 402, dest = InterfaceDestination.MAIN_SCREEN)
+    p.openGrandExchangeCollectionBox()
 }
 
 }

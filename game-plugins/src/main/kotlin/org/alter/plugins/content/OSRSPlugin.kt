@@ -58,6 +58,12 @@ class OSRSPlugin(
                 calculateAndSetCombatLevel()
                 sendWeaponComponentInformation()
                 sendCombatLevelText()
+                /*
+                 * The inventory's ops. Item options 1-4 arrive as op2..op5, then op6 is Use,
+                 * op7 Drop and op10 Examine. ClickOp5 was missing, so the item's fourth option
+                 * was not clickable at all - that is where every container keeps "Empty" and
+                 * an amulet of glory keeps "Rub".
+                 */
                 setInterfaceEvents(
                     interfaceId = 149,
                     component = 0,
@@ -67,6 +73,7 @@ class OSRSPlugin(
                             InterfaceEvent.ClickOp2,
                             InterfaceEvent.ClickOp3,
                             InterfaceEvent.ClickOp4,
+                            InterfaceEvent.ClickOp5,
                             InterfaceEvent.ClickOp6,
                             InterfaceEvent.ClickOp7,
                             InterfaceEvent.ClickOp10,
@@ -93,14 +100,21 @@ class OSRSPlugin(
                 syncVarp(Varp.PLAYER_ATTACK_PRIORITY_VARP)
                 // Send player interaction options.
                 sendOption("Follow", 3)
-                sendOption("Trade with", 4)
-                sendOption("Report", 5)
+                /*
+                 * "Trade with" and "Report" are sent by SettingsEffects instead, because the player
+                 * can turn either of them off in Settings and sending them unconditionally here
+                 * would put them back on every login.
+                 */
                 // Game-related logic.
                 sendRunEnergy(player.runEnergy.toInt())
                 message("Welcome to ${world.gameContext.name}.", ChatMessageType.GAME_MESSAGE)
                 // player.social.pushFriends(player)
                 // player.social.pushIgnores(player)
-                setVarbit(Varbit.ESC_CLOSES_CURRENT_INTERFACE, 1)
+                /*
+                 * Esc-closes-interface is settings entry 57 and the player is allowed to switch it
+                 * off. Forcing it on here turned it back on at every login, so the default now lands
+                 * once, from SettingsEffects, and the player's own choice survives after that.
+                 */
 
                 /**
                  * @TODO
@@ -134,9 +148,19 @@ class OSRSPlugin(
         InterfaceDestination.getModals().forEach { pane ->
             if (pane == InterfaceDestination.XP_COUNTER && player.getVarbit(Varbit.XP_DROPS_VISIBLE_VARBIT) == 0) {
                 return@forEach
-            } else if (pane == InterfaceDestination.MINI_MAP && player.getVarbit(Varbit.HIDE_DATA_ORBS_VARBIT) == 1) {
-                return@forEach
             }
+            /*
+             * The minimap is opened unconditionally, where it used to be withheld whenever varbit
+             * 4084 was 1.
+             *
+             * That test was backwards - 4084 is "Show data orbs", so 1 is the *on* state - but
+             * making it read the right way round would not have been right either. Interface 160
+             * carries the compass and world-map button as well as the four orbs, and the client
+             * already hides just the orbs off that varbit; withholding the whole interface takes
+             * the compass with them. Leaving the decision to the client also removes a login-order
+             * race, since [org.alter.plugins.content.interfaces.gameframe.tabs.settings.SettingsEffects]
+             * seeds the varbit's default from its own login hook, which may run after this one.
+             */
             player.openInterface(pane.interfaceId, pane, fullscreen)
         }
     }

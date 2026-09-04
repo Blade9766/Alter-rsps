@@ -228,6 +228,15 @@ tasks.register<JavaExec>("agilityMapDump") {
 }
 
 // TEMPORARY diagnostic task - remove after use.
+// TEMPORARY diagnostic - remove after use.
+tasks.register<JavaExec>("objDefDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.ObjDefDump")
+    workingDir = rootDir
+}
+
 tasks.register<JavaExec>("agilityReachDump") {
     group = "diagnostics"
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
@@ -257,6 +266,16 @@ tasks.register<JavaExec>("makeoverDiag") {
 }
 
 // TEMPORARY diagnostic task - remove after use.
+// TEMPORARY diagnostic - remove after use.
+tasks.register<JavaExec>("wildernessGateDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.WildernessGateDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
 tasks.register<JavaExec>("varpSaveDiag") {
     group = "diagnostics"
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
@@ -294,6 +313,43 @@ tasks.register<JavaExec>("duelDiag") {
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("org.alter.tools.DuelDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("interfaceTextDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.InterfaceTextDump")
+    workingDir = rootDir
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("npcAnimDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.NpcAnimDiag")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("chaosDruidDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.ChaosDruidDiag")
+    // The server resolves its own paths against "..", the way the packaged launcher runs.
+    workingDir = File(rootDir, "game-server")
+}
+
+// TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("dataOrbsDiag") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.alter.tools.DataOrbsDiag")
     // The server resolves its own paths against "..", the way the packaged launcher runs.
     workingDir = File(rootDir, "game-server")
 }
