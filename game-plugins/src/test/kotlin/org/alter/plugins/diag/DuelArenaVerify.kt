@@ -321,4 +321,29 @@ class DuelArenaVerify {
         val claimAt = source.indexOf("DuelArenas.claim(this)")
         assertTrue(checkAt in 1 until claimAt, "stakes must be verified before an arena is claimed")
     }
+
+    /**
+     * The trade screen must not write its working copy back over a real inventory either.
+     *
+     * It uses the same snapshot pattern the duel did, and `complete()` used to restore both
+     * inventories from it. Nothing can reach an inventory mid-trade today, so it was harmless by
+     * accident; the moment something can - a timed plugin, or a screen that hands the inventory tab
+     * back, as the duel's options screen does - it duplicates on equip and destroys on unequip.
+     */
+    @Test
+    fun `trading never overwrites a real inventory with its working copy`() {
+        val source =
+            java.io.File(
+                "src/main/kotlin/org/alter/plugins/content/mechanics/trading/impl/TradeSession.kt",
+            ).readText()
+
+        assertTrue(
+            !source.contains("forEachIndexed { index, item -> playerInv[index] = item }"),
+            "TradeSession.complete() is restoring the real inventory from its snapshot again",
+        )
+        assertTrue(
+            source.contains("private fun holds(") && source.contains("private fun take("),
+            "the trade must verify and then take the offered items from the real inventory",
+        )
+    }
 }

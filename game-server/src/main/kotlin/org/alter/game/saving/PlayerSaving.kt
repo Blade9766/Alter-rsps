@@ -8,6 +8,7 @@ import org.alter.game.GameContext
 import org.alter.game.model.PlayerUID
 import org.alter.game.model.attr.APPEARANCE_SET_ATTR
 import org.alter.game.model.attr.NEW_ACCOUNT_ATTR
+import org.alter.game.model.World
 import org.alter.game.model.entity.Client
 import org.alter.game.saving.impl.*
 import org.alter.game.saving.formats.FormatHandler
@@ -37,6 +38,29 @@ object PlayerSaving {
 
         serialization.init()
 
+    }
+
+    /**
+     * Saves every player currently online, and reports how many.
+     *
+     * Players were only ever written on logout, so any stop that is not a clean logout - a crash, a
+     * killed process, a power cut - discarded everything since they logged in, and they came back
+     * at their last saved tile with their last saved inventory. Used by the autosave and by the
+     * shutdown hook.
+     */
+    fun saveAll(world: World): Int {
+        var saved = 0
+        world.players.forEach { player ->
+            if (player is Client && player.isOnline) {
+                try {
+                    savePlayer(player)
+                    saved++
+                } catch (t: Throwable) {
+                    logger.error(t) { "Failed to save player ${player.username}." }
+                }
+            }
+        }
+        return saved
     }
 
     fun savePlayer(player: Client) {

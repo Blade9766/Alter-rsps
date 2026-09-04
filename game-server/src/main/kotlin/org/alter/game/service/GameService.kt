@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import org.alter.game.saving.PlayerSaving
 
 /**
  * The service used to schedule and execute logic needed for the game to run properly.
@@ -48,6 +49,15 @@ class GameService : Service {
      * submitted.
      */
     private val gameThreadJobs = ConcurrentLinkedQueue<() -> Unit>()
+
+    /**
+     * Cycles until the next autosave.
+     *
+     * Saving only on logout meant any stop that was not a clean logout threw away everything since
+     * the player logged in. This bounds that loss to [AUTOSAVE_INTERVAL_CYCLES] rather than to the
+     * length of the session.
+     */
+    private var cyclesUntilAutosave = AUTOSAVE_INTERVAL_CYCLES
 
     /**
      * The amount of ticks that have gone by since the last debug log.
@@ -213,6 +223,22 @@ class GameService : Service {
         }
 
         /*
+         * Autosave. Nothing here is allowed to escape - a save that throws must not take the game
+         * loop with it, since the loop dying leaves the server accepting logins but otherwise mute.
+         */
+        if (--cyclesUntilAutosave <= 0) {
+            cyclesUntilAutosave = AUTOSAVE_INTERVAL_CYCLES
+            try {
+                val saved = PlayerSaving.saveAll(world)
+                if (saved > 0) {
+                    logger.info { "Autosaved $saved player(s)." }
+                }
+            } catch (t: Throwable) {
+                logger.error(t) { "Error during autosave." }
+            }
+        }
+
+        /*
          * Calculate the time, in milliseconds, it took for this cycle to complete
          * and add it to [cycleTime].
          */
@@ -285,5 +311,16 @@ class GameService : Service {
          * The amount of ticks that must go by for debug info to be logged.
          */
         private const val TICKS_PER_DEBUG_LOG = 10
+
+        /**
+         * How often every online player is written to disk, in game cycles. 600ms a cycle, so this
+         * is every minute.
+         *
+         * This is the only thing standing between a player and losing their session, because the
+         * shutdown hook cannot help on Windows: a JVM with no console can only be terminated
+         * forcefully, which runs no hooks. A save is a handful of small documents per player, so
+         * the frequency costs nothing worth measuring.
+         */
+        private const val AUTOSAVE_INTERVAL_CYCLES = 100
     }
 }

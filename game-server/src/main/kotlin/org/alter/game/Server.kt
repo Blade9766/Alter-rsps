@@ -211,7 +211,34 @@ class Server {
          */
         world.network.start()
         logger.info { "Now listening for incoming connections on port $port..." }
+
+        installShutdownHook(world)
+
         return world
+    }
+
+    /**
+     * Saves every online player when the JVM is going down.
+     *
+     * A player is otherwise only written on logout, so any stop that is not a clean logout - Ctrl-C,
+     * a kill, a restart, an IDE stop button - silently discarded everything they had done since
+     * logging in and put them back at their last saved tile. The hook covers every route out except
+     * SIGKILL and a hard power loss; the autosave in [org.alter.game.service.GameService] bounds
+     * what those can cost.
+     *
+     * Nothing here may throw: a shutdown hook that dies takes the remaining players' saves with it.
+     */
+    private fun installShutdownHook(world: World) {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                try {
+                    val saved = PlayerSaving.saveAll(world)
+                    logger.info { "Shutting down - saved $saved player(s)." }
+                } catch (t: Throwable) {
+                    logger.error(t) { "Failed to save players during shutdown." }
+                }
+            },
+            )
     }
 
     /**

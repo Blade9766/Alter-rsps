@@ -345,21 +345,67 @@ class TradeSession(private val player: Player, private val partner: Player) {
      */
     private fun complete() {
         if (stage != TradeStage.ACCEPT_SCREEN) return
+        val partnerSession = partner.getTradeSession() ?: return
+
+        /*
+         * Move only what was actually offered.
+         *
+         * This used to restore each player's inventory from [inventory], the copy taken when the
+         * trade screen opened, and then add what they had been given. That makes the copy
+         * authoritative over the real inventory for the length of the trade, so any change in
+         * between is silently undone: an item equipped mid-trade would be worn *and* written back
+         * (duplicated), and one unequipped would be overwritten (destroyed). Nothing can reach the
+         * inventory during a trade today - the offer overlay holds the tab area - so this was
+         * harmless by accident rather than by design, and would come back the moment anything else
+         * could touch an inventory mid-trade. The duel arena hit exactly this, where its options
+         * screen hands the inventory tab back.
+         */
+        if (!holds(player, container) || !holds(partner, partnerSession.container)) {
+            player.message("The trade could not be completed - an offered item is missing.")
+            partner.message("The trade could not be completed - an offered item is missing.")
+            decline(forced = true)
+            return
+        }
+
         stage = TradeStage.COMPLETED
 
-        // Assign the trade containers for this player
-        val playerInv = player.inventory
-        inventory.forEachIndexed { index, item -> playerInv[index] = item }
-        partner.getTradeSession()?.container?.filterNotNull()?.forEach { playerInv.add(it) }
+        take(player, container)
+        take(partner, partnerSession.container)
 
-        // Assign the trade containers for the partner
-        val partnerInv = partner.inventory
-        partner.getTradeSession()?.inventory?.forEachIndexed { index, item -> partnerInv[index] = item }
-        container.filterNotNull().forEach { partnerInv.add(it) }
+        partnerSession.container.filterNotNull().forEach { player.inventory.add(it) }
+        container.filterNotNull().forEach { partner.inventory.add(it) }
 
         // Finalise the trade session
         finalise(player)
         finalise(partner)
+    }
+
+    /**
+     * The contents of [offered], totalled per item id - stackables can only appear once, but this
+     * keeps the arithmetic honest either way.
+     */
+    private fun totals(offered: ItemContainer): Map<Int, Int> {
+        val totals = HashMap<Int, Int>()
+        offered.rawItems.filterNotNull().forEach { item ->
+            totals[item.id] = (totals[item.id] ?: 0) + item.amount
+        }
+        return totals
+    }
+
+    /** Whether [who] still actually holds everything they offered. */
+    private fun holds(
+        who: Player,
+        offered: ItemContainer,
+    ): Boolean = totals(offered).all { (id, amount) -> who.inventory.getItemCount(id) >= amount }
+
+    /** Takes everything [who] offered out of their real inventory. */
+    private fun take(
+        who: Player,
+        offered: ItemContainer,
+    ) {
+        totals(offered).forEach { (id, amount) ->
+            who.inventory.remove(id, amount, assureFullRemoval = true)
+        }
     }
 
     /**
