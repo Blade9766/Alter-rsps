@@ -1,3 +1,5 @@
+package org.alter.plugins.content.interfaces.gameframe.tabs.account_management
+
 /**
  * @author Fritz <frikkipafi@gmail.com>
  */
