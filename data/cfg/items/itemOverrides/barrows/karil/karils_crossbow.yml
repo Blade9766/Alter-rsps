@@ -4,7 +4,7 @@ name: "Karil's crossbow"
 
 equipment:
   skillReqs:
-    - skill: "magic"
+    - skill: "ranged"
       level: 70
 
 ---
@@ -13,7 +13,7 @@ name: "Karil's crossbow 100"
 
 equipment:
   skillReqs:
-    - skill: "magic"
+    - skill: "ranged"
       level: 70
 
 ---
@@ -22,7 +22,7 @@ name: "Karil's crossbow 75"
 
 equipment:
   skillReqs:
-    - skill: "magic"
+    - skill: "ranged"
       level: 70
 
 ---
@@ -31,7 +31,7 @@ name: "Karil's crossbow 50"
 
 equipment:
   skillReqs:
-    - skill: "magic"
+    - skill: "ranged"
       level: 70
 
 ---
@@ -40,5 +40,5 @@ name: "Karil's crossbow 25"
 
 equipment:
   skillReqs:
-    - skill: "magic"
+    - skill: "ranged"
       level: 70

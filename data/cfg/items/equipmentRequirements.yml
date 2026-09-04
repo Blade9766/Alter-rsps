@@ -1,0 +1,929 @@
+# Equipment level requirements the cache does not carry.
+#
+# The 228 cache stores requirements as item params (434/436 and friends), and
+# ItemMetadataService reads them - but the cache only carries them from the rune tier
+# upward, and not even completely there. A probe of all 5,492 equippable items found
+# only 618 with any requirement at all, and no Attack requirement below level 30:
+# steel (5), black/white (10) and mithril (20) are absent outright, adamant (30) has
+# two entries, and a scattering above that - dragon halberd, dragon battleaxe, dragon
+# 2h sword, the whole granite set - carry none either. The practical effect was that a
+# level 1 account could wear full adamant and swing a dragon battleaxe.
+#
+# Everything here is *additive*: a requirement is only written for a skill the item
+# does not already declare, so the cache's own params and the per-item documents in
+# itemOverrides/ both stay authoritative. Nothing in this file overrides them.
+#
+# Levels are the OSRS metal ladder - steel 5, black/white 10, mithril 20, adamant 30,
+# rune 40, granite 50, dragon 60 - applied to melee weapons (Attack) and melee armour
+# (Defence). Item ids and names are read straight out of the cache; the verify test
+# asserts each id still carries the name recorded here, so a cache bump that moves an
+# id fails the build rather than silently gating the wrong item.
+#
+# Ranged is covered too, but on a different ladder - see the RANGED section at the foot of
+# this file for where its numbers come from and why most ammunition is correctly ungated.
+#
+# Deliberately NOT covered:
+#   - Quest gating. White equipment needs Wanted!, the dragon halberd needs Regicide,
+#     dragon platebody needs a diary - none of that is modelled here, only the levels.
+#   - Cosmetic and non-tier items that merely share a colour word: black partyhats,
+#     black d'hide, wizard robes, masks, granite rings, Recipe for Disaster gloves.
+#   - Crystal halberds. They want 70 Attack, 35 Strength *and* 50 Agility, and the loader
+#     only understands the five combat skills, so gating them here would gate them wrongly.
+#     They also spread across two dozen charge-state ids, and the Hard Western Provinces
+#     diary they really hang on is not modelled either.
+
+groups:
+  # Steel weapons - 5 Attack
+  - skillReqs:
+      - { skill: attack, level: 5 }
+    items:
+      - { id: 1207, name: "Steel dagger" }
+      - { id: 1223, name: "Steel dagger(p)" }
+      - { id: 1241, name: "Steel spear" }
+      - { id: 1255, name: "Steel spear(p)" }
+      - { id: 1269, name: "Steel pickaxe" }
+      - { id: 1281, name: "Steel sword" }
+      - { id: 1295, name: "Steel longsword" }
+      - { id: 1311, name: "Steel 2h sword" }
+      - { id: 1325, name: "Steel scimitar" }
+      - { id: 1353, name: "Steel axe" }
+      - { id: 1365, name: "Steel battleaxe" }
+      - { id: 1424, name: "Steel mace" }
+      - { id: 3097, name: "Steel claws" }
+      - { id: 3172, name: "Steel spear(kp)" }
+      - { id: 3194, name: "Steel halberd" }
+      - { id: 5672, name: "Steel dagger(p+)" }
+      - { id: 5690, name: "Steel dagger(p++)" }
+      - { id: 5708, name: "Steel spear(p+)" }
+      - { id: 5722, name: "Steel spear(p++)" }
+      - { id: 11371, name: "Steel hasta" }
+      - { id: 11393, name: "Steel hasta(p)" }
+      - { id: 11395, name: "Steel hasta(kp)" }
+      - { id: 11396, name: "Steel hasta(p+)" }
+      - { id: 11398, name: "Steel hasta(p++)" }
+      - { id: 28202, name: "Steel felling axe" }
+
+  # Steel armour - 5 Defence
+  - skillReqs:
+      - { skill: defence, level: 5 }
+    items:
+      - { id: 1069, name: "Steel platelegs" }
+      - { id: 1083, name: "Steel plateskirt" }
+      - { id: 1105, name: "Steel chainbody" }
+      - { id: 1119, name: "Steel platebody" }
+      - { id: 1141, name: "Steel med helm" }
+      - { id: 1157, name: "Steel full helm" }
+      - { id: 1177, name: "Steel sq shield" }
+      - { id: 1193, name: "Steel kiteshield" }
+      - { id: 4123, name: "Steel boots" }
+      - { id: 8682, name: "Steel heraldic helm" }
+      - { id: 8684, name: "Steel heraldic helm" }
+      - { id: 8686, name: "Steel heraldic helm" }
+      - { id: 8688, name: "Steel heraldic helm" }
+      - { id: 8690, name: "Steel heraldic helm" }
+      - { id: 8692, name: "Steel heraldic helm" }
+      - { id: 8694, name: "Steel heraldic helm" }
+      - { id: 8696, name: "Steel heraldic helm" }
+      - { id: 8698, name: "Steel heraldic helm" }
+      - { id: 8700, name: "Steel heraldic helm" }
+      - { id: 8702, name: "Steel heraldic helm" }
+      - { id: 8704, name: "Steel heraldic helm" }
+      - { id: 8706, name: "Steel heraldic helm" }
+      - { id: 8708, name: "Steel heraldic helm" }
+      - { id: 8710, name: "Steel heraldic helm" }
+      - { id: 8712, name: "Steel heraldic helm" }
+      - { id: 8746, name: "Steel kiteshield" }
+      - { id: 8748, name: "Steel kiteshield" }
+      - { id: 8750, name: "Steel kiteshield" }
+      - { id: 8752, name: "Steel kiteshield" }
+      - { id: 8754, name: "Steel kiteshield" }
+      - { id: 8756, name: "Steel kiteshield" }
+      - { id: 8758, name: "Steel kiteshield" }
+      - { id: 8760, name: "Steel kiteshield" }
+      - { id: 8762, name: "Steel kiteshield" }
+      - { id: 8764, name: "Steel kiteshield" }
+      - { id: 8766, name: "Steel kiteshield" }
+      - { id: 8768, name: "Steel kiteshield" }
+      - { id: 8770, name: "Steel kiteshield" }
+      - { id: 8772, name: "Steel kiteshield" }
+      - { id: 8774, name: "Steel kiteshield" }
+      - { id: 8776, name: "Steel kiteshield" }
+      - { id: 20169, name: "Steel platebody (g)" }
+      - { id: 20172, name: "Steel platelegs (g)" }
+      - { id: 20175, name: "Steel plateskirt (g)" }
+      - { id: 20178, name: "Steel full helm (g)" }
+      - { id: 20181, name: "Steel kiteshield (g)" }
+      - { id: 20184, name: "Steel platebody (t)" }
+      - { id: 20187, name: "Steel platelegs (t)" }
+      - { id: 20190, name: "Steel plateskirt (t)" }
+      - { id: 20193, name: "Steel full helm (t)" }
+      - { id: 20196, name: "Steel kiteshield (t)" }
+
+  # Black weapons - 10 Attack
+  - skillReqs:
+      - { skill: attack, level: 10 }
+    items:
+      - { id: 1217, name: "Black dagger" }
+      - { id: 1233, name: "Black dagger(p)" }
+      - { id: 1283, name: "Black sword" }
+      - { id: 1297, name: "Black longsword" }
+      - { id: 1313, name: "Black 2h sword" }
+      - { id: 1327, name: "Black scimitar" }
+      - { id: 1361, name: "Black axe" }
+      - { id: 1367, name: "Black battleaxe" }
+      - { id: 1426, name: "Black mace" }
+      - { id: 3098, name: "Black claws" }
+      - { id: 4580, name: "Black spear" }
+      - { id: 4582, name: "Black spear(p)" }
+      - { id: 4584, name: "Black spear(kp)" }
+      - { id: 5682, name: "Black dagger(p+)" }
+      - { id: 5700, name: "Black dagger(p++)" }
+      - { id: 5734, name: "Black spear(p+)" }
+      - { id: 5736, name: "Black spear(p++)" }
+      - { id: 12297, name: "Black pickaxe" }
+      - { id: 28205, name: "Black felling axe" }
+
+  # Black armour - 10 Defence
+  - skillReqs:
+      - { skill: defence, level: 10 }
+    items:
+      - { id: 1077, name: "Black platelegs" }
+      - { id: 1089, name: "Black plateskirt" }
+      - { id: 1107, name: "Black chainbody" }
+      - { id: 1125, name: "Black platebody" }
+      - { id: 1151, name: "Black med helm" }
+      - { id: 1165, name: "Black full helm" }
+      - { id: 1179, name: "Black sq shield" }
+      - { id: 1195, name: "Black kiteshield" }
+      - { id: 2583, name: "Black platebody (t)" }
+      - { id: 2585, name: "Black platelegs (t)" }
+      - { id: 2587, name: "Black full helm (t)" }
+      - { id: 2589, name: "Black kiteshield (t)" }
+      - { id: 2591, name: "Black platebody (g)" }
+      - { id: 2593, name: "Black platelegs (g)" }
+      - { id: 2595, name: "Black full helm (g)" }
+      - { id: 2597, name: "Black kiteshield (g)" }
+      - { id: 3472, name: "Black plateskirt (t)" }
+      - { id: 3473, name: "Black plateskirt (g)" }
+      - { id: 4125, name: "Black boots" }
+      - { id: 7332, name: "Black shield (h1)" }
+      - { id: 7338, name: "Black shield (h2)" }
+      - { id: 7344, name: "Black shield (h3)" }
+      - { id: 7350, name: "Black shield (h4)" }
+      - { id: 7356, name: "Black shield (h5)" }
+      - { id: 10306, name: "Black helm (h1)" }
+      - { id: 10308, name: "Black helm (h2)" }
+      - { id: 10310, name: "Black helm (h3)" }
+      - { id: 10312, name: "Black helm (h4)" }
+      - { id: 10314, name: "Black helm (h5)" }
+      - { id: 23366, name: "Black platebody (h1)" }
+      - { id: 23369, name: "Black platebody (h2)" }
+      - { id: 23372, name: "Black platebody (h3)" }
+      - { id: 23375, name: "Black platebody (h4)" }
+      - { id: 23378, name: "Black platebody (h5)" }
+
+  # White weapons - 10 Attack
+  - skillReqs:
+      - { skill: attack, level: 10 }
+    items:
+      - { id: 6587, name: "White claws" }
+      - { id: 6589, name: "White battleaxe" }
+      - { id: 6591, name: "White dagger" }
+      - { id: 6593, name: "White dagger(p)" }
+      - { id: 6595, name: "White dagger(p+)" }
+      - { id: 6597, name: "White dagger(p++)" }
+      - { id: 6601, name: "White mace" }
+      - { id: 6605, name: "White sword" }
+      - { id: 6607, name: "White longsword" }
+      - { id: 6609, name: "White 2h sword" }
+      - { id: 6611, name: "White scimitar" }
+
+  # White armour - 10 Defence
+  - skillReqs:
+      - { skill: defence, level: 10 }
+    items:
+      - { id: 6615, name: "White chainbody" }
+      - { id: 6617, name: "White platebody" }
+      - { id: 6619, name: "White boots" }
+      - { id: 6621, name: "White med helm" }
+      - { id: 6623, name: "White full helm" }
+      - { id: 6625, name: "White platelegs" }
+      - { id: 6627, name: "White plateskirt" }
+      - { id: 6631, name: "White sq shield" }
+      - { id: 6633, name: "White kiteshield" }
+
+  # Mithril weapons - 20 Attack
+  - skillReqs:
+      - { skill: attack, level: 20 }
+    items:
+      - { id: 1209, name: "Mithril dagger" }
+      - { id: 1225, name: "Mithril dagger(p)" }
+      - { id: 1243, name: "Mithril spear" }
+      - { id: 1257, name: "Mithril spear(p)" }
+      - { id: 1273, name: "Mithril pickaxe" }
+      - { id: 1285, name: "Mithril sword" }
+      - { id: 1299, name: "Mithril longsword" }
+      - { id: 1315, name: "Mithril 2h sword" }
+      - { id: 1329, name: "Mithril scimitar" }
+      - { id: 1355, name: "Mithril axe" }
+      - { id: 1369, name: "Mithril battleaxe" }
+      - { id: 1428, name: "Mithril mace" }
+      - { id: 3099, name: "Mithril claws" }
+      - { id: 3173, name: "Mithril spear(kp)" }
+      - { id: 5674, name: "Mithril dagger(p+)" }
+      - { id: 5692, name: "Mithril dagger(p++)" }
+      - { id: 5710, name: "Mithril spear(p+)" }
+      - { id: 5724, name: "Mithril spear(p++)" }
+      - { id: 11373, name: "Mithril hasta" }
+      - { id: 11400, name: "Mithril hasta(p)" }
+      - { id: 11402, name: "Mithril hasta(kp)" }
+      - { id: 11403, name: "Mithril hasta(p+)" }
+      - { id: 11405, name: "Mithril hasta(p++)" }
+      - { id: 11720, name: "Mithril pickaxe (nz)" }
+      - { id: 28208, name: "Mithril felling axe" }
+
+  # Mithril armour - 20 Defence
+  - skillReqs:
+      - { skill: defence, level: 20 }
+    items:
+      - { id: 1071, name: "Mithril platelegs" }
+      - { id: 1085, name: "Mithril plateskirt" }
+      - { id: 1109, name: "Mithril chainbody" }
+      - { id: 1121, name: "Mithril platebody" }
+      - { id: 1143, name: "Mithril med helm" }
+      - { id: 1159, name: "Mithril full helm" }
+      - { id: 1181, name: "Mithril sq shield" }
+      - { id: 1197, name: "Mithril kiteshield" }
+      - { id: 4127, name: "Mithril boots" }
+      - { id: 12277, name: "Mithril platebody (g)" }
+      - { id: 12279, name: "Mithril platelegs (g)" }
+      - { id: 12281, name: "Mithril kiteshield (g)" }
+      - { id: 12283, name: "Mithril full helm (g)" }
+      - { id: 12285, name: "Mithril plateskirt (g)" }
+      - { id: 12287, name: "Mithril platebody (t)" }
+      - { id: 12289, name: "Mithril platelegs (t)" }
+      - { id: 12291, name: "Mithril kiteshield (t)" }
+      - { id: 12293, name: "Mithril full helm (t)" }
+      - { id: 12295, name: "Mithril plateskirt (t)" }
+
+  # Adamant weapons - 30 Attack
+  - skillReqs:
+      - { skill: attack, level: 30 }
+    items:
+      - { id: 1211, name: "Adamant dagger" }
+      - { id: 1227, name: "Adamant dagger(p)" }
+      - { id: 1245, name: "Adamant spear" }
+      - { id: 1259, name: "Adamant spear(p)" }
+      - { id: 1271, name: "Adamant pickaxe" }
+      - { id: 1287, name: "Adamant sword" }
+      - { id: 1301, name: "Adamant longsword" }
+      - { id: 1317, name: "Adamant 2h sword" }
+      - { id: 1331, name: "Adamant scimitar" }
+      - { id: 1357, name: "Adamant axe" }
+      - { id: 1371, name: "Adamant battleaxe" }
+      - { id: 1430, name: "Adamant mace" }
+      - { id: 3100, name: "Adamant claws" }
+      - { id: 3174, name: "Adamant spear(kp)" }
+      - { id: 5676, name: "Adamant dagger(p+)" }
+      - { id: 5694, name: "Adamant dagger(p++)" }
+      - { id: 5712, name: "Adamant spear(p+)" }
+      - { id: 5726, name: "Adamant spear(p++)" }
+      - { id: 11375, name: "Adamant hasta" }
+      - { id: 11407, name: "Adamant hasta(p)" }
+      - { id: 11409, name: "Adamant hasta(kp)" }
+      - { id: 11410, name: "Adamant hasta(p+)" }
+      - { id: 11412, name: "Adamant hasta(p++)" }
+      - { id: 28211, name: "Adamant felling axe" }
+
+  # Adamant armour - 30 Defence
+  - skillReqs:
+      - { skill: defence, level: 30 }
+    items:
+      - { id: 1073, name: "Adamant platelegs" }
+      - { id: 1091, name: "Adamant plateskirt" }
+      - { id: 1111, name: "Adamant chainbody" }
+      - { id: 1123, name: "Adamant platebody" }
+      - { id: 1145, name: "Adamant med helm" }
+      - { id: 1161, name: "Adamant full helm" }
+      - { id: 1183, name: "Adamant sq shield" }
+      - { id: 1199, name: "Adamant kiteshield" }
+      - { id: 2599, name: "Adamant platebody (t)" }
+      - { id: 2601, name: "Adamant platelegs (t)" }
+      - { id: 2603, name: "Adamant kiteshield (t)" }
+      - { id: 2605, name: "Adamant full helm (t)" }
+      - { id: 2607, name: "Adamant platebody (g)" }
+      - { id: 2609, name: "Adamant platelegs (g)" }
+      - { id: 2611, name: "Adamant kiteshield (g)" }
+      - { id: 2613, name: "Adamant full helm (g)" }
+      - { id: 3474, name: "Adamant plateskirt (t)" }
+      - { id: 3475, name: "Adamant plateskirt (g)" }
+      - { id: 4129, name: "Adamant boots" }
+      - { id: 7334, name: "Adamant shield (h1)" }
+      - { id: 7340, name: "Adamant shield (h2)" }
+      - { id: 7346, name: "Adamant shield (h3)" }
+      - { id: 7352, name: "Adamant shield (h4)" }
+      - { id: 7358, name: "Adamant shield (h5)" }
+      - { id: 10296, name: "Adamant helm (h1)" }
+      - { id: 10298, name: "Adamant helm (h2)" }
+      - { id: 10300, name: "Adamant helm (h3)" }
+      - { id: 10302, name: "Adamant helm (h4)" }
+      - { id: 10304, name: "Adamant helm (h5)" }
+      - { id: 20415, name: "Adamant platebody" }
+      - { id: 20416, name: "Adamant platelegs" }
+      - { id: 20561, name: "Adamant full helm" }
+      - { id: 22127, name: "Adamant kiteshield" }
+      - { id: 22129, name: "Adamant kiteshield" }
+      - { id: 22131, name: "Adamant kiteshield" }
+      - { id: 22133, name: "Adamant kiteshield" }
+      - { id: 22135, name: "Adamant kiteshield" }
+      - { id: 22137, name: "Adamant kiteshield" }
+      - { id: 22139, name: "Adamant kiteshield" }
+      - { id: 22141, name: "Adamant kiteshield" }
+      - { id: 22143, name: "Adamant kiteshield" }
+      - { id: 22145, name: "Adamant kiteshield" }
+      - { id: 22147, name: "Adamant kiteshield" }
+      - { id: 22149, name: "Adamant kiteshield" }
+      - { id: 22151, name: "Adamant kiteshield" }
+      - { id: 22153, name: "Adamant kiteshield" }
+      - { id: 22155, name: "Adamant kiteshield" }
+      - { id: 22157, name: "Adamant kiteshield" }
+      - { id: 22159, name: "Adamant heraldic helm" }
+      - { id: 22161, name: "Adamant heraldic helm" }
+      - { id: 22163, name: "Adamant heraldic helm" }
+      - { id: 22165, name: "Adamant heraldic helm" }
+      - { id: 22167, name: "Adamant heraldic helm" }
+      - { id: 22169, name: "Adamant heraldic helm" }
+      - { id: 22171, name: "Adamant heraldic helm" }
+      - { id: 22173, name: "Adamant heraldic helm" }
+      - { id: 22175, name: "Adamant heraldic helm" }
+      - { id: 22177, name: "Adamant heraldic helm" }
+      - { id: 22179, name: "Adamant heraldic helm" }
+      - { id: 22181, name: "Adamant heraldic helm" }
+      - { id: 22183, name: "Adamant heraldic helm" }
+      - { id: 22185, name: "Adamant heraldic helm" }
+      - { id: 22187, name: "Adamant heraldic helm" }
+      - { id: 22189, name: "Adamant heraldic helm" }
+      - { id: 23392, name: "Adamant platebody (h1)" }
+      - { id: 23395, name: "Adamant platebody (h2)" }
+      - { id: 23398, name: "Adamant platebody (h3)" }
+      - { id: 23401, name: "Adamant platebody (h4)" }
+      - { id: 23404, name: "Adamant platebody (h5)" }
+
+  # Rune weapons - 40 Attack
+  - skillReqs:
+      - { skill: attack, level: 40 }
+    items:
+      - { id: 1213, name: "Rune dagger" }
+      - { id: 1229, name: "Rune dagger(p)" }
+      - { id: 1247, name: "Rune spear" }
+      - { id: 1261, name: "Rune spear(p)" }
+      - { id: 1275, name: "Rune pickaxe" }
+      - { id: 1289, name: "Rune sword" }
+      - { id: 1303, name: "Rune longsword" }
+      - { id: 1359, name: "Rune axe" }
+      - { id: 1373, name: "Rune battleaxe" }
+      - { id: 1432, name: "Rune mace" }
+      - { id: 3101, name: "Rune claws" }
+      - { id: 3175, name: "Rune spear(kp)" }
+      - { id: 5678, name: "Rune dagger(p+)" }
+      - { id: 5696, name: "Rune dagger(p++)" }
+      - { id: 5714, name: "Rune spear(p+)" }
+      - { id: 5728, name: "Rune spear(p++)" }
+      - { id: 11377, name: "Rune hasta" }
+      - { id: 11414, name: "Rune hasta(p)" }
+      - { id: 11416, name: "Rune hasta(kp)" }
+      - { id: 11417, name: "Rune hasta(p+)" }
+      - { id: 11419, name: "Rune hasta(p++)" }
+      - { id: 11719, name: "Rune pickaxe (nz)" }
+      - { id: 20402, name: "Rune scimitar" }
+      - { id: 20552, name: "Rune battleaxe" }
+      - { id: 20555, name: "Rune 2h sword" }
+      - { id: 23330, name: "Rune scimitar" }
+      - { id: 23332, name: "Rune scimitar" }
+      - { id: 23334, name: "Rune scimitar" }
+      - { id: 28214, name: "Rune felling axe" }
+
+  # Rune armour - 40 Defence
+  - skillReqs:
+      - { skill: defence, level: 40 }
+    items:
+      - { id: 1113, name: "Rune chainbody" }
+      - { id: 1147, name: "Rune med helm" }
+      - { id: 1185, name: "Rune sq shield" }
+      - { id: 2615, name: "Rune platebody (g)" }
+      - { id: 2617, name: "Rune platelegs (g)" }
+      - { id: 2619, name: "Rune full helm (g)" }
+      - { id: 2621, name: "Rune kiteshield (g)" }
+      - { id: 2623, name: "Rune platebody (t)" }
+      - { id: 2625, name: "Rune platelegs (t)" }
+      - { id: 2627, name: "Rune full helm (t)" }
+      - { id: 2629, name: "Rune kiteshield (t)" }
+      - { id: 3476, name: "Rune plateskirt (g)" }
+      - { id: 3477, name: "Rune plateskirt (t)" }
+      - { id: 7336, name: "Rune shield (h1)" }
+      - { id: 7342, name: "Rune shield (h2)" }
+      - { id: 7348, name: "Rune shield (h3)" }
+      - { id: 7354, name: "Rune shield (h4)" }
+      - { id: 7360, name: "Rune shield (h5)" }
+      - { id: 8464, name: "Rune heraldic helm" }
+      - { id: 8466, name: "Rune heraldic helm" }
+      - { id: 8468, name: "Rune heraldic helm" }
+      - { id: 8470, name: "Rune heraldic helm" }
+      - { id: 8472, name: "Rune heraldic helm" }
+      - { id: 8474, name: "Rune heraldic helm" }
+      - { id: 8476, name: "Rune heraldic helm" }
+      - { id: 8478, name: "Rune heraldic helm" }
+      - { id: 8480, name: "Rune heraldic helm" }
+      - { id: 8482, name: "Rune heraldic helm" }
+      - { id: 8484, name: "Rune heraldic helm" }
+      - { id: 8486, name: "Rune heraldic helm" }
+      - { id: 8488, name: "Rune heraldic helm" }
+      - { id: 8490, name: "Rune heraldic helm" }
+      - { id: 8492, name: "Rune heraldic helm" }
+      - { id: 8494, name: "Rune heraldic helm" }
+      - { id: 8714, name: "Rune kiteshield" }
+      - { id: 8716, name: "Rune kiteshield" }
+      - { id: 8718, name: "Rune kiteshield" }
+      - { id: 8720, name: "Rune kiteshield" }
+      - { id: 8722, name: "Rune kiteshield" }
+      - { id: 8724, name: "Rune kiteshield" }
+      - { id: 8726, name: "Rune kiteshield" }
+      - { id: 8728, name: "Rune kiteshield" }
+      - { id: 8730, name: "Rune kiteshield" }
+      - { id: 8732, name: "Rune kiteshield" }
+      - { id: 8734, name: "Rune kiteshield" }
+      - { id: 8736, name: "Rune kiteshield" }
+      - { id: 8738, name: "Rune kiteshield" }
+      - { id: 8740, name: "Rune kiteshield" }
+      - { id: 8742, name: "Rune kiteshield" }
+      - { id: 8744, name: "Rune kiteshield" }
+      - { id: 10286, name: "Rune helm (h1)" }
+      - { id: 10288, name: "Rune helm (h2)" }
+      - { id: 10290, name: "Rune helm (h3)" }
+      - { id: 10292, name: "Rune helm (h4)" }
+      - { id: 10294, name: "Rune helm (h5)" }
+      - { id: 20421, name: "Rune platebody" }
+      - { id: 20422, name: "Rune platelegs" }
+      - { id: 23209, name: "Rune platebody (h1)" }
+      - { id: 23212, name: "Rune platebody (h2)" }
+      - { id: 23215, name: "Rune platebody (h3)" }
+      - { id: 23218, name: "Rune platebody (h4)" }
+      - { id: 23221, name: "Rune platebody (h5)" }
+
+  # Dragon weapons - 60 Attack
+  - skillReqs:
+      - { skill: attack, level: 60 }
+    items:
+      - { id: 1231, name: "Dragon dagger(p)" }
+      - { id: 1263, name: "Dragon spear(p)" }
+      - { id: 1377, name: "Dragon battleaxe" }
+      - { id: 3176, name: "Dragon spear(kp)" }
+      - { id: 5680, name: "Dragon dagger(p+)" }
+      - { id: 5716, name: "Dragon spear(p+)" }
+      - { id: 5730, name: "Dragon spear(p++)" }
+      - { id: 6739, name: "Dragon axe" }
+      - { id: 11920, name: "Dragon pickaxe" }
+      - { id: 12797, name: "Dragon pickaxe" }
+      - { id: 20000, name: "Dragon scimitar (or)" }
+      - { id: 20406, name: "Dragon scimitar" }
+      - { id: 20407, name: "Dragon dagger" }
+      - { id: 20559, name: "Dragon 2h sword" }
+      - { id: 20784, name: "Dragon claws" }
+      - { id: 21028, name: "Dragon harpoon" }
+      - { id: 21206, name: "Dragon sword" }
+      - { id: 22734, name: "Dragon hasta(p)" }
+      - { id: 22737, name: "Dragon hasta(p+)" }
+      - { id: 22743, name: "Dragon hasta(kp)" }
+      - { id: 23677, name: "Dragon pickaxe (or)" }
+      - { id: 25373, name: "Dragon harpoon (or)" }
+      - { id: 25376, name: "Dragon pickaxe (or)" }
+      - { id: 25378, name: "Dragon axe (or)" }
+      - { id: 26708, name: "Dragon claws (or)" }
+      - { id: 27810, name: "Dragon candle dagger" }
+      - { id: 28021, name: "Dragon dagger (p)(cr)" }
+      - { id: 28023, name: "Dragon dagger (p+)(cr)" }
+      - { id: 28037, name: "Dragon battleaxe (cr)" }
+      - { id: 28043, name: "Dragon spear (p)(cr)" }
+      - { id: 28045, name: "Dragon spear (p+)(cr)" }
+      - { id: 28047, name: "Dragon spear (p++)(cr)" }
+      - { id: 28217, name: "Dragon felling axe" }
+      - { id: 30349, name: "Dragon harpoon (or)" }
+      - { id: 30351, name: "Dragon pickaxe (or)" }
+      - { id: 30352, name: "Dragon axe (or)" }
+
+  # Dragon armour - 60 Defence
+  - skillReqs:
+      - { skill: defence, level: 60 }
+    items:
+      - { id: 12414, name: "Dragon chainbody (g)" }
+      - { id: 12415, name: "Dragon platelegs (g)" }
+      - { id: 12416, name: "Dragon plateskirt (g)" }
+      - { id: 12417, name: "Dragon full helm (g)" }
+      - { id: 12418, name: "Dragon sq shield (g)" }
+      - { id: 20428, name: "Dragon chainbody" }
+      - { id: 20429, name: "Dragon platelegs" }
+      - { id: 22234, name: "Dragon boots (g)" }
+      - { id: 22242, name: "Dragon platebody (g)" }
+      - { id: 22244, name: "Dragon kiteshield (g)" }
+      - { id: 28055, name: "Dragon boots (cr)" }
+      - { id: 28059, name: "Dragon sq shield (cr)" }
+      - { id: 28061, name: "Dragon platelegs (cr)" }
+      - { id: 28065, name: "Dragon chainbody (cr)" }
+
+  # Granite armour - 50 Defence and 50 Strength. Every piece of the set is gated on both.
+  - skillReqs:
+      - { skill: defence, level: 50 }
+      - { skill: strength, level: 50 }
+    items:
+      - { id: 3122, name: "Granite shield" }
+      - { id: 6809, name: "Granite legs" }
+      - { id: 10564, name: "Granite body" }
+      - { id: 10589, name: "Granite helm" }
+      - { id: 21643, name: "Granite boots" }
+
+  # Granite weapons - 50 Attack and 50 Strength, the same pair the granite armour above wants.
+  # Granite maul id 4153 already carries both from the cache; 12848/20557/24227 are its
+  # ornamented and later-added variants, and the hammer and longsword carry nothing at all.
+  - skillReqs:
+      - { skill: attack, level: 50 }
+      - { skill: strength, level: 50 }
+    items:
+      - { id: 12848, name: "Granite maul" }
+      - { id: 20557, name: "Granite maul" }
+      - { id: 24227, name: "Granite maul" }
+      - { id: 21742, name: "Granite hammer" }
+      - { id: 21646, name: "Granite longsword" }
+
+  # Dragon halberd - 60 Attack and 30 Strength, the top of the halberd ladder below.
+  - skillReqs:
+      - { skill: attack, level: 60 }
+      - { skill: strength, level: 30 }
+    items:
+      - { id: 3204, name: "Dragon halberd" }
+      - { id: 28049, name: "Dragon halberd (cr)" }
+
+  # ---------------------------------------------------------------------------------------
+  # Strength-gated melee weapons.
+  #
+  # Almost nothing below carries a requirement in this cache, so a level 1 account could swing
+  # a dragon warhammer or a scythe of vitur. Levels are per-weapon off the wiki rather than off
+  # the metal ladder, because these weapons do not follow it: warhammers gate on Strength
+  # *instead of* Attack, and halberds want Attack at the tier and Strength at half of it.
+  #
+  # **Seven ids here do already carry their requirement from the cache**, and restating them is
+  # a no-op rather than a correction - the loader merges per skill and never overwrites. They
+  # are kept so each family reads as a complete set: Granite hammer (21742) and Granite
+  # longsword (21646) at 50/50, Barrelchest anchor (10887) at 60/40, Tzhaar-ket-om (6528) and
+  # Dragon warhammer (13576) at 60 Strength, Elder maul (21003) at 75/75, and Scythe of vitur
+  # (22325) at 80/90. Every one agrees with the value written here, which is a useful check on
+  # the wiki figures the rest of the section rests on.
+  # ---------------------------------------------------------------------------------------
+
+  # Warhammers - Strength only, no Attack requirement at all. Confirmed on the rune, dragon
+  # and mithril pages, all three of which say so outright; the 2021-04-21 update moved the
+  # whole family from Attack to Strength. Bronze and iron are level 1 and so gate nothing.
+  # White also wants Wanted!, which this file does not model - see the header.
+  - skillReqs:
+      - { skill: strength, level: 5 }
+    items:
+      - { id: 1339, name: "Steel warhammer" }
+
+  - skillReqs:
+      - { skill: strength, level: 10 }
+    items:
+      - { id: 1341, name: "Black warhammer" }
+      - { id: 6613, name: "White warhammer" }
+
+  - skillReqs:
+      - { skill: strength, level: 20 }
+    items:
+      - { id: 1343, name: "Mithril warhammer" }
+
+  - skillReqs:
+      - { skill: strength, level: 30 }
+    items:
+      - { id: 1345, name: "Adamant warhammer" }
+
+  - skillReqs:
+      - { skill: strength, level: 40 }
+    items:
+      - { id: 1347, name: "Rune warhammer" }
+
+  # Halberds - Attack at the tier, Strength at half of it (black 10/5, mithril 20/10,
+  # adamant 30/15, rune 40/20, dragon 60/30 above). Bronze, iron and steel stop at their
+  # Attack level and ask for no Strength, so they stay on the Attack ladder further up.
+  - skillReqs:
+      - { skill: attack, level: 10 }
+      - { skill: strength, level: 5 }
+    items:
+      - { id: 3196, name: "Black halberd" }
+      - { id: 6599, name: "White halberd" }
+
+  - skillReqs:
+      - { skill: attack, level: 20 }
+      - { skill: strength, level: 10 }
+    items:
+      - { id: 3198, name: "Mithril halberd" }
+
+  - skillReqs:
+      - { skill: attack, level: 30 }
+      - { skill: strength, level: 15 }
+    items:
+      - { id: 3200, name: "Adamant halberd" }
+
+  - skillReqs:
+      - { skill: attack, level: 40 }
+      - { skill: strength, level: 20 }
+    items:
+      - { id: 3202, name: "Rune halberd" }
+
+  # Barrelchest anchor - 60 Attack and 40 Strength. Id 10888 is the same weapon but is not
+  # equippable in this cache, so it is left out.
+  - skillReqs:
+      - { skill: attack, level: 60 }
+      - { skill: strength, level: 40 }
+    items:
+      - { id: 10887, name: "Barrelchest anchor" }
+
+  # Tzhaar-ket-om - 60 Strength, no Attack, like the warhammers.
+  - skillReqs:
+      - { skill: strength, level: 60 }
+    items:
+      - { id: 6528, name: "Tzhaar-ket-om" }
+      - { id: 23235, name: "Tzhaar-ket-om (t)" }
+
+  # Dragon warhammer - 60 Strength, no Attack. Both ids are named "Dragon warhammer".
+  - skillReqs:
+      - { skill: strength, level: 60 }
+    items:
+      - { id: 13576, name: "Dragon warhammer" }
+      - { id: 20785, name: "Dragon warhammer" }
+      - { id: 26710, name: "Dragon warhammer (or)" }
+
+  # Elder maul - 75 Attack and 75 Strength. Both ids are named "Elder maul".
+  - skillReqs:
+      - { skill: attack, level: 75 }
+      - { skill: strength, level: 75 }
+    items:
+      - { id: 21003, name: "Elder maul" }
+      - { id: 21205, name: "Elder maul" }
+
+  # Scythe of vitur - 80 Attack and 90 Strength, the highest Strength requirement in the game.
+  - skillReqs:
+      - { skill: attack, level: 80 }
+      - { skill: strength, level: 90 }
+    items:
+      - { id: 22325, name: "Scythe of vitur" }
+      - { id: 22486, name: "Scythe of vitur (uncharged)" }
+      - { id: 22664, name: "Scythe of vitur" }
+
+  # ------------------------------------------------------------------------------------
+  # RANGED
+  #
+  # Ranged does NOT follow the metal ladder above, and most ammunition is not gated at all.
+  #
+  # The distinction the cache already makes, and which was verified against the wiki before
+  # anything here was written: a *launcher* carries the requirement, and low-tier ammunition
+  # does not. Adamant arrows, dragon javelins and iron bolts each have no Ranged parameter in
+  # this cache, and their wiki infoboxes have no requirement field either - the pages say the
+  # arrow "can be used by any standard bow of maple or stronger" and the bolts "may be shot
+  # from iron or better crossbows". So arrows, javelins and sub-mithril bolts are deliberately
+  # absent from this file: they are correctly ungated, not missing.
+  #
+  # What IS gated is anything held in the weapon slot - bows, crossbows, darts, knives,
+  # thrownaxes - plus the higher bolts, which take their level from the crossbow that fires
+  # them rather than from their metal. That is why mithril bolts are 36 and not 20: the
+  # mithril crossbow is 36.
+  #
+  # Levels, all wiki-verified and each corroborated by at least one item the cache already
+  # gates at the same number:
+  #   crossbows   blurite 16, iron 26, steel 31, mithril 36, adamant 46, rune 61, dragon 64
+  #   bows        oak 5, willow 20, maple 30, yew 40, magic 50
+  #   darts       steel 5, black 10, mithril 20, adamant 30, rune 40, amethyst 50, dragon 60
+  #   knives      steel 5, black 10, mithril 20, adamant 30, rune 40, dragon 60
+  #   thrownaxes  steel 5, mithril 20, adamant 30, rune 40, dragon 61
+  #   bolts       mithril 36, adamant 46, runite 61, dragon 64
+  #
+  # Bronze and iron tiers are omitted throughout: their requirement is level 1, which every
+  # account already meets, so an entry for them would be a row that can never fire.
+  #
+  # The named exceptions are left to the cache, which already has them right: Karil's, the
+  # Armadyl and dragon hunter crossbows at 70, and the Zaryte at 80 - none of which follows
+  # the ladder their name would suggest.
+  # ------------------------------------------------------------------------------------
+
+  # 5 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 5 }
+    items:
+      - { id: 802, name: "Steel thrownaxe" }
+      - { id: 808, name: "Steel dart" }
+      - { id: 814, name: "Steel dart(p)" }
+      - { id: 843, name: "Oak shortbow" }
+      - { id: 845, name: "Oak longbow" }
+      - { id: 865, name: "Steel knife" }
+      - { id: 872, name: "Steel knife(p)" }
+      - { id: 5630, name: "Steel dart(p+)" }
+      - { id: 5637, name: "Steel dart(p++)" }
+      - { id: 5656, name: "Steel knife(p+)" }
+      - { id: 5663, name: "Steel knife(p++)" }
+
+  # 10 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 10 }
+    items:
+      - { id: 869, name: "Black knife" }
+      - { id: 874, name: "Black knife(p)" }
+      - { id: 3093, name: "Black dart" }
+      - { id: 3094, name: "Black dart(p)" }
+      - { id: 5631, name: "Black dart(p+)" }
+      - { id: 5638, name: "Black dart(p++)" }
+      - { id: 5658, name: "Black knife(p+)" }
+      - { id: 5665, name: "Black knife(p++)" }
+
+  # 16 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 16 }
+    items:
+      - { id: 9176, name: "Blurite crossbow" }
+
+  # 20 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 20 }
+    items:
+      - { id: 803, name: "Mithril thrownaxe" }
+      - { id: 809, name: "Mithril dart" }
+      - { id: 815, name: "Mithril dart(p)" }
+      - { id: 847, name: "Willow longbow" }
+      - { id: 849, name: "Willow shortbow" }
+      - { id: 866, name: "Mithril knife" }
+      - { id: 873, name: "Mithril knife(p)" }
+      - { id: 5632, name: "Mithril dart(p+)" }
+      - { id: 5639, name: "Mithril dart(p++)" }
+      - { id: 5657, name: "Mithril knife(p+)" }
+      - { id: 5664, name: "Mithril knife(p++)" }
+      - { id: 10280, name: "Willow comp bow" }
+
+  # 26 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 26 }
+    items:
+      - { id: 9177, name: "Iron crossbow" }
+
+  # 30 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 30 }
+    items:
+      - { id: 804, name: "Adamant thrownaxe" }
+      - { id: 816, name: "Adamant dart(p)" }
+      - { id: 851, name: "Maple longbow" }
+      - { id: 867, name: "Adamant knife" }
+      - { id: 875, name: "Adamant knife(p)" }
+      - { id: 5633, name: "Adamant dart(p+)" }
+      - { id: 5640, name: "Adamant dart(p++)" }
+      - { id: 5659, name: "Adamant knife(p+)" }
+      - { id: 5666, name: "Adamant knife(p++)" }
+      - { id: 20403, name: "Maple shortbow" }
+
+  # 31 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 31 }
+    items:
+      - { id: 9179, name: "Steel crossbow" }
+
+  # 36 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 36 }
+    items:
+      - { id: 9181, name: "Mithril crossbow" }
+      - { id: 9289, name: "Mithril bolts (p)" }
+      - { id: 9296, name: "Mithril bolts (p+)" }
+      - { id: 9303, name: "Mithril bolts (p++)" }
+
+  # 40 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 40 }
+    items:
+      - { id: 817, name: "Rune dart(p)" }
+      - { id: 855, name: "Yew longbow" }
+      - { id: 857, name: "Yew shortbow" }
+      - { id: 876, name: "Rune knife(p)" }
+      - { id: 5634, name: "Rune dart(p+)" }
+      - { id: 5641, name: "Rune dart(p++)" }
+      - { id: 5660, name: "Rune knife(p+)" }
+      - { id: 10282, name: "Yew comp bow" }
+      - { id: 20401, name: "Yew shortbow" }
+
+  # 46 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 46 }
+    items:
+      - { id: 9183, name: "Adamant crossbow" }
+      - { id: 9290, name: "Adamant bolts (p)" }
+      - { id: 9297, name: "Adamant bolts (p+)" }
+      - { id: 9304, name: "Adamant bolts (p++)" }
+
+  # 50 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 50 }
+    items:
+      - { id: 859, name: "Magic longbow" }
+      - { id: 10284, name: "Magic comp bow" }
+      - { id: 20558, name: "Magic shortbow" }
+      - { id: 25849, name: "Amethyst dart" }
+      - { id: 25851, name: "Amethyst dart(p)" }
+      - { id: 25855, name: "Amethyst dart(p+)" }
+      - { id: 25857, name: "Amethyst dart(p++)" }
+
+  # 60 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 60 }
+    items:
+      - { id: 11231, name: "Dragon dart(p)" }
+      - { id: 11233, name: "Dragon dart(p+)" }
+      - { id: 11234, name: "Dragon dart(p++)" }
+      - { id: 22806, name: "Dragon knife(p)" }
+      - { id: 22808, name: "Dragon knife(p+)" }
+      - { id: 22812, name: "Dragon knife" }
+      - { id: 22814, name: "Dragon knife" }
+      - { id: 27157, name: "Dragon knife" }
+
+  # 61 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 61 }
+    items:
+      - { id: 9291, name: "Runite bolts (p)" }
+      - { id: 9298, name: "Runite bolts (p+)" }
+      - { id: 9305, name: "Runite bolts (p++)" }
+      - { id: 21207, name: "Dragon thrownaxe" }
+      - { id: 23601, name: "Rune crossbow" }
+      - { id: 26486, name: "Rune crossbow (or)" }
+
+  # 64 Ranged
+  - skillReqs:
+      - { skill: ranged, level: 64 }
+    items:
+      - { id: 21924, name: "Dragon bolts (p)" }
+      - { id: 21926, name: "Dragon bolts (p+)" }
+      - { id: 21928, name: "Dragon bolts (p++)" }
+
+  # ------------------------------------------------------------------------------------
+  # MAGIC STAVES
+  #
+  # The elemental staff family - the staves that stand in for runes, wired up in
+  # `org.alter.plugins.content.magic.ElementalStaves`. The cache gates almost none of it, so
+  # a level 1 account could wield a mystic staff.
+  #
+  #   basic elemental staves   no requirement at all - not listed here, there is nothing to gate
+  #   battlestaves             30 Attack, 30 Magic
+  #   mystic staves            40 Attack, 40 Magic
+  #   Twinflame staff          60 Magic, and no Attack requirement
+  #
+  # Two members of the family are deliberately absent:
+  #   - The four craftable elemental battlestaves (air, water, earth, fire) and Bryophyta's
+  #     staff (uncharged) carry a *Crafting* level in the cache's requirement param, which this
+  #     file cannot remove because it only ever adds. They are corrected outright in
+  #     `itemOverrides/weapons/elemental_battlestaves.yml` instead.
+  #   - Mystic smoke staff (12000) already declares Attack 40 / Magic 40 in the cache.
+  #
+  # The upgrade-kit forms (lava 21198/21200, steam 12795/12796) are separate ids for what is a
+  # purely cosmetic change, so they take the same requirements as the staves they decorate.
+  # ------------------------------------------------------------------------------------
+
+  # Battlestaves - 30 Attack, 30 Magic
+  - skillReqs:
+      - { skill: attack, level: 30 }
+      - { skill: magic, level: 30 }
+    items:
+      - { id: 1391, name: "Battlestaff" }
+      - { id: 3053, name: "Lava battlestaff" }
+      - { id: 21198, name: "Lava battlestaff" }
+      - { id: 6562, name: "Mud battlestaff" }
+      - { id: 11787, name: "Steam battlestaff" }
+      - { id: 12795, name: "Steam battlestaff" }
+      - { id: 11998, name: "Smoke battlestaff" }
+      - { id: 20730, name: "Mist battlestaff" }
+      - { id: 20736, name: "Dust battlestaff" }
+
+  # Mystic staves - 40 Attack, 40 Magic
+  - skillReqs:
+      - { skill: attack, level: 40 }
+      - { skill: magic, level: 40 }
+    items:
+      - { id: 1401, name: "Mystic fire staff" }
+      - { id: 1403, name: "Mystic water staff" }
+      - { id: 1405, name: "Mystic air staff" }
+      - { id: 1407, name: "Mystic earth staff" }
+      - { id: 3054, name: "Mystic lava staff" }
+      - { id: 21200, name: "Mystic lava staff" }
+      - { id: 6563, name: "Mystic mud staff" }
+      - { id: 11789, name: "Mystic steam staff" }
+      - { id: 12796, name: "Mystic steam staff" }
+      - { id: 20733, name: "Mystic mist staff" }
+      - { id: 20739, name: "Mystic dust staff" }
+
+  # Twinflame staff - 60 Magic, no Attack requirement
+  - skillReqs:
+      - { skill: magic, level: 60 }
+    items:
+      - { id: 30634, name: "Twinflame staff" }

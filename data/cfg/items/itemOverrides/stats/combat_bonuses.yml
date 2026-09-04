@@ -1,0 +1,821 @@
+---
+# Equipment bonus corrections, against the live game's own numbers.
+#
+# Every value here was diffed against the OSRS Wiki's equipment table (the dump the wiki's own
+# DPS calculator is built from, https://oldschool.runescape.wiki/w/Calculator:DPS) on 2026-09-03,
+# item id by item id, over all 4,691 equippable items the rev-228 cache and the wiki have in
+# common. Only the fields that actually differ are written, so the cache keeps everything it
+# already gets right.
+#
+# What the differences are:
+#
+#  - Balance changes made after this cache was built. The 2024 melee rebalance raised the Ghrazi
+#    rapier, the Blade of Saeldor and the Inquisitor's set; the magic rebalance gave the master
+#    wand +10% magic damage and doubled the ancient sceptres' to 10%.
+#  - Charged variants that carry the uncharged stats. The charged dragonfire shield, dragonfire
+#    ward and ancient wyvern shield all read fifty points of defence short.
+#  - Items whose bonuses the cache simply never got: the imbued and historical crystal bows and
+#    shields sit at a flat zero.
+#
+# Deliberately not corrected here: the Deadman Mode, Emir's Arena and Wilderness Wars copies,
+# whose wiki rows describe a different balance pass than the one in this cache, and the five
+# salamanders, whose magic damage the wiki's equipment table does not record at all (it is read
+# from cache param 65 instead - see ParamMapper).
+
+---
+id: 27626
+name: "Ancient sceptre (l)"
+equipment:
+  magicDamage: 10
+
+---
+id: 27624
+name: "Ancient sceptre"
+equipment:
+  magicDamage: 10
+
+---
+id: 21633
+name: "Ancient wyvern shield"
+equipment:
+  defenceStab: 72
+  defenceSlash: 80
+  defenceCrush: 75
+  defenceRanged: -5
+
+---
+id: 28205
+name: "Black felling axe"
+equipment:
+  attackStab: -2
+  attackSlash: 10
+  attackCrush: 8
+  meleeStrength: 12
+
+---
+id: 23995
+name: "Blade of saeldor"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 24551
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25882
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25876
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25878
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25872
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25870
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25880
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 25874
+name: "Blade of saeldor (c)"
+equipment:
+  attackSlash: 100
+  meleeStrength: 93
+
+---
+id: 28687
+name: "Blazing blowpipe (empty)"
+equipment:
+  rangedStrength: 0
+
+---
+id: 28473
+name: "Blood ancient sceptre (l)"
+equipment:
+  magicDamage: 10
+
+---
+id: 28260
+name: "Blood ancient sceptre"
+equipment:
+  magicDamage: 10
+
+---
+id: 89
+name: "Boots of lightness"
+equipment:
+  defenceStab: 1
+
+---
+id: 23845
+name: "Corrupted body (perfected)"
+equipment:
+  attackStab: 15
+
+---
+id: 7539
+name: "Crab helmet"
+equipment:
+  defenceStab: 5
+  defenceSlash: 4
+
+---
+id: 23891
+name: "Crystal body (perfected)"
+equipment:
+  attackStab: 15
+
+---
+id: 4223
+name: "Crystal bow 1/10"
+equipment:
+  attackRanged: 64
+  rangedStrength: 52
+
+---
+id: 4222
+name: "Crystal bow 2/10"
+equipment:
+  attackRanged: 68
+  rangedStrength: 54
+
+---
+id: 4221
+name: "Crystal bow 3/10"
+equipment:
+  attackRanged: 72
+  rangedStrength: 56
+
+---
+id: 4220
+name: "Crystal bow 4/10"
+equipment:
+  attackRanged: 76
+  rangedStrength: 58
+
+---
+id: 4219
+name: "Crystal bow 5/10"
+equipment:
+  attackRanged: 80
+  rangedStrength: 60
+
+---
+id: 4218
+name: "Crystal bow 6/10"
+equipment:
+  attackRanged: 84
+  rangedStrength: 62
+
+---
+id: 4217
+name: "Crystal bow 7/10"
+equipment:
+  attackRanged: 88
+  rangedStrength: 64
+
+---
+id: 4216
+name: "Crystal bow 8/10"
+equipment:
+  attackRanged: 92
+  rangedStrength: 66
+
+---
+id: 4215
+name: "Crystal bow 9/10"
+equipment:
+  attackRanged: 96
+  rangedStrength: 68
+
+---
+id: 4214
+name: "Crystal bow full"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 4212
+name: "New crystal bow"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11758
+name: "Crystal bow 1/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11757
+name: "Crystal bow 2/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11756
+name: "Crystal bow 3/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11755
+name: "Crystal bow 4/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11754
+name: "Crystal bow 5/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11753
+name: "Crystal bow 6/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11752
+name: "Crystal bow 7/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11751
+name: "Crystal bow 8/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11750
+name: "Crystal bow 9/10 (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11749
+name: "Crystal bow full (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 11748
+name: "New crystal bow (i)"
+equipment:
+  attackRanged: 100
+  rangedStrength: 70
+
+---
+id: 30340
+name: "Crystal dagger (perfected)"
+equipment:
+  attackSlash: 140
+
+---
+id: 4234
+name: "Crystal shield 1/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 33
+  defenceSlash: 36
+  defenceCrush: 35
+  defenceRanged: 62
+
+---
+id: 4233
+name: "Crystal shield 2/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 35
+  defenceSlash: 38
+  defenceCrush: 37
+  defenceRanged: 64
+
+---
+id: 4232
+name: "Crystal shield 3/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 37
+  defenceSlash: 40
+  defenceCrush: 39
+  defenceRanged: 66
+
+---
+id: 4231
+name: "Crystal shield 4/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 39
+  defenceSlash: 42
+  defenceCrush: 41
+  defenceRanged: 68
+
+---
+id: 4230
+name: "Crystal shield 5/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 41
+  defenceSlash: 44
+  defenceCrush: 43
+  defenceRanged: 70
+
+---
+id: 4229
+name: "Crystal shield 6/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 43
+  defenceSlash: 46
+  defenceCrush: 45
+  defenceRanged: 72
+
+---
+id: 4228
+name: "Crystal shield 7/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 45
+  defenceSlash: 48
+  defenceCrush: 47
+  defenceRanged: 74
+
+---
+id: 4227
+name: "Crystal shield 8/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 47
+  defenceSlash: 50
+  defenceCrush: 49
+  defenceRanged: 76
+
+---
+id: 4226
+name: "Crystal shield 9/10"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 49
+  defenceSlash: 52
+  defenceCrush: 51
+  defenceRanged: 78
+
+---
+id: 4225
+name: "Crystal shield full"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 4224
+name: "New crystal shield"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11769
+name: "Crystal shield 1/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11768
+name: "Crystal shield 2/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11767
+name: "Crystal shield 3/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11766
+name: "Crystal shield 4/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11765
+name: "Crystal shield 5/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11764
+name: "Crystal shield 6/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11763
+name: "Crystal shield 7/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11762
+name: "Crystal shield 8/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11761
+name: "Crystal shield 9/10 (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11760
+name: "Crystal shield full (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 11759
+name: "New crystal shield (i)"
+equipment:
+  attackMagic: -10
+  attackRanged: -10
+  defenceStab: 51
+  defenceSlash: 54
+  defenceCrush: 53
+  defenceRanged: 80
+
+---
+id: 8856
+name: "Defensive shield"
+equipment:
+  defenceRanged: 7
+
+---
+id: 11283
+name: "Dragonfire shield"
+equipment:
+  defenceStab: 70
+  defenceSlash: 75
+  defenceCrush: 72
+  defenceRanged: 72
+
+---
+id: 22002
+name: "Dragonfire ward"
+equipment:
+  defenceStab: 25
+  defenceSlash: 30
+  defenceCrush: 28
+  defenceRanged: 68
+
+---
+id: 30373
+name: "Drygore blowpipe (empty)"
+equipment:
+  rangedStrength: 0
+
+---
+id: 28143
+name: "Forestry basket"
+equipment:
+  defenceSlash: 0
+  defenceCrush: 0
+  defenceRanged: 0
+
+---
+id: 28145
+name: "Open forestry basket"
+equipment:
+  defenceSlash: 0
+  defenceCrush: 0
+  defenceRanged: 0
+
+---
+id: 22324
+name: "Ghrazi rapier"
+equipment:
+  attackStab: 100
+  meleeStrength: 93
+
+---
+id: 21739
+name: "Granite ring"
+equipment:
+  defenceRanged: 12
+
+---
+id: 26685
+name: "Granite ring (i)"
+equipment:
+  defenceRanged: 24
+
+---
+id: 21752
+name: "Granite ring (i)"
+equipment:
+  defenceRanged: 24
+
+---
+id: 25193
+name: "Granite ring (i)"
+equipment:
+  defenceRanged: 24
+
+---
+id: 25734
+name: "Holy ghrazi rapier"
+equipment:
+  attackStab: 100
+  meleeStrength: 93
+
+---
+id: 28474
+name: "Ice ancient sceptre (l)"
+equipment:
+  magicDamage: 10
+
+---
+id: 28262
+name: "Ice ancient sceptre"
+equipment:
+  magicDamage: 10
+
+---
+id: 24419
+name: "Inquisitor's great helm"
+equipment:
+  attackStab: 0
+  attackSlash: 0
+  attackCrush: 10
+  meleeStrength: 6
+
+---
+id: 24420
+name: "Inquisitor's hauberk"
+equipment:
+  attackStab: 0
+  attackSlash: 0
+  attackCrush: 16
+
+---
+id: 24417
+name: "Inquisitor's mace"
+equipment:
+  attackCrush: 102
+  meleeStrength: 96
+
+---
+id: 24421
+name: "Inquisitor's plateskirt"
+equipment:
+  attackStab: 0
+  attackSlash: 0
+
+---
+id: 6914
+name: "Master wand"
+equipment:
+  magicDamage: 10
+
+---
+id: 12796
+name: "Mystic steam staff"
+equipment:
+  attackStab: 7
+
+---
+id: 13237
+name: "Pegasian boots"
+equipment:
+  rangedStrength: 1
+
+---
+id: 20047
+name: "Samurai boots"
+equipment:
+  meleeStrength: 0
+
+---
+id: 28476
+name: "Shadow ancient sceptre (l)"
+equipment:
+  magicDamage: 10
+
+---
+id: 28266
+name: "Shadow ancient sceptre"
+equipment:
+  magicDamage: 10
+
+---
+id: 21838
+name: "Shaman mask"
+equipment:
+  attackMagic: 2
+
+---
+id: 28475
+name: "Smoke ancient sceptre (l)"
+equipment:
+  magicDamage: 10
+
+---
+id: 28264
+name: "Smoke ancient sceptre"
+equipment:
+  magicDamage: 10
+
+---
+id: 28338
+name: "Soulreaper axe"
+equipment:
+  meleeStrength: 125
+
+---
+id: 7439
+name: "Spatula"
+equipment:
+  meleeStrength: 26
+
+---
+id: 27833
+name: "Statius's full helm (bh)"
+equipment:
+  prayer: 0
+
+---
+id: 3194
+name: "Steel halberd"
+equipment:
+  defenceSlash: 1
+  defenceCrush: 2
+
+---
+id: 12924
+name: "Toxic blowpipe (empty)"
+equipment:
+  rangedStrength: 0
+
+---
+id: 27660
+name: "Ursine chainmace"
+equipment:
+  defenceSlash: 0
+
+---
+id: 27657
+name: "Ursine chainmace (u)"
+equipment:
+  defenceSlash: 0
+
+---
+id: 22545
+name: "Viggora's chainmace"
+equipment:
+  defenceSlash: 1
+
+---
+id: 22542
+name: "Viggora's chainmace (u)"
+equipment:
+  defenceSlash: 1
+
+---
+id: 24182
+name: "Void knight gloves (l)"
+equipment:
+  defenceMagic: 4
+
+---
+id: 8842
+name: "Void knight gloves"
+equipment:
+  defenceMagic: 4
+
+---
+id: 27002
+name: "Void knight gloves (l)(or)"
+equipment:
+  defenceMagic: 4
+
+---
+id: 26467
+name: "Void knight gloves (or)"
+equipment:
+  defenceMagic: 4

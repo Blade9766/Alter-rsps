@@ -1,0 +1,145 @@
+# Items the cache gates on the level needed to *make* them.
+#
+# `ItemMetadataService` reads equip requirements out of cache param pairs 434/436, 435/437,
+# 191/613 and 579/614. Those pairs are a skill id and a level, and for most items they mean what
+# the loader assumes - Ahrim's staff really does want 70 Attack and 70 Magic. But the cache also
+# uses the same pair for requirements that have nothing to do with wearing the item, and there is
+# nothing in the data to tell the two apart:
+#
+#   - a Crafting level that is the level to *create* the item (this file, and the four elemental
+#     battlestaves in `weapons/elemental_battlestaves.yml`)
+#   - a Firemaking level that is really the entry requirement for the activity the item comes
+#     from - 50 Firemaking gates Wintertodt, not the Bruma torch
+#
+# Read as equip requirements, they gate items that OSRS lets anyone wear: a tiara needed 23
+# Crafting to put on, and an opal necklace 16.
+#
+# A document here **replaces** an item's requirement set outright, so `skillReqs: []` clears it.
+# That is why this cannot live in `equipmentRequirements.yml`, which is additive per skill and can
+# only ever fill in a requirement an item does not already have.
+#
+# Every id below was checked against the OSRS wiki: none of these items has any wield requirement
+# at all, and in each case the wiki attributes the level this file removes to making the item.
+#
+# NOT cleared - the same params, but genuine requirements, and `CreationLevelRequirementVerify`
+# asserts they survive:
+#   - Hitpoints 75 on the amulet of torture, necklace of anguish, ring of suffering and tormented
+#     bracelet, and Hitpoints 50 on the Nightmare staves (which want Magic 72, not Attack - the
+#     cache has those right).
+#   - Agility 50 on crystal armour and weapons, Agility 70 on the bow of faerdhinen.
+#   - Slayer 55 on the leaf-bladed weapons and Slayer's staff, Slayer 44 on boots of brimstone.
+
+# --- Crafting: the level to make the item -------------------------------------------------
+
+---
+id: 2961
+name: "Silver sickle"
+
+equipment:
+  skillReqs: []
+
+---
+id: 5525
+name: "Tiara"
+
+equipment:
+  skillReqs: []
+
+---
+id: 26788
+name: "Gold tiara"
+
+equipment:
+  skillReqs: []
+
+# Not equipable on the wiki at all, but slot 3 in this cache, so the requirement is live here.
+---
+id: 7637
+name: "Silvthrill rod"
+
+equipment:
+  skillReqs: []
+
+# The opal/jade/topaz line. Each carries its own creation level - 1 to 38 across the nine pieces.
+---
+id: 21081
+name: "Opal ring"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21084
+name: "Jade ring"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21087
+name: "Topaz ring"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21090
+name: "Opal necklace"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21093
+name: "Jade necklace"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21096
+name: "Topaz necklace"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21117
+name: "Opal bracelet"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21120
+name: "Jade bracelet"
+
+equipment:
+  skillReqs: []
+
+---
+id: 21123
+name: "Topaz bracelet"
+
+equipment:
+  skillReqs: []
+
+# --- Firemaking: the Wintertodt entry level, not a wield requirement -----------------------
+#
+# 20720 also has a document in `stats/attack_speeds.yml`. Two documents for one id is fine - each
+# writes only the fields it declares, and those two sets do not overlap - but it is worth knowing
+# about before adding a third.
+
+---
+id: 20720
+name: "Bruma torch"
+
+equipment:
+  skillReqs: []
+
+---
+id: 29777
+name: "Bruma torch (off-hand)"
+
+equipment:
+  skillReqs: []

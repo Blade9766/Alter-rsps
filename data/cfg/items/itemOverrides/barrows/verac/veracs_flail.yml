@@ -6,8 +6,6 @@ equipment:
   skillReqs:
     - skill: "attack"
       level: 70
-    - skill: "strength"
-      level: 70
 
 ---
 id: 4982
@@ -16,8 +14,6 @@ name: "Verac's flail 100"
 equipment:
   skillReqs:
     - skill: "attack"
-      level: 70
-    - skill: "strength"
       level: 70
 
 ---
@@ -28,8 +24,6 @@ equipment:
   skillReqs:
     - skill: "attack"
       level: 70
-    - skill: "strength"
-      level: 70
 
 ---
 id: 4984
@@ -38,8 +32,6 @@ name: "Verac's flail 50"
 equipment:
   skillReqs:
     - skill: "attack"
-      level: 70
-    - skill: "strength"
       level: 70
 
 ---

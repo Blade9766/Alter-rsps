@@ -71,6 +71,14 @@ class DefenceCapePlugin(
             if (player.lock != LockState.NONE) {
                 return@onPlayerLowHealth
             }
+            /*
+             * The cape's threshold is 10%, the Ring of Life's. The engine hook fires at 20% - the
+             * widest any listener needs, for the phoenix necklace and necklace of faith - so the
+             * tighter one is applied here.
+             */
+            if (player.getCurrentHp() > player.getMaxHp() / 10) {
+                return@onPlayerLowHealth
+            }
             if (player.tile.getWildernessLevel() > 30) {
                 return@onPlayerLowHealth
             }

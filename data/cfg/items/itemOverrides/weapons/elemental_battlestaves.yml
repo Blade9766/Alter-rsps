@@ -1,0 +1,76 @@
+# The five battlestaves whose cache requirement is a Crafting level, not a wield requirement.
+#
+# `ItemMetadataService` reads equip requirements out of cache param pair 434/436, and for these
+# items that pair holds the Crafting level needed to *make* the staff - 66 for an air battlestaff,
+# 62 for fire, 58 for earth, 54 for water - rather than anything about wielding it. The effect was
+# backwards in both directions at once: an air battlestaff could not be equipped below 66
+# Crafting, and could be equipped at level 1 Attack and Magic.
+#
+# These have to live here rather than in `equipmentRequirements.yml`, because that file is
+# additive per skill and can only fill in a requirement an item does not already have - it cannot
+# take the Crafting one away. A document here replaces the item's requirement set outright.
+#
+# Every other battlestaff and mystic staff declares nothing at all in the cache and is gated from
+# `equipmentRequirements.yml`; see its MAGIC STAVES section.
+#
+# The same defect is not unique to staves - silver sickle, the tiaras and the opal/jade/topaz
+# jewellery all carry their Crafting creation level in the same param - but those are not staves
+# and are left alone here.
+
+---
+id: 1393
+name: "Fire battlestaff"
+
+equipment:
+  skillReqs:
+    - skill: "attack"
+      level: 30
+    - skill: "magic"
+      level: 30
+
+---
+id: 1395
+name: "Water battlestaff"
+
+equipment:
+  skillReqs:
+    - skill: "attack"
+      level: 30
+    - skill: "magic"
+      level: 30
+
+---
+id: 1397
+name: "Air battlestaff"
+
+equipment:
+  skillReqs:
+    - skill: "attack"
+      level: 30
+    - skill: "magic"
+      level: 30
+
+---
+id: 1399
+name: "Earth battlestaff"
+
+equipment:
+  skillReqs:
+    - skill: "attack"
+      level: 30
+    - skill: "magic"
+      level: 30
+
+# Not an elemental staff, but the same param defect and the same battlestaff requirements - and
+# its charged form (22370) already carries Attack 30 / Magic 30 from the cache, so leaving this
+# one alone made charging the staff *lower* its requirements.
+---
+id: 22368
+name: "Bryophyta's staff (uncharged)"
+
+equipment:
+  skillReqs:
+    - skill: "attack"
+      level: 30
+    - skill: "magic"
+      level: 30

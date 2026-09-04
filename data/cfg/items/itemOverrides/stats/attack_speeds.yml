@@ -1,0 +1,1028 @@
+---
+# Attack speeds for weapons the cache does not give one.
+#
+# `ItemMetadataService` reads the attack rate from cache param 14 and falls back to 7 ticks when
+# it is absent - and it is absent on 432 of the 1,443 weapon-slot items in this cache. Seven ticks
+# is slower than all but the heaviest two-handers, so every one of those weapons swung at roughly
+# half its real rate: the Kodai wand, master wand and every other wand at 7 instead of 4, the
+# staff of the dead and the staff of light at 7 instead of 4, the blackjacks at 7 instead of 4,
+# the Gauntlet's crystal and corrupted weapons at 7 instead of 4, and each Barrows weapon's fully
+# degraded (0) form at 7 rather than the 5, 6 or 7 its charged form uses.
+#
+# Speeds are the live game's, taken from the same wiki equipment table as the bonus corrections
+# beside this file, on 2026-09-03. Only weapons whose speed differs from what the cache yields are
+# listed.
+
+---
+id: 12422
+name: "3rd age wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 27679
+name: "Accursed sceptre (a)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 27676
+name: "Accursed sceptre (au)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 30607
+name: "Adamant staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4866
+name: "Ahrim's staff 0"
+equipment:
+  attackSpeed: 6
+
+---
+id: 20056
+name: "Ale of the gods"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6910
+name: "Apprentice wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8650
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8652
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8654
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8656
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8658
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8660
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8662
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8664
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8666
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8668
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8670
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8672
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8674
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8676
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8678
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8680
+name: "Banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11706
+name: "Beach boxing gloves"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11705
+name: "Beach boxing gloves"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6908
+name: "Beginner wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30603
+name: "Black staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 7673
+name: "Boxing gloves"
+equipment:
+  attackSpeed: 4
+
+---
+id: 7671
+name: "Boxing gloves"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8968
+name: "Bronze fist flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30597
+name: "Bronze staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 20720
+name: "Bruma torch"
+equipment:
+  attackSpeed: 4
+
+---
+id: 29912
+name: "Butler's tray"
+equipment:
+  attackSpeed: 4
+
+---
+id: 10010
+name: "Butterfly net"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22361
+name: "Chaotic handegg"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25721
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25724
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25726
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25728
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25723
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25729
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25725
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25727
+name: "Clan vexillum"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22817
+name: "Cormorant's glove"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22816
+name: "Cormorant's glove"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23850
+name: "Corrupted halberd (attuned)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23849
+name: "Corrupted halberd (basic)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23851
+name: "Corrupted halberd (perfected)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23853
+name: "Corrupted staff (attuned)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23852
+name: "Corrupted staff (basic)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23854
+name: "Corrupted staff (perfected)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4223
+name: "Crystal bow 1/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4222
+name: "Crystal bow 2/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4221
+name: "Crystal bow 3/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4220
+name: "Crystal bow 4/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4219
+name: "Crystal bow 5/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4218
+name: "Crystal bow 6/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4217
+name: "Crystal bow 7/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4216
+name: "Crystal bow 8/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4215
+name: "Crystal bow 9/10"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4214
+name: "Crystal bow full"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4212
+name: "New crystal bow"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11758
+name: "Crystal bow 1/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11757
+name: "Crystal bow 2/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11756
+name: "Crystal bow 3/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11755
+name: "Crystal bow 4/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11754
+name: "Crystal bow 5/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11753
+name: "Crystal bow 6/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11752
+name: "Crystal bow 7/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11751
+name: "Crystal bow 8/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11750
+name: "Crystal bow 9/10 (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11749
+name: "Crystal bow full (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 11748
+name: "New crystal bow (i)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 24000
+name: "Crystal grail"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23896
+name: "Crystal halberd (attuned)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23895
+name: "Crystal halberd (basic)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23897
+name: "Crystal halberd (perfected)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23899
+name: "Crystal staff (attuned)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23898
+name: "Crystal staff (basic)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23900
+name: "Crystal staff (perfected)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11709
+name: "Cursed goblin staff"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8966
+name: "Cutthroat flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30070
+name: "Dragon hunter wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30611
+name: "Dragon staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30574
+name: "Echo ahrim's staff 0"
+equipment:
+  attackSpeed: 6
+
+---
+id: 25110
+name: "Echo axe"
+equipment:
+  attackSpeed: 5
+
+---
+id: 25114
+name: "Echo harpoon"
+equipment:
+  attackSpeed: 5
+
+---
+id: 25112
+name: "Echo pickaxe"
+equipment:
+  attackSpeed: 5
+
+---
+id: 3691
+name: "Enchanted lyre(1)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6125
+name: "Enchanted lyre(2)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6126
+name: "Enchanted lyre(3)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6127
+name: "Enchanted lyre(4)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 13079
+name: "Enchanted lyre(5)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 3690
+name: "Enchanted lyre"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23458
+name: "Enchanted lyre(i)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 10023
+name: "Falconer's glove"
+equipment:
+  attackSpeed: 4
+
+---
+id: 10024
+name: "Falconer's glove"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6082
+name: "Fixed device"
+equipment:
+  attackSpeed: 4
+
+---
+id: 5608
+name: "Fox"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8967
+name: "Gilded smile flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30613
+name: "Gilded staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 13328
+name: "Green banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4914
+name: "Guthan's warspear 0"
+equipment:
+  attackSpeed: 5
+
+---
+id: 6760
+name: "Guthix mjolnir"
+equipment:
+  attackSpeed: 6
+
+---
+id: 21539
+name: "Heat-proof vessel"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22355
+name: "Holy handegg"
+equipment:
+  attackSpeed: 4
+
+---
+id: 23907
+name: "Imbued tephra"
+equipment:
+  attackSpeed: 3
+
+---
+id: 30599
+name: "Iron staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 21006
+name: "Kodai wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8969
+name: "Lucky shot flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 3689
+name: "Lyre"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11259
+name: "Magic butterfly net"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6416
+name: "Maple blackjack"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6420
+name: "Maple blackjack(d)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6418
+name: "Maple blackjack(o)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6914
+name: "Master wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30605
+name: "Mithril staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4023
+name: "Monkey talisman"
+equipment:
+  attackSpeed: 4
+
+---
+id: 10150
+name: "Noose wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4599
+name: "Oak blackjack"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6410
+name: "Oak blackjack(d)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6408
+name: "Oak blackjack(o)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22358
+name: "Peaceful handegg"
+equipment:
+  attackSpeed: 4
+
+---
+id: 3695
+name: "Pet rock"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8971
+name: "Phasmatys flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 27010
+name: "Preform"
+equipment:
+  attackSpeed: 4
+
+---
+id: 29911
+name: "Prop sword"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25822
+name: "Protest banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 7679
+name: "Pugel"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30430
+name: "Raging echoes banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30428
+name: "Raging echoes cane"
+equipment:
+  attackSpeed: 4
+
+---
+id: 12439
+name: "Royal sceptre"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30609
+name: "Rune staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4037
+name: "Saradomin banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11891
+name: "Saradomin banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6762
+name: "Saradomin mjolnir"
+equipment:
+  attackSpeed: 6
+
+---
+id: 10858
+name: "Shadow sword"
+equipment:
+  attackSpeed: 6
+
+---
+id: 26424
+name: "Shattered banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 26517
+name: "Shattered cane"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4083
+name: "Sled"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4084
+name: "Sled"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25282
+name: "Sled"
+equipment:
+  attackSpeed: 4
+
+---
+id: 10501
+name: "Snowball"
+equipment:
+  attackSpeed: 4
+
+---
+id: 24144
+name: "Staff of balance"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22296
+name: "Staff of light"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11791
+name: "Staff of the dead"
+equipment:
+  attackSpeed: 4
+
+---
+id: 22335
+name: "Starter staff"
+equipment:
+  attackSpeed: 4
+
+---
+id: 30601
+name: "Steel staff of collection"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6912
+name: "Teacher wand"
+equipment:
+  attackSpeed: 4
+
+---
+id: 27788
+name: "Thammaron's sceptre (a)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 27785
+name: "Thammaron's sceptre (au)"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4962
+name: "Torag's hammers 0"
+equipment:
+  attackSpeed: 5
+
+---
+id: 12904
+name: "Toxic staff of the dead"
+equipment:
+  attackSpeed: 4
+
+---
+id: 12902
+name: "Toxic staff (uncharged)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25056
+name: "Trailblazer banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 25013
+name: "Trailblazer cane"
+equipment:
+  attackSpeed: 4
+
+---
+id: 28702
+name: "Trailblazer reloaded banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 28748
+name: "Trailblazer reloaded torch"
+equipment:
+  attackSpeed: 4
+
+---
+id: 8970
+name: "Treasure flag"
+equipment:
+  attackSpeed: 4
+
+---
+id: 24413
+name: "Twisted banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 24395
+name: "Twisted cane"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4986
+name: "Verac's flail 0"
+equipment:
+  attackSpeed: 5
+
+---
+id: 13142
+name: "Western banner 2"
+equipment:
+  attackSpeed: 5
+
+---
+id: 4600
+name: "Willow blackjack"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6414
+name: "Willow blackjack(d)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6412
+name: "Willow blackjack(o)"
+equipment:
+  attackSpeed: 4
+
+---
+id: 4039
+name: "Zamorak banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 11892
+name: "Zamorak banner"
+equipment:
+  attackSpeed: 4
+
+---
+id: 6764
+name: "Zamorak mjolnir"
+equipment:
+  attackSpeed: 6

@@ -6,8 +6,6 @@ equipment:
   skillReqs:
     - skill: "attack"
       level: 70
-    - skill: "strength"
-      level: 70
 
 ---
 id: 4910
@@ -16,8 +14,6 @@ name: "Guthan's warspear 100"
 equipment:
   skillReqs:
     - skill: "attack"
-      level: 70
-    - skill: "strength"
       level: 70
 
 ---
@@ -28,8 +24,6 @@ equipment:
   skillReqs:
     - skill: "attack"
       level: 70
-    - skill: "strength"
-      level: 70
 
 ---
 id: 4912
@@ -38,8 +32,6 @@ name: "Guthan's warspear 50"
 equipment:
   skillReqs:
     - skill: "attack"
-      level: 70
-    - skill: "strength"
       level: 70
 
 ---

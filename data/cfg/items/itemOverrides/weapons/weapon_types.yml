@@ -1,0 +1,231 @@
+---
+# Weapon type corrections for items their cache category cannot tell apart.
+#
+# `ItemMetadataService` derives an item's weapon type - the Combat Options panel, and with it
+# every attack style the server resolves - from the item's cache category, via
+# `org.alter.game.service.game.WeaponCategory`. That works for categories that hold one kind
+# of weapon, but a few do not:
+#
+#  - Category 1 is every staff there is, from a plain Staff of air (weapon type 18, two
+#    autocast buttons) to a trident (weapon type 24, which attacks with magic on its own and
+#    has no autocast at all). The category resolves to 18, which left every powered staff
+#    swinging as a melee crush weapon with no crush bonus.
+#  - Category 26 is blunt weapons (weapon type 2: Pound, Pummel, Block), but the abyssal
+#    bludgeon's three buttons are all Aggressive, which is weapon type 27.
+#
+# Weapon type ids are the values of varbit 357; see `org.alter.api.WeaponType`.
+
+id: 11905
+name: "Trident of the seas (full)"
+equipment:
+  weaponType: 24
+
+---
+id: 11907
+name: "Trident of the seas"
+equipment:
+  weaponType: 24
+
+---
+id: 11908
+name: "Uncharged trident"
+equipment:
+  weaponType: 24
+
+---
+id: 22288
+name: "Trident of the seas (e)"
+equipment:
+  weaponType: 24
+
+---
+id: 22290
+name: "Uncharged trident (e)"
+equipment:
+  weaponType: 24
+
+---
+id: 12899
+name: "Trident of the swamp"
+equipment:
+  weaponType: 24
+
+---
+id: 12900
+name: "Uncharged toxic trident"
+equipment:
+  weaponType: 24
+
+---
+id: 22292
+name: "Trident of the swamp (e)"
+equipment:
+  weaponType: 24
+
+---
+id: 22294
+name: "Uncharged toxic trident (e)"
+equipment:
+  weaponType: 24
+
+---
+id: 22323
+name: "Sanguinesti staff"
+equipment:
+  weaponType: 24
+
+---
+id: 22481
+name: "Sanguinesti staff (uncharged)"
+equipment:
+  weaponType: 24
+
+---
+id: 25731
+name: "Holy sanguinesti staff"
+equipment:
+  weaponType: 24
+
+---
+id: 25733
+name: "Holy sanguinesti staff (uncharged)"
+equipment:
+  weaponType: 24
+
+---
+id: 27275
+name: "Tumeken's shadow"
+equipment:
+  weaponType: 24
+
+---
+id: 27277
+name: "Tumeken's shadow (uncharged)"
+equipment:
+  weaponType: 24
+
+---
+id: 28547
+name: "Corrupted tumeken's shadow"
+equipment:
+  weaponType: 24
+
+---
+id: 28549
+name: "Corrupted tumeken's shadow (uncharged)"
+equipment:
+  weaponType: 24
+
+---
+id: 22552
+name: "Thammaron's sceptre (u)"
+equipment:
+  weaponType: 24
+
+---
+id: 22555
+name: "Thammaron's sceptre"
+equipment:
+  weaponType: 24
+
+---
+id: 27785
+name: "Thammaron's sceptre (au)"
+equipment:
+  weaponType: 24
+
+---
+id: 27788
+name: "Thammaron's sceptre (a)"
+equipment:
+  weaponType: 24
+
+---
+id: 27662
+name: "Accursed sceptre (u)"
+equipment:
+  weaponType: 24
+
+---
+id: 27665
+name: "Accursed sceptre"
+equipment:
+  weaponType: 24
+
+---
+id: 27676
+name: "Accursed sceptre (au)"
+equipment:
+  weaponType: 24
+
+---
+id: 27679
+name: "Accursed sceptre (a)"
+equipment:
+  weaponType: 24
+
+---
+id: 23898
+name: "Crystal staff (basic)"
+equipment:
+  weaponType: 24
+
+---
+id: 23899
+name: "Crystal staff (attuned)"
+equipment:
+  weaponType: 24
+
+---
+id: 23900
+name: "Crystal staff (perfected)"
+equipment:
+  weaponType: 24
+
+---
+id: 23852
+name: "Corrupted staff (basic)"
+equipment:
+  weaponType: 24
+
+---
+id: 23853
+name: "Corrupted staff (attuned)"
+equipment:
+  weaponType: 24
+
+---
+id: 23854
+name: "Corrupted staff (perfected)"
+equipment:
+  weaponType: 24
+
+---
+id: 28583
+name: "Warped sceptre (uncharged)"
+equipment:
+  weaponType: 24
+
+---
+id: 28585
+name: "Warped sceptre"
+equipment:
+  weaponType: 24
+
+---
+id: 28796
+name: "Bone staff"
+equipment:
+  weaponType: 24
+
+---
+id: 22516
+name: "Dawnbringer"
+equipment:
+  weaponType: 24
+
+---
+id: 13263
+name: "Abyssal bludgeon"
+equipment:
+  weaponType: 27
