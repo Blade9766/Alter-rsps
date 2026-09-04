@@ -603,13 +603,14 @@ class DuelSession(first: Player, second: Player) {
             if (!isSlotLocked(duelSlot.slot)) return@forEach
             val worn = player.equipment[duelSlot.slot] ?: return@forEach
             stripped += duelSlot.label
-            if (player.inventory.add(worn).hasSucceeded()) {
-                player.equipment[duelSlot.slot] = null
-            } else {
+            // Same partial-add trap as give(): only what did not fit goes on the floor, or the
+            // part that was taken into the inventory would be duplicated.
+            val leftOver = player.inventory.add(worn).getLeftOver()
+            player.equipment[duelSlot.slot] = null
+            if (leftOver > 0) {
                 // Nowhere to put it: drop it at their feet rather than silently keeping it on and
                 // letting them fight in equipment the rules forbid.
-                player.world.spawn(GroundItem(worn, player.tile, player))
-                player.equipment[duelSlot.slot] = null
+                player.world.spawn(GroundItem(worn.id, leftOver, player.tile, player))
                 player.message("Your ${duelSlot.label} was dropped - you had no room for it.")
             }
         }
@@ -764,12 +765,21 @@ class DuelSession(first: Player, second: Player) {
         DuelArenas.release(this)
     }
 
+    /**
+     * Gives [item] to [player], dropping only what would not fit.
+     *
+     * `add` fills what it can and reports the shortfall, so it does not simply succeed or fail.
+     * Treating a partial add as a failure and then dropping the whole item duplicated everything
+     * that had already gone in - a full inventory receiving a stack of coins would keep some and
+     * find the entire stack on the floor as well.
+     */
     private fun give(
         player: Player,
         item: org.alter.game.model.item.Item,
     ) {
-        if (!player.inventory.add(item).hasSucceeded()) {
-            player.world.spawn(GroundItem(item, player.tile, player))
+        val leftOver = player.inventory.add(item).getLeftOver()
+        if (leftOver > 0) {
+            player.world.spawn(GroundItem(item.id, leftOver, player.tile, player))
         }
     }
 

@@ -345,5 +345,40 @@ class DuelArenaVerify {
             source.contains("private fun holds(") && source.contains("private fun take("),
             "the trade must verify and then take the offered items from the real inventory",
         )
+        // An overflow must land on the floor, not vanish: add() reports a shortfall it is easy to
+        // discard, and discarding it destroys items.
+        assertTrue(
+            source.contains("getLeftOver()"),
+            "the trade must handle what would not fit rather than dropping the result of add()",
+        )
+    }
+
+    /**
+     * Handing an item to a player must drop only the part that did not fit.
+     *
+     * `ItemContainer.add` fills what it can and reports the shortfall - it does not simply succeed
+     * or fail. Both the prize payout and the locked-slot stripping treated a partial add as a
+     * failure and dropped the *whole* item, duplicating whatever had already gone in. Reported from
+     * live testing as items duplicating on the floor when a duel ended.
+     */
+    @Test
+    fun `the duel drops only what would not fit`() {
+        val source =
+            java.io.File("src/main/kotlin/org/alter/plugins/content/areas/duelarena/DuelSession.kt")
+                .readText()
+
+        val spawns =
+            Regex("""world\.spawn\(GroundItem\(([^)]*)\)""").findAll(source).map { it.groupValues[1] }.toList()
+        assertTrue(spawns.isNotEmpty(), "expected the duel to drop items it cannot hand over")
+        spawns.forEach { args ->
+            assertTrue(
+                args.contains("leftOver"),
+                "a ground drop must use the add's leftover, not the whole item: GroundItem($args)",
+            )
+        }
+        assertTrue(
+            source.contains("getLeftOver()"),
+            "the duel must read the shortfall from the transaction",
+        )
     }
 }
