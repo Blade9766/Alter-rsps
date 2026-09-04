@@ -215,20 +215,33 @@ object MusicZones {
             // unlocks in Al Kharid." on both wiki infoboxes) but sit in different
             // places, so they unlock together and play separately.
             //
-            // Al Kharid's own classic polygon is 3264,3136|3264,3200|3392,3200|3392,3136.
-            // Deliberately extended north from z=3200 to z=3230: the classic polygon
-            // stops short of the real city's northern market, where this repo's own
-            // Al Kharid content actually sits (gem trader 3287,3212 and silk trader
-            // 3298,3202 in areas/alkharid/npcs/stores), which would otherwise fall
-            // outside every zone and drop back to the generic per-region file. This
-            // is the one boundary here not taken straight from the wiki.
+            // Al Kharid's own classic polygon is 3264,3136|3264,3200|3392,3200|3392,3136,
+            // which is the first rectangle below.
+            //
+            // The second rectangle is an extension north from z=3200 to z=3230: the
+            // classic polygon stops short of the real city's northern market, where this
+            // repo's own Al Kharid content actually sits (gem trader 3287,3212 and silk
+            // trader 3298,3202 in areas/alkharid/npcs/stores), which would otherwise fall
+            // outside every zone and drop back to the generic per-region file. This is the
+            // one boundary here not taken straight from the wiki.
+            //
+            // That extension stops at **x=3310**, not the polygon's x=3392. East of there,
+            // z 3200-3263 is the Emir's Arena zone below - the southern pair of duel
+            // arenas sit at z 3208-3218, and the arena's western entrance road runs up
+            // x 3311-3323 at z 3224-3247. `lookup()` is a first-match and this zone is
+            // declared first, so an extension running the full width would have swallowed
+            // both. The traders it exists for are west of x=3300, so nothing is lost.
             //
             // Western edge starts at x=3265 rather than the polygon's 3264, since
             // Lumbridge's zones above end on x2=3264 - same tie-break reasoning as
             // Draynor's eastern edge.
             MusicZone(
                 name = "Al Kharid",
-                areas = listOf(TileArea(x1 = 3265, z1 = 3136, x2 = 3392, z2 = 3230)),
+                areas =
+                    listOf(
+                        TileArea(x1 = 3265, z1 = 3136, x2 = 3392, z2 = 3199),
+                        TileArea(x1 = 3265, z1 = 3200, x2 = 3310, z2 = 3230),
+                    ),
                 trackIds = listOf(50), // Al Kharid
                 alsoUnlock = AL_KHARID_GENRE,
             ),
@@ -373,6 +386,96 @@ object MusicZones {
                 alsoUnlock = AL_KHARID_GENRE,
             ),
 
+            // The Emir's Arena - the Duel Arena, north-east of Al Kharid. The two tracks
+            // the wiki's Emir's Arena page names as the area's music.
+            //
+            // Both its regions were resolving to **Vampyre Assault (678)**, a Morytania
+            // track, before this: the same `music_by_region.yaml` last-entry-wins defect
+            // that had put the Lumbridge theme on Barbarian Village. 13362 and 13363 are
+            // each listed several times in that file, once correctly against track 47 and
+            // later against 678, and `MusicService` parses it with a plain `put`.
+            //
+            // **These are the modern polygons, not the classic ones the rest of this table
+            // uses** - because this cache is itself modern here, and the cache decides, the
+            // same tie-break the Ardougne zones settled. Its own hints (DBTable 44, via
+            // [MusicTracks]) read "at the Emir's Arena, north-east of Al Kharid." for 47
+            // and "at the Mage Training Arena." for 122 - both post-2021 wordings. The
+            // classic split was the other way round and would have been wrong here: before
+            // April 2021 the hospital and bank played Shine, and 47 was the arena block
+            // alone. `EmirsArenaMusicVerify` asserts the hints so a cache that goes back to
+            // the classic pair fails loudly instead of quietly playing the wrong track.
+            //
+            // The hints are distinct, so unlike Al Kharid's pair these two do NOT unlock
+            // together - no `alsoUnlock`, same reasoning as Ardougne's three.
+            //
+            // 47's polygon is the most irregular one in this table; it is reproduced as
+            // seven rectangles rather than reduced to a bounding box, since a box would
+            // cover most of northern Al Kharid. Reading it as: the arena block, the strip
+            // along the top of the arena wall, the entrance road in from the west, the
+            // walkway up to the staging area, and then the three buildings north of the
+            // arenas (lobby, hospital, bank) that the April 2021 update added to it.
+            //
+            // All four arenas land in the first rectangle: interiors x3334-3351 and
+            // x3370-3387, at z3246-3256 (north pair) and z3208-3218 (south pair). The
+            // lobby (`DuelArena.LOBBY_TILE`, 3366,3272) lands in the staging-area one.
+            //
+            // Known under-coverage, deliberate: the polygon also dips 4 tiles south of
+            // z=3200 around x 3327-3334, which is left to the Al Kharid zone above rather
+            // than notching its sourced boundary for four tiles.
+            MusicZone(
+                name = "Emir's Arena",
+                areas =
+                    listOf(
+                        // The walled arena block itself.
+                        TileArea(x1 = 3324, z1 = 3200, x2 = 3423, z2 = 3263),
+                        // The strip along the north wall. Starts at x=3329 rather than the
+                        // polygon's ~3326 because Arabian 2's own polygon runs to x=3328
+                        // here and the two overlap - the seam is given to Al Kharid, whose
+                        // zone is declared first anyway.
+                        TileArea(x1 = 3329, z1 = 3264, x2 = 3423, z2 = 3267),
+                        // The entrance road in from the west - the "western entrance" the
+                        // April 2021 update named. This is the notch Arabian 2's polygon
+                        // cuts out of itself, so it is the arena's on both sources.
+                        TileArea(x1 = 3311, z1 = 3224, x2 = 3323, z2 = 3247),
+                        // The walkway from the arena wall up to the staging area. One tile
+                        // tall, and worth keeping: without it a player walking from an
+                        // arena to the lobby crosses a row belonging to no zone and would
+                        // hear the music change and change back.
+                        TileArea(x1 = 3337, z1 = 3268, x2 = 3354, z2 = 3268),
+                        // The staging area, where duels start and end.
+                        TileArea(x1 = 3355, z1 = 3268, x2 = 3373, z2 = 3279),
+                        // The hospital, north-east.
+                        TileArea(x1 = 3374, z1 = 3268, x2 = 3379, z2 = 3286),
+                        // The bank, east.
+                        TileArea(x1 = 3380, z1 = 3268, x2 = 3391, z2 = 3272),
+                    ),
+                trackIds = listOf(47), // The Emir's Arena
+            ),
+            // Shine, directly north - the Mage Training Arena and the ground between it and
+            // the Emir's Arena's buildings, which is what this cache's hint for 122 names.
+            //
+            // Its polygon's southern boundary is the *same* chain of points as 47's
+            // northern one, so these four rectangles are the complement of the three
+            // building rectangles above and cannot overlap them.
+            //
+            // Western edge held at x=3341 throughout, though the polygon steps out to 3336
+            // lower down and 3338 at the very top: west of there is the cliff face, which
+            // belongs to neither track (Arabian 2's polygon stops at x=3328), so
+            // approximating outward would be claiming ground no source gives to anyone.
+            // That leaves x 3329-3340 above z=3268 uncovered - a known gap, like the one
+            // north-east of Ardougne, and almost all of it is unwalkable cliff.
+            MusicZone(
+                name = "Mage Training Arena",
+                areas =
+                    listOf(
+                        TileArea(x1 = 3341, z1 = 3271, x2 = 3354, z2 = 3327),
+                        TileArea(x1 = 3355, z1 = 3280, x2 = 3373, z2 = 3327),
+                        TileArea(x1 = 3374, z1 = 3287, x2 = 3379, z2 = 3327),
+                        TileArea(x1 = 3380, z1 = 3273, x2 = 3392, z2 = 3327),
+                    ),
+                trackIds = listOf(122), // Shine
+            ),
+
             // Falador. Every one of these nine tracks' classic-mode polygon is an exact
             // 64x64 block, and together they tile the area cleanly - the same
             // one-track-per-sub-area pattern as Lumbridge, but here it falls out of the
@@ -501,6 +604,212 @@ object MusicZones {
                 name = "North of East Ardougne",
                 regionIds = setOf(regionId(41, 52)),
                 trackIds = listOf(81), // Wonderous
+            ),
+
+            // ----------------------------------------------------------------------------------
+            // The Wilderness.
+            //
+            // Every zone below is transcribed from this project's own `data/cfg/music/music.json`,
+            // which carries an explicit `regionIds` list per track alongside an unlock hint that
+            // reads like the wiki's ("unlocked at the Bone Yard in the wilderness", "unlocked at
+            // the Rogues' Castle in the deep Wilderness"). That is a far better source for this
+            // area than `music_by_region.yaml`: of the 50 Wilderness regions the two files both
+            // describe, they disagree on 30, and the yaml points four of them at track 678, which
+            // is not a track that exists in music.json at all.
+            //
+            // Regions carrying more than one track become a shuffle, which is what MusicZone's
+            // trackIds list already means - the Rogues' Castle region, for instance, is the unlock
+            // point for both Regal and Everlasting Fire.
+            // ----------------------------------------------------------------------------------
+            MusicZone(
+                name = "Wilderness: Wonder",
+                regionIds = setOf(regionId(46, 55)),
+                trackIds = listOf(34), // 34 = Wonder.
+            ),
+            MusicZone(
+                name = "Wilderness: Wilderness",
+                regionIds = setOf(regionId(46, 56)),
+                trackIds = listOf(435), // 435 = Wilderness.
+            ),
+            MusicZone(
+                name = "Wilderness: Troubled",
+                regionIds = setOf(regionId(46, 57)),
+                trackIds = listOf(183), // 183 = Troubled.
+            ),
+            MusicZone(
+                name = "Wilderness: Wilderness 3",
+                regionIds = setOf(regionId(46, 58)),
+                trackIds = listOf(43), // 43 = Wilderness 3.
+            ),
+            MusicZone(
+                name = "Wilderness: Deep Wildy",
+                regionIds = setOf(regionId(46, 59), regionId(46, 60)),
+                trackIds = listOf(37), // 37 = Deep Wildy.
+            ),
+            MusicZone(
+                name = "Wilderness: Serene",
+                regionIds = setOf(regionId(46, 61)),
+                trackIds = listOf(52), // 52 = Serene.
+            ),
+            MusicZone(
+                name = "Wilderness: Inspiration / Dangerous",
+                regionIds = setOf(regionId(47, 55)),
+                trackIds = listOf(96, 182), // 96 = Inspiration. 182 = Dangerous.
+            ),
+            MusicZone(
+                name = "Wilderness: Army of Darkness",
+                regionIds = setOf(regionId(47, 56)),
+                trackIds = listOf(160), // 160 = Army of Darkness.
+            ),
+            MusicZone(
+                name = "Wilderness: Legion",
+                regionIds = setOf(regionId(47, 57)),
+                trackIds = listOf(66), // 66 = Legion.
+            ),
+            MusicZone(
+                name = "Wilderness: Gaol",
+                regionIds = setOf(regionId(47, 58)),
+                trackIds = listOf(159), // 159 = Gaol.
+            ),
+            MusicZone(
+                name = "Wilderness: Wilderness 2",
+                regionIds = setOf(regionId(47, 59), regionId(48, 59)),
+                trackIds = listOf(42), // 42 = Wilderness 2.
+            ),
+            MusicZone(
+                name = "Wilderness: Wild Side",
+                regionIds = setOf(regionId(47, 60), regionId(48, 60)),
+                trackIds = listOf(475), // 475 = Wild Side.
+            ),
+            MusicZone(
+                name = "Wilderness: Pirates of Peril",
+                regionIds = setOf(regionId(47, 61)),
+                trackIds = listOf(334), // 334 = Pirates of Peril.
+            ),
+            MusicZone(
+                name = "Wilderness: Dangerous",
+                regionIds = setOf(regionId(48, 55), regionId(51, 59), regionId(52, 59)),
+                trackIds = listOf(182), // 182 = Dangerous.
+            ),
+            MusicZone(
+                name = "Wilderness: Wildwood",
+                regionIds = setOf(regionId(48, 56)),
+                trackIds = listOf(8), // 8 = Wildwood.
+            ),
+            MusicZone(
+                name = "Wilderness: Wildwood / Undercurrent",
+                regionIds = setOf(regionId(48, 57)),
+                trackIds = listOf(8, 176), // 8 = Wildwood. 176 = Undercurrent.
+            ),
+            MusicZone(
+                name = "Wilderness: Gaol / Wilderness",
+                regionIds = setOf(regionId(48, 58)),
+                trackIds = listOf(159, 435), // 159 = Gaol. 435 = Wilderness.
+            ),
+            MusicZone(
+                name = "Wilderness: Mage Arena",
+                regionIds = setOf(regionId(48, 61)),
+                trackIds = listOf(13), // 13 = Mage Arena.
+            ),
+            MusicZone(
+                name = "Wilderness: Lightness",
+                regionIds = setOf(regionId(49, 55)),
+                trackIds = listOf(113), // 113 = Lightness.
+            ),
+            MusicZone(
+                name = "Wilderness: Moody",
+                regionIds = setOf(regionId(49, 56)),
+                trackIds = listOf(10), // 10 = Moody.
+            ),
+            MusicZone(
+                name = "Wilderness: Dead Can Dance",
+                regionIds = setOf(regionId(49, 57)),
+                trackIds = listOf(476), // 476 = Dead Can Dance.
+            ),
+            MusicZone(
+                name = "Wilderness: Close Quarters",
+                regionIds = setOf(regionId(49, 58)),
+                trackIds = listOf(67), // 67 = Close Quarters.
+            ),
+            MusicZone(
+                name = "Wilderness: Wolf Mountain",
+                regionIds = setOf(regionId(49, 59), regionId(50, 59)),
+                trackIds = listOf(189), // 189 = Wolf Mountain.
+            ),
+            MusicZone(
+                name = "Wilderness: Scape Wild",
+                regionIds = setOf(regionId(49, 60), regionId(50, 57), regionId(50, 60)),
+                trackIds = listOf(332), // 332 = Scape Wild.
+            ),
+            MusicZone(
+                name = "Wilderness: Expanse",
+                regionIds = setOf(regionId(49, 61)),
+                trackIds = listOf(106), // 106 = Expanse.
+            ),
+            MusicZone(
+                name = "Wilderness: Crystal Sword",
+                regionIds = setOf(regionId(50, 55)),
+                trackIds = listOf(169), // 169 = Crystal Sword.
+            ),
+            MusicZone(
+                name = "Wilderness: Scape Wild / Faithless",
+                regionIds = setOf(regionId(50, 56)),
+                trackIds = listOf(332, 337), // 332 = Scape Wild. 337 = Faithless.
+            ),
+            MusicZone(
+                name = "Wilderness: Shining",
+                regionIds = setOf(regionId(50, 58)),
+                trackIds = listOf(120), // 120 = Shining.
+            ),
+            MusicZone(
+                name = "Wilderness: Nightfall",
+                regionIds = setOf(regionId(50, 61)),
+                trackIds = listOf(127), // 127 = Nightfall.
+            ),
+            MusicZone(
+                name = "Wilderness: Forbidden",
+                regionIds = setOf(regionId(51, 55), regionId(52, 55)),
+                trackIds = listOf(121), // 121 = Forbidden.
+            ),
+            MusicZone(
+                name = "Wilderness: Faithless",
+                regionIds = setOf(regionId(51, 56)),
+                trackIds = listOf(337), // 337 = Faithless.
+            ),
+            MusicZone(
+                name = "Wilderness: Dark",
+                regionIds = setOf(regionId(51, 57), regionId(52, 57)),
+                trackIds = listOf(326), // 326 = Dark.
+            ),
+            MusicZone(
+                name = "Wilderness: Witching",
+                regionIds = setOf(regionId(51, 58), regionId(52, 58)),
+                trackIds = listOf(14), // 14 = Witching.
+            ),
+            MusicZone(
+                name = "Wilderness: Scape Sad",
+                regionIds = setOf(regionId(51, 60), regionId(52, 60)),
+                trackIds = listOf(331), // 331 = Scape Sad.
+            ),
+            MusicZone(
+                name = "Wilderness: Regal / Everlasting Fire",
+                regionIds = setOf(regionId(51, 61)),
+                trackIds = listOf(329, 586), // 329 = Regal. 586 = Everlasting Fire.
+            ),
+            MusicZone(
+                name = "Wilderness: Underground",
+                regionIds = setOf(regionId(52, 56)),
+                trackIds = listOf(179), // 179 = Underground.
+            ),
+            MusicZone(
+                name = "Wilderness: Scape Sad / Everlasting Fire",
+                regionIds = setOf(regionId(52, 61)),
+                trackIds = listOf(331, 586), // 331 = Scape Sad. 586 = Everlasting Fire.
+            ),
+            MusicZone(
+                name = "Wilderness: The Terrible Tower",
+                regionIds = setOf(regionId(53, 55)),
+                trackIds = listOf(339), // 339 = The Terrible Tower.
             ),
         )
 

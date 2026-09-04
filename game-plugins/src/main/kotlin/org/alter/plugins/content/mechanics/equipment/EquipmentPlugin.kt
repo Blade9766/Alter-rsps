@@ -18,6 +18,7 @@ import org.alter.game.model.queue.*
 import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
+import org.alter.game.plugin.KotlinPlugin.Companion.EQUIPMENT_OP_OFFSET
 
 class EquipmentPlugin(
     r: PluginRepository,
@@ -69,7 +70,15 @@ class EquipmentPlugin(
                     val item = player.equipment[equipment.id] ?: return@onButton
                     val menuOpt = opt
                     if (!world.plugins.executeEquipmentOption(player, item.id, menuOpt) && world.devContext.debugItemActions) {
-                        val action = ObjectExamineHolder.EQUIPMENT_MENU.get(item.id).equipmentMenu[menuOpt]
+                        /*
+                         * The op is not the option's index. Remove is op1 and Examine op10, both
+                         * handled above, and the item's eight equipment options sit between them
+                         * starting at op2 - the numbering `KotlinPlugin.EQUIPMENT_OP_OFFSET`
+                         * documents. Indexing the menu by the raw op named the wrong option here,
+                         * and ran off the end of the array for the last one.
+                         */
+                        val index = menuOpt - EQUIPMENT_OP_OFFSET
+                        val action = ObjectExamineHolder.EQUIPMENT_MENU.get(item.id).equipmentMenu.getOrNull(index)
                         player.message("Unhandled equipment action: [item=${item.id}, option=$menuOpt, action=$action]")
                     }
                 }

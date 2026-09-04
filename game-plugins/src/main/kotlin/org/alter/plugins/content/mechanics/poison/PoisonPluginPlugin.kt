@@ -25,7 +25,7 @@ class PoisonPluginPlugin(
 ) : KotlinPlugin(r, world, server) {
         
     init {
-        val POISON_TICK_DELAY = 25
+        val POISON_TICK_DELAY = Poison.TICKS_PER_CYCLE
 
         onPlayerDeath {
             player.timers.remove(POISON_TIMER)

@@ -1,6 +1,9 @@
 package org.alter.plugins.content.mechanics.water
 
 import dev.openrune.cache.CacheManager
+import org.alter.api.ext.getItemName
+import org.alter.api.ext.replaceItemName
+import org.alter.game.fs.DefinitionSet
 
 /**
  * The kinds of scenery a water container can be filled from, and the message each one
@@ -42,6 +45,24 @@ enum class WaterSources(val message: String, vararg val names: String) {
     TAPS("You fill the #ITEM.", "tap", "water tap"),
     WELLS("You fill the #ITEM careful not to fall in.", "well"),
     ;
+
+    /**
+     * The line printed when [container] is filled at this source.
+     *
+     * A cup is the one container the generic `#ITEM` substitution reads badly for - "You
+     * fill the empty cup from the sink" - so it gets its own line, the way it did when this
+     * lived inline in `WaterPlugin`. Shared by both fill routes so the left-click actions
+     * cannot drift from the use-item-on-source ones.
+     */
+    fun messageFor(
+        container: WaterContainer,
+        definitions: DefinitionSet,
+    ): String =
+        if (container.unfilled.getItemName().contains("Cup")) {
+            "You fill the cup."
+        } else {
+            message.replaceItemName(container.unfilled, definitions)
+        }
 
     companion object {
         /**

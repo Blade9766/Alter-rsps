@@ -1,8 +1,11 @@
 package org.alter.plugins.content.mechanics.music
 
 import org.alter.api.cfg.Song
+import org.alter.api.ext.message
 import org.alter.game.model.attr.AttributeKey
 import org.alter.game.model.entity.Player
+import org.alter.plugins.content.interfaces.gameframe.tabs.settings.Setting
+import org.alter.plugins.content.interfaces.gameframe.tabs.settings.settingEnabled
 
 /**
  * Tracks which music tracks a player has unlocked, keyed by the real music/track id
@@ -36,6 +39,22 @@ object MusicUnlocks {
             return
         }
         write(player, current + musicId)
+        announce(player, musicId)
+    }
+
+    /**
+     * The chatbox line the "Music unlock message" setting controls. The setting existed and was
+     * togglable before this, but nothing ever read it, so it did nothing either way.
+     */
+    private fun announce(
+        player: Player,
+        musicId: Int,
+    ) {
+        if (!player.settingEnabled(Setting.MUSIC_UNLOCK_MESSAGE)) {
+            return
+        }
+        val name = MusicTracks.all.firstOrNull { it.id == musicId }?.name ?: return
+        player.message("<col=ff0000>You have unlocked a new music track: $name.</col>")
     }
 
     fun unlockAll(player: Player) {

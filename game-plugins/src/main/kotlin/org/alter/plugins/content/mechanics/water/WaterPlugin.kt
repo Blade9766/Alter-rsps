@@ -1,5 +1,6 @@
 package org.alter.plugins.content.mechanics.water
 
+import dev.openrune.cache.CacheManager
 import org.alter.api.ext.*
 import org.alter.game.Server
 import org.alter.game.model.World
@@ -29,12 +30,13 @@ import org.alter.rscm.RSCM.getRSCM
  * (`Server` calls `RSCM.init()` before `plugins.init()`), so `init` would work too, but
  * keeping every cache-scanned binding on the same hook keeps them comparable.
  *
- * **Not implemented, and worth knowing about:** the `Fill-bucket` and `Fill-from` actions
- * that a handful of sinks and pumps carry in the cache (objects 9143, 35981, 36078, 41004)
- * are left unbound. Filling is reached by using a container on the source, which is the
- * general OSRS mechanic and the one every source supports; wiring those actions as well
- * would mean guessing which container in the inventory they should pick, and they are four
- * objects out of ~130.
+ * **The `Fill-bucket` and `Fill-from` actions are bound too.** Four sources carry one in the
+ * cache - 9143 `Sink`, 41004 `Water pump`, and 35981/36078 `Water Pump` - and left unbound
+ * they were a left-click that visibly did nothing. `Fill-bucket` names its container, so it
+ * fills a bucket and nothing else; `Fill-from` does not, so it fills the first container the
+ * player is carrying in [WaterContainers] declaration order, which puts the bowl and bucket
+ * ahead of the vial and waterskin. Every other source has no action at all, and is still
+ * reached the general OSRS way, by using a container on it.
  */
 class WaterPlugin(
     r: PluginRepository,
@@ -49,13 +51,39 @@ class WaterPlugin(
             WaterSources.scan().forEach { (obj, source) ->
                 WaterContainers.values().forEach {
                     onItemOnObj(obj = obj, item = it.container.unfilled) {
-                        val message =
-                            if (it.container.unfilled.getItemName().contains("Cup")) {
-                                "You fill the cup."
-                            } else {
-                                source.message.replaceItemName(it.container.unfilled, world.definitions)
+                        it.container.fill(player, source.messageFor(it.container, world.definitions))
+                    }
+                }
+
+                /*
+                 * The handful of sources that also carry a left-click fill action. Bound by
+                 * the action name found on the object rather than by id, so a cache update
+                 * that adds one to another source picks it up.
+                 */
+                CacheManager.getObject(obj).actions.filterNotNull().forEach { action ->
+                    when {
+                        action.equals(OPT_FILL_BUCKET, ignoreCase = true) ->
+                            onObjOption(obj = obj, option = action) {
+                                val bucket = WaterContainers.BUCKET.container
+                                if (!player.inventory.contains(bucket.unfilled)) {
+                                    player.message(NEED_CONTAINER)
+                                } else {
+                                    bucket.fill(player, source.messageFor(bucket, world.definitions))
+                                }
                             }
-                        it.container.fill(player, message)
+
+                        action.equals(OPT_FILL_FROM, ignoreCase = true) ->
+                            onObjOption(obj = obj, option = action) {
+                                val held =
+                                    WaterContainers.values()
+                                        .map { it.container }
+                                        .firstOrNull { player.inventory.contains(it.unfilled) }
+                                if (held == null) {
+                                    player.message(NEED_CONTAINER)
+                                } else {
+                                    held.fill(player, source.messageFor(held, world.definitions))
+                                }
+                            }
                     }
                 }
             }
@@ -134,5 +162,10 @@ class WaterPlugin(
 
     private companion object {
         const val OPT_EMPTY = "Empty"
+        const val OPT_FILL_BUCKET = "Fill-bucket"
+        const val OPT_FILL_FROM = "Fill-from"
+
+        /** Nothing in the inventory to fill, on the left-click routes that pick for you. */
+        const val NEED_CONTAINER = "You have nothing to fill with water."
     }
 }

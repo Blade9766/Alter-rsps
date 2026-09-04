@@ -40,9 +40,12 @@ class RunEnergyPlugin(
         }
 
         /**
-         * Settings button.
+         * The "Toggle Run" button on the Settings tab.
+         *
+         * This used to be bound to 116:71, which is a graphic inside the Audio tab button and has no
+         * op of its own, so it never fired. 30 is the button that actually carries "Toggle Run".
          */
-        onButton(interfaceId = 116, component = 71) {
+        onButton(interfaceId = 116, component = 30) {
             RunEnergy.toggle(player)
         }
     }
