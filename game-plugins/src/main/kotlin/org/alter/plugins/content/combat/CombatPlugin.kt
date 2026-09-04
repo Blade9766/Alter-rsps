@@ -17,6 +17,7 @@ import org.alter.game.model.move.hasMoveDestination
 import org.alter.game.model.move.stopMovement
 import org.alter.game.model.move.walkTo
 import org.alter.game.model.move.walkRoute
+import org.alter.game.model.move.isRooted
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
@@ -119,7 +120,48 @@ class CombatPlugin(
             srcSize = pawn.getSize(),
             locShape = -2
         )
-        if (!reached) {
+        /*
+         * Being close enough is not the same as being able to see the target. This
+         * used to declare the target reached on distance alone, which is why an npc
+         * would happily shoot, cast at, or swing through a fence, a wall or a closed
+         * door: nothing anywhere in the combat path tested line of sight, so the only
+         * thing standing between an "unreachable" player and a full attack loop was
+         * how many tiles away they stood.
+         *
+         * Melee uses line of *walk* (if you cannot step there you cannot swing there);
+         * ranged and magic use line of *sight*, which is the looser test objects opt
+         * into for projectiles - shooting over a low fence stays legal, shooting
+         * through a wall does not.
+         *
+         * This has to be settled *before* a route is asked for. `reachStrategy.reached`
+         * only ever answers the melee question - are the two footprints bordering - so
+         * routing on it alone sends a pawn that can already shoot walking towards melee
+         * distance. The route was thrown away again by the `stopMovement` below, but the
+         * pawn still paid for the pathfind every tick and still had a walk flag planted
+         * on the target, and any tick the range test came back false for another reason
+         * left it walking in for real.
+         *
+         * When sight is blocked the pawn is deliberately left un-reached rather than
+         * having its combat reset, so it walks the route issued below and re-engages the
+         * moment it comes round the obstacle. A target that cannot be pathed to at all -
+         * a genuine safespot - simply leaves the pawn standing there facing them, which
+         * is the intended outcome.
+         */
+        val projectileAttack = strategy !== MeleeCombatStrategy
+        if (!reached &&
+            Combat.edgeDistance(pawn, target) <= attackRange &&
+            Combat.hasAttackLineOfSight(pawn, target, projectile = projectileAttack)
+        ) {
+            reached = true
+        }
+        if (reached) {
+            pawn.stopMovement()
+        } else if (!pawn.isRooted()) {
+            /*
+             * A frozen or stunned pawn stays where it is. [org.alter.game.model.move.walkRoute]
+             * refuses it anyway, but the chase is the one caller that runs every tick, so the
+             * route is not worth finding in the first place.
+             */
             when (routeLogic) {
                 1 -> {
                     val route = world.smartRouteFinder.findRoute(
@@ -186,35 +228,6 @@ class CombatPlugin(
                     pawn.walkRoute(route, stepType = StepType.NORMAL)
                 }
             }
-        }
-        /*
-         * Being close enough is not the same as being able to see the target. This
-         * used to declare the target reached on distance alone, which is why an npc
-         * would happily shoot, cast at, or swing through a fence, a wall or a closed
-         * door: nothing anywhere in the combat path tested line of sight, so the only
-         * thing standing between an "unreachable" player and a full attack loop was
-         * how many tiles away they stood.
-         *
-         * Melee uses line of *walk* (if you cannot step there you cannot swing there);
-         * ranged and magic use line of *sight*, which is the looser test objects opt
-         * into for projectiles - shooting over a low fence stays legal, shooting
-         * through a wall does not.
-         *
-         * When sight is blocked the pawn is deliberately left un-reached rather than
-         * having its combat reset, so it keeps walking the route issued above and
-         * re-engages the moment it comes round the obstacle. A target that cannot be
-         * pathed to at all - a genuine safespot - simply leaves the npc standing there
-         * facing them, which is the intended outcome.
-         */
-        val projectileAttack = strategy !== MeleeCombatStrategy
-        if (!reached &&
-            Combat.edgeDistance(pawn, target) <= attackRange &&
-            Combat.hasAttackLineOfSight(pawn, target, projectile = projectileAttack)
-        ) {
-            reached = true
-        }
-        if (reached) {
-            pawn.stopMovement()
         }
         if (pawn.hasMoveDestination() || !reached) {
             if (!target.isAlive()) {

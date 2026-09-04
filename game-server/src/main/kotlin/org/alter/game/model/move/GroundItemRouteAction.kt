@@ -42,6 +42,16 @@ object GroundItemRouteAction {
                 destZ = item.tile.z
             )
             player.walkRoute(route, MovementQueue.StepType.NORMAL)
+            /*
+             * Rooted - frozen or stunned - so no steps were queued. An item on or next to the
+             * player is still picked up by the branches below (neither needs a walk), but
+             * anything further away has to say why nothing happened.
+             */
+            if (player.isRooted() && player.tile.getDistance(item.tile) > 1) {
+                player.rootedMessage()?.let { player.writeMessage(it) }
+                player.setMapFlag()
+                return@queue
+            }
             while (player.hasMoveDestination()) {
                 wait(1)
             }

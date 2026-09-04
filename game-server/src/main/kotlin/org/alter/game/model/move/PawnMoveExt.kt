@@ -8,6 +8,7 @@ import org.alter.game.model.entity.*
 import org.alter.game.model.move.MovementQueue.StepType
 import org.alter.game.model.priv.Privilege
 import org.alter.game.model.timer.FROZEN_TIMER
+import org.alter.game.model.timer.STUN_TIMER
 import org.rsmod.routefinder.Route
 import org.rsmod.routefinder.RouteCoordinates
 import java.util.*
@@ -50,6 +51,27 @@ fun Pawn.setMapFlag(
 }
 
 /**
+ * Whether this pawn is rooted - frozen or stunned - and so may not walk anywhere.
+ *
+ * The two timers are checked together everywhere they matter, and were previously checked in
+ * different places from each other: [walkTo] knew about freezing only, and
+ * [org.alter.game.model.move.ObjectPathAction] was the one caller that knew about both.
+ */
+fun Pawn.isRooted(): Boolean = timers.has(FROZEN_TIMER) || timers.has(STUN_TIMER)
+
+/**
+ * The message a player should be given for a walk [isRooted] refused, or `null` when they are
+ * free to walk. Freezing is reported first, matching
+ * [org.alter.game.model.move.ObjectPathAction].
+ */
+fun Pawn.rootedMessage(): String? =
+    when {
+        timers.has(FROZEN_TIMER) -> Entity.MAGIC_STOPS_YOU_FROM_MOVING
+        timers.has(STUN_TIMER) -> Entity.YOURE_STUNNED
+        else -> null
+    }
+
+/**
  * Walk to all the tiles specified in our [route] queue, using [stepType] as
  * the [MovementQueue.StepType].
  *
@@ -67,6 +89,31 @@ fun Pawn.walkRoute(
     path: Queue<Tile>,
     stepType: StepType,
 ) {
+    /*
+     * A rooted pawn - frozen or stunned - cannot walk, by any route.
+     *
+     * The check used to live only in [walkTo] (and there for freezing alone), which is just one
+     * of the ways steps get queued - and not the one that mattered. `walkRoute` is what
+     * [org.alter.game.model.move.PawnPathAction] and the combat loop
+     * (`org.alter.plugins.content.combat.CombatPlugin.cycle`) call, so a frozen player still
+     * chased their target around, and a duel fought under the "No Movement" rule - which is
+     * held with the freeze timer - was not still at all. Jade bolts and the King Black Dragon's
+     * freeze had the same hole: `Pawn.freeze` clears the movement queue once, and the next tick
+     * of the victim's combat loop simply filled it again. `Pawn.stun` shares that shape exactly.
+     *
+     * Deliberately silent. Every caller that a *click* reaches reports [rootedMessage] itself
+     * ([walkTo], [ObjectPathAction], [PawnPathAction], [GroundItemRouteAction]); the ones that
+     * do not are automatic - the combat loop's chase and firemaking's step aside - and would
+     * spam the chatbox once a tick.
+     *
+     * Applies to npcs as well as players, which is what makes a jade bolt actually root the
+     * monster it procs on.
+     */
+    if (isRooted()) {
+        stopMovement()
+        setMapFlag()
+        return
+    }
     if (path.isEmpty()) {
         setMapFlag()
         return
@@ -130,12 +177,12 @@ fun Pawn.walkTo(
             return
         }
         /*
-         * ObjectPathAction already refuses to path a frozen pawn, but a plain map click reached
-         * here without ever consulting the timer, so a freeze only ever stopped half the ways a
-         * player can walk. A duel fought under "No Movement" is held with this same timer.
+         * [walkRoute] below refuses a rooted pawn on its own; this branch is what turns that
+         * refusal into the message and the cleared map flag a map click should produce. It only
+         * knew about freezing, so a stunned player's map click walked them off regardless.
          */
-        if (timers.has(FROZEN_TIMER)) {
-            writeMessage(Entity.MAGIC_STOPS_YOU_FROM_MOVING)
+        rootedMessage()?.let { message ->
+            writeMessage(message)
             write(SetMapFlag(255, 255))
             return
         }

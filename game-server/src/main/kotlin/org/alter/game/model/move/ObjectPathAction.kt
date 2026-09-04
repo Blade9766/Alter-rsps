@@ -15,8 +15,6 @@ import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
 import org.alter.game.model.queue.QueueTask
 import org.alter.game.model.queue.TaskPriority
-import org.alter.game.model.timer.FROZEN_TIMER
-import org.alter.game.model.timer.STUN_TIMER
 import org.alter.game.plugin.Plugin
 import org.rsmod.routefinder.Route
 import org.rsmod.routefinder.collision.CollisionStrategy
@@ -50,11 +48,7 @@ object ObjectPathAction {
                 player.executePlugin(logic)
             } else {
                 player.faceTile(obj.tile)
-                when {
-                    player.timers.has(FROZEN_TIMER) -> player.writeMessage(Entity.MAGIC_STOPS_YOU_FROM_MOVING)
-                    player.timers.has(STUN_TIMER) -> player.writeMessage(Entity.YOURE_STUNNED)
-                    else -> player.writeMessage(Entity.YOU_CANT_REACH_THAT)
-                }
+                player.writeMessage(player.rootedMessage() ?: Entity.YOU_CANT_REACH_THAT)
                 player.write(SetMapFlag(255, 255))
             }
         }
@@ -223,19 +217,13 @@ object ObjectPathAction {
 
         while (last != null &&
             !pawn.tile.sameAs(last) &&
-            !pawn.timers.has(FROZEN_TIMER) &&
-            !pawn.timers.has(STUN_TIMER) &&
+            !pawn.isRooted() &&
             pawn.lock.canMove()
         ) {
             wait(1)
         }
 
-        if (pawn.timers.has(STUN_TIMER)) {
-            pawn.stopMovement()
-            return Route.FAILED
-        }
-
-        if (pawn.timers.has(FROZEN_TIMER)) {
+        if (pawn.isRooted()) {
             pawn.stopMovement()
             return Route.FAILED
         }
