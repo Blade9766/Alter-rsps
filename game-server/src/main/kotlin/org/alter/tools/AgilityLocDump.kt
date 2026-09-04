@@ -43,6 +43,12 @@ object AgilityLocDump {
             runCatching { CacheManager.getObject(id).let { "${it.sizeX}x${it.sizeY}" } }.getOrDefault("?")
         fun actionsOf(id: Int): String =
             runCatching { CacheManager.getObject(id).actions.filterNotNull().joinToString("/") }.getOrDefault("")
+        fun clipOf(id: Int): String =
+            runCatching {
+                CacheManager.getObject(id).let {
+                    "solid=${it.solid} clipMask=${it.clipMask} impen=${it.impenetrable} obstr=${it.obstructive} clipType=${it.clipType}"
+                }
+            }.getOrDefault("?")
 
         var regionsRead = 0
         var hits = 0
@@ -64,7 +70,9 @@ object AgilityLocDump {
                         val name = nameOf(loc.id)
                         val lower = name.lowercase()
                         val acts = actionsOf(loc.id)
-                        val matched = if (filters.singleOrNull() == "all") {
+                        val matched = if (filters.singleOrNull() == "everything") {
+                            true
+                        } else if (filters.singleOrNull() == "all") {
                             name != "null" && acts.isNotEmpty()
                         } else {
                             filters.any { lower.contains(it) }
@@ -78,7 +86,7 @@ object AgilityLocDump {
                                 "region=$region id=${loc.id} name='$name' " +
                                     "tile=(${baseX + loc.localX},${baseZ + loc.localY},$effective)" +
                                     (if (bridge) "[BRIDGE raw h=${loc.height}]" else "") + " " +
-                                    "type=${loc.type} rot=${loc.orientation} size=${sizeOf(loc.id)} actions=[$acts]",
+                                    "type=${loc.type} rot=${loc.orientation} size=${sizeOf(loc.id)} ${clipOf(loc.id)} actions=[$acts]",
                             )
                             hits++
                         }
