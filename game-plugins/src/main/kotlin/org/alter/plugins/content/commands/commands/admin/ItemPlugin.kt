@@ -25,16 +25,23 @@ class ItemPlugin(
         onCommand("item", Privilege.ADMIN_POWER, description = "Spawn items") {
             val values = player.getCommandArgs()
             try {
-                val item = values[0].toInt()
+                val requested = values[0].toInt()
                 val amount = if (values.size > 1) Math.min(Int.MAX_VALUE.toLong(), values[1].parseAmount()).toInt() else 1
-                if (item < itemSize()) {
+                if (requested < itemSize()) {
+                    /*
+                     * A bank placeholder is a separate id that only holds a bank slot open. It
+                     * looks exactly like the item it stands for and nothing recognises it, so
+                     * spawning one hands out an item that silently does nothing.
+                     */
+                    val item = Item(requested).unwrapPlaceholder().id
                     val def = getItem(Item(item).toUnnoted().id)
                     val result = player.inventory.add(item = item, amount = amount, assureFullInsertion = false)
+                    val note = if (item != requested) " - $requested is its bank placeholder" else ""
                     player.message(
-                        "You have spawned <col=801700>${DecimalFormat().format(result.completed)} x ${def.name}</col></col> ($item).",
+                        "You have spawned <col=801700>${DecimalFormat().format(result.completed)} x ${def.name}</col></col> ($item)$note.",
                     )
                 } else {
-                    player.message("Item $item does not exist in cache.")
+                    player.message("Item $requested does not exist in cache.")
                 }
             } catch (e: Exception) {
                 player.queue(TaskPriority.STRONG) {

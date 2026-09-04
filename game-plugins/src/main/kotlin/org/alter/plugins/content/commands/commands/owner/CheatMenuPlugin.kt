@@ -10,6 +10,9 @@ import org.alter.game.model.appearance.Appearance
 import org.alter.game.model.appearance.Colours
 import org.alter.game.model.appearance.Gender
 import org.alter.game.model.appearance.Looks
+import org.alter.game.model.attr.ONE_HIT_KILL_ATTR
+import org.alter.game.model.bits.INFINITE_VARS_STORAGE
+import org.alter.game.model.bits.InfiniteVarsType
 import org.alter.game.model.entity.Player
 import org.alter.game.model.item.Item
 import org.alter.game.model.move.moveTo
@@ -44,8 +47,11 @@ class CheatMenuPlugin(
             listOf(
                 "Give item",
                 "Give XP",
+                "Reset skills and levels",
                 "Heal fully",
                 "Refill prayer points",
+                "Godmode: ${onOff(player.hasStorageBit(INFINITE_VARS_STORAGE, InfiniteVarsType.HP))}",
+                "One-hit monsters: ${onOff(player.attr[ONE_HIT_KILL_ATTR] == true)}",
                 "Teleport to a city",
                 "Edit appearance / gender",
                 "Unlock all music",
@@ -53,12 +59,43 @@ class CheatMenuPlugin(
         when (pagedOptions(player, entries, title = "Cheat Menu")) {
             1 -> giveItem(player)
             2 -> giveXp(player)
-            3 -> heal(player)
-            4 -> refillPrayer(player)
-            5 -> teleport(player)
-            6 -> editAppearance(player)
-            7 -> unlockAllMusic(player)
+            3 -> resetSkills(player)
+            4 -> heal(player)
+            5 -> refillPrayer(player)
+            6 -> toggleGodmode(player)
+            7 -> toggleOneHitKill(player)
+            8 -> teleport(player)
+            9 -> editAppearance(player)
+            10 -> unlockAllMusic(player)
         }
+    }
+
+    /** Renders a toggle's current state in the menu entry itself, so the menu doubles as a readout. */
+    private fun onOff(enabled: Boolean): String = if (enabled) "<col=178000>on</col>" else "<col=801700>off</col>"
+
+    /**
+     * Invulnerability. Shares the engine's infinite-hp bit with `::infhp`, which is read by
+     * [org.alter.game.model.entity.Pawn.hitsCycle] at the single point damage is subtracted - so
+     * poison, dragonfire and every other source of damage is covered, not just combat hits.
+     * Hitsplats still show; the hitpoints behind them simply never move.
+     */
+    private fun toggleGodmode(player: Player) {
+        player.toggleStorageBit(INFINITE_VARS_STORAGE, InfiniteVarsType.HP)
+        val enabled = player.hasStorageBit(INFINITE_VARS_STORAGE, InfiniteVarsType.HP)
+        if (enabled) {
+            restoreHitpoints(player)
+        }
+        player.message("Godmode: ${onOff(enabled)}.")
+    }
+
+    /**
+     * Makes every attack that lands on an npc a killing blow. Players are left alone by
+     * [org.alter.plugins.content.combat.dealExactHit], so this cannot be turned on someone else.
+     */
+    private fun toggleOneHitKill(player: Player) {
+        val enabled = player.attr[ONE_HIT_KILL_ATTR] != true
+        player.attr[ONE_HIT_KILL_ATTR] = enabled
+        player.message("One-hit monsters: ${onOff(enabled)}.")
     }
 
     private fun unlockAllMusic(player: Player) {
@@ -125,22 +162,99 @@ class CheatMenuPlugin(
     }
 
     private suspend fun QueueTask.giveXp(player: Player) {
-        val name = inputString(player, "Enter a skill name").trim().lowercase()
-        val skill = Skills.getSkillForName(world, player.getSkills().maxSkills, resolveSkillAlias(name))
-        if (skill == -1) {
-            player.message("Could not find a skill named '$name'.")
-            return
-        }
+        val skill = promptSkill(player)
+        if (skill == -1) return
         val amount = inputInt(player, "Enter amount of xp to give")
         if (amount <= 0) return
         player.addXp(skill, amount.toDouble())
         player.message("Gave yourself $amount xp in ${Skills.getSkillName(world, skill)}.")
     }
 
+    private suspend fun QueueTask.resetSkills(player: Player) {
+        when (
+            options(
+                player,
+                "Reset all skills to level 1",
+                "Reset a single skill to level 1",
+                "Set a skill to a level",
+                "Set all skills to level 99",
+                title = "Reset Skills",
+            )
+        ) {
+            1 -> resetAllSkills(player)
+            2 -> resetSingleSkill(player)
+            3 -> setSkillLevel(player)
+            4 -> maxAllSkills(player)
+        }
+    }
+
+    private suspend fun QueueTask.resetAllSkills(player: Player) {
+        val confirm =
+            options(
+                player,
+                "No, keep my levels.",
+                "Yes, reset everything.",
+                title = "Reset every skill to level 1?",
+            )
+        if (confirm != 2) return
+        for (skill in 0 until player.getSkills().maxSkills) {
+            player.getSkills().setBaseLevel(skill, minimumLevel(skill))
+        }
+        player.calculateAndSetCombatLevel()
+        player.message("All of your skills have been reset.")
+    }
+
+    private fun maxAllSkills(player: Player) {
+        for (skill in 0 until player.getSkills().maxSkills) {
+            player.getSkills().setBaseLevel(skill, MAX_LEVEL)
+        }
+        player.calculateAndSetCombatLevel()
+        player.message("All of your skills have been set to level $MAX_LEVEL.")
+    }
+
+    private suspend fun QueueTask.resetSingleSkill(player: Player) {
+        val skill = promptSkill(player)
+        if (skill == -1) return
+        val level = minimumLevel(skill)
+        player.getSkills().setBaseLevel(skill, level)
+        player.calculateAndSetCombatLevel()
+        player.message("${Skills.getSkillName(world, skill)} has been reset to level $level.")
+    }
+
+    private suspend fun QueueTask.setSkillLevel(player: Player) {
+        val skill = promptSkill(player)
+        if (skill == -1) return
+        val requested = inputInt(player, "Enter a level (${minimumLevel(skill)}-$MAX_LEVEL)")
+        val level = requested.coerceIn(minimumLevel(skill), MAX_LEVEL)
+        player.getSkills().setBaseLevel(skill, level)
+        player.calculateAndSetCombatLevel()
+        player.message("${Skills.getSkillName(world, skill)} has been set to level $level.")
+    }
+
+    /** Hitpoints starts at 10 on a fresh account, every other skill starts at 1. */
+    private fun minimumLevel(skill: Int): Int = if (skill == Skills.HITPOINTS) 10 else 1
+
+    /**
+     * Asks for a skill by name and resolves it, messaging the player if nothing
+     * matches. Returns -1 when the name could not be resolved.
+     */
+    private suspend fun QueueTask.promptSkill(player: Player): Int {
+        val name = inputString(player, "Enter a skill name").trim().lowercase()
+        val skill = Skills.getSkillForName(world, player.getSkills().maxSkills, resolveSkillAlias(name))
+        if (skill == -1) {
+            player.message("Could not find a skill named '$name'.")
+        }
+        return skill
+    }
+
     private fun heal(player: Player) {
+        restoreHitpoints(player)
+        player.message("You have been fully healed.")
+    }
+
+    private fun restoreHitpoints(player: Player) {
         val skills = player.getSkills()
         skills.setCurrentLevel(Skills.HITPOINTS, skills.getBaseLevel(Skills.HITPOINTS))
-        player.message("You have been fully healed.")
     }
 
     private fun refillPrayer(player: Player) {
@@ -306,6 +420,8 @@ class CheatMenuPlugin(
         }
 
     private companion object {
+        const val MAX_LEVEL = 99
+
         val TELEPORT_REGIONS =
             listOf(
                 "Misthalin" to
