@@ -9,6 +9,8 @@ import org.alter.game.model.container.ItemContainer
 import org.alter.game.model.entity.Player
 import org.alter.plugins.content.mechanics.trading.*
 import org.alter.plugins.service.marketvalue.ItemMarketValueService
+import org.alter.game.model.entity.GroundItem
+import org.alter.game.model.item.Item
 
 /**
  * @author Triston Plummer ("Dread")
@@ -359,12 +361,32 @@ class TradeSession(private val player: Player, private val partner: Player) {
         take(player, container)
         take(partner, partnerSession.container)
 
-        partnerSession.container.filterNotNull().forEach { player.inventory.add(it) }
-        container.filterNotNull().forEach { partner.inventory.add(it) }
+        partnerSession.container.filterNotNull().forEach { give(player, it) }
+        container.filterNotNull().forEach { give(partner, it) }
 
         // Finalise the trade session
         finalise(player)
         finalise(partner)
+    }
+
+    /**
+     * Gives [item] to [who], dropping at their feet only what would not fit.
+     *
+     * `add` fills what it can and reports the shortfall rather than simply succeeding or failing,
+     * and the result was previously discarded entirely - so anything that did not fit was silently
+     * destroyed. The accept screen checks free slots before letting a trade through, which is why
+     * that never bit, but a stack that overflows the receiving slot would still have gone missing.
+     * Dropping the remainder is recoverable; deleting it is not.
+     */
+    private fun give(
+        who: Player,
+        item: Item,
+    ) {
+        val leftOver = who.inventory.add(item).getLeftOver()
+        if (leftOver > 0) {
+            who.world.spawn(GroundItem(item.id, leftOver, who.tile, who))
+            who.message("You didn't have room for everything - some of it is at your feet.")
+        }
     }
 
     /**
