@@ -1,16 +1,18 @@
 package org.alter.plugins.diag
 
 import dev.openrune.cache.CacheManager
+import org.alter.game.DevContext
+import org.alter.game.GameContext
 import org.alter.game.Server
 import org.alter.game.model.EntityType
 import org.alter.game.model.PlayerUID
 import org.alter.game.model.Tile
 import org.alter.game.model.World
+import org.alter.game.saving.formats.SaveFormatType
 import org.alter.game.model.attr.KILLER_ATTR
 import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Player
-import org.alter.game.service.game.NpcMetadataService
 import org.alter.plugins.content.npcs.DropRoll
 import org.alter.plugins.content.npcs.WeightedDrop
 import org.alter.plugins.content.npcs.goblin.GoblinDrops
@@ -19,7 +21,6 @@ import org.alter.plugins.content.npcs.goblin.Goblins
 import org.alter.rscm.RSCM
 import org.alter.rscm.RSCM.getRSCM
 import org.junit.BeforeClass
-import java.io.File
 import java.lang.ref.WeakReference
 import java.nio.file.Paths
 import kotlin.test.Test
@@ -61,13 +62,40 @@ class GoblinDropsVerify {
         val TERTIARY_MARKERS =
             listOf("champion_scroll", "ensouled_", "clue_scroll", "looting_bag")
 
-        /** BestiaryVerify keeps its copy private, so this file carries its own. */
-        val STATS_CONFIG = File("../data/cfg/npcs/monsterStats.json")
+        /**
+         * Nothing here is read by the plugin; both only exist to build a [World]. Declared locally
+         * rather than borrowed from a sibling verify so this file compiles on its own.
+         */
+        val GAME_CONTEXT =
+            GameContext(
+                initialLaunch = false,
+                name = "test",
+                revision = 228,
+                saveFormat = SaveFormatType.JSON,
+                cycleTime = 600,
+                playerLimit = 1,
+                home = Tile(3222, 3222),
+                skillCount = 23,
+                npcStatCount = 6,
+                runEnergy = true,
+                gItemPublicDelay = 100,
+                gItemDespawnDelay = 300,
+                preloadMaps = false,
+            )
+
+        val DEV_CONTEXT =
+            DevContext(
+                debugExamines = false,
+                debugObjects = false,
+                debugButtons = false,
+                debugItemActions = false,
+                debugMagicSpells = false,
+                debugPackets = false,
+            )
     }
 
     private fun buildWorld(): World {
-        val world = World(EatingVerify.GAME_CONTEXT, EatingVerify.DEV_CONTEXT)
-        NpcMetadataService().loadMonsterStats(world, STATS_CONFIG)
+        val world = World(GAME_CONTEXT, DEV_CONTEXT)
         GoblinPlugin(world.plugins, world, Server())
         return world
     }

@@ -34,6 +34,13 @@ data class NpcCombatDef(
     val aggressiveRadius: Int,
     val aggroTargetDelay: Int,
     val aggressiveTimer: Int,
+    /**
+     * Percentage chance, 0 to 100, that one of this npc's attacks poisons its target.
+     *
+     * Meaningless without [poisonDamage], and [org.alter.api.NpcCombatBuilder] refuses to build a
+     * def that sets one without the other - a chance with no damage is what this field was for
+     * years, set on npcs and read by nothing.
+     */
     val poisonChance: Double,
     val venomChance: Double,
     val slayerReq: Int,
@@ -54,11 +61,34 @@ data class NpcCombatDef(
     val elementalWeaknessElement: Int = -1,
     val elementalWeaknessPercent: Int = 0,
     /**
+     * How far away, in tiles, this npc can attack from, or -1 to take the default for
+     * its [combatClass] (1 for melee, 7 for ranged, 10 for magic).
+     *
+     * Measured the way [org.alter.plugins.content.combat.Combat.edgeDistance] measures:
+     * between the closest edges of the two footprints, so a large npc's size is already
+     * accounted for and should not be added here.
+     */
+    val attackRange: Int = -1,
+    /**
      * Which combat strategy this npc attacks with. Copied onto [org.alter.game.model.entity.Npc.combatClass]
      * at spawn; before this existed every npc was hard-wired to MELEE and the only way
      * to make one shoot or cast was a bespoke per-monster attack loop.
      */
     val combatClass: CombatClass = CombatClass.MELEE,
+    /**
+     * Which melee style this npc attacks *with*, which decides whose defence bonus its attacks
+     * are rolled against - a crush monster against the player's crush defence, and so on.
+     *
+     * [org.alter.game.model.entity.Npc.combatStyle] defaults to [CombatStyle.STAB] and nothing
+     * used to copy a style out of here, so every monster in the game attacked as though it were
+     * stabbing and a plate-legged player took the wrong defence against all of them. Plugins that
+     * set the style themselves in an `onNpcSpawn` hook still win, because those run after
+     * `World.setNpcDefaults`.
+     *
+     * Only the three melee styles belong here: [org.alter.plugins.content.combat.formula.MeleeCombatFormula]
+     * throws on anything else, and a ranged or magic monster's class is [combatClass]'s business.
+     */
+    val combatStyle: CombatStyle = CombatStyle.STAB,
     /**
      * Spotanim of the projectile a [CombatClass.RANGED] npc fires, or -1 for none.
      */
@@ -76,8 +106,26 @@ data class NpcCombatDef(
     /** Spotanim played on the target as the projectile lands, or -1 for none. */
     val rangedImpactGfx: Int = -1,
     val rangedImpactHeight: Int = 0,
+    /**
+     * Initial poison damage this npc inflicts, or 0 if it cannot poison.
+     *
+     * This is the wiki infobox's `poisonous = Yes (N)` value: N is the damage the poison starts
+     * at, not a chance. The wiki publishes N for every poisonous monster and a chance for none of
+     * them, which is why the two are separate fields and why [DEFAULT_POISON_CHANCE] exists.
+     */
+    val poisonDamage: Int = 0,
 ) {
     companion object {
+        /**
+         * Chance applied to an npc that declares [poisonDamage] without a [poisonChance].
+         *
+         * **This figure is not published anywhere.** The wiki gives every poisonous monster an
+         * initial damage and no rate at all, so rather than have each npc invent one, they share
+         * this default: the 1/4 the wiki does publish, for a poisoned melee weapon. Set
+         * `poisonChance` explicitly on any npc that should differ.
+         */
+        const val DEFAULT_POISON_CHANCE = 25.0
+
         private const val DEFAULT_HITPOINTS = 10
         private const val DEFAULT_ATTACK_SPEED = 4
         private const val DEFAULT_RESPAWN_DELAY = 25

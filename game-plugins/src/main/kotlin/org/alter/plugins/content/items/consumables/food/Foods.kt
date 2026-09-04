@@ -10,18 +10,36 @@ import org.alter.api.ext.playSound
 import org.alter.game.model.entity.Player
 import org.alter.plugins.content.areas.duelarena.DuelRules
 import org.alter.rscm.RSCM.getRSCM
+import org.alter.game.model.attr.AttributeKey
 import org.alter.game.model.timer.ATTACK_DELAY
 import org.alter.game.model.timer.COMBO_FOOD_DELAY
 import org.alter.game.model.timer.FOOD_DELAY
 import org.alter.game.model.timer.POTION_DELAY
+import org.alter.game.model.timer.TimerKey
 
 /**
  * @author Tom <rspsmods@gmail.com>
  */
 object Foods {
+    /**
+     * Ticks down to the second half of a
+     * [DelayedHeal][org.alter.plugins.content.items.consumables.DelayedHeal] - the Varlamore hunter
+     * meats, which heal again three seconds after they are eaten. Serviced by `EatingPlugin`.
+     */
+    val DELAYED_HEAL_TIMER = TimerKey()
+
+    /** Hitpoints those meats still owe the player. */
+    val DELAYED_HEAL_OWED = AttributeKey<Int>()
+
     private const val EAT_FOOD_ANIM = 829
     private const val EAT_FOOD_ON_SLED_ANIM = 1469
     private const val EAT_FOOD_SOUND = 2393
+
+    /**
+     * Half this list is drunk rather than eaten - the ales, the teas, the cocktails - and a swallow
+     * does not sound like a bite. The animation is the same 829 either way.
+     */
+    private const val DRINK_SOUND = 2401
 
     /**
      * Eating blocks the next piece of food, and any potion, for this many ticks, and costs the
@@ -45,7 +63,11 @@ object Foods {
 
         val heal =
             when (food) {
-                Food.ANGLERFISH -> {
+                /*
+                 * The blighted copy is the same fish with a PvP-world-only id, so it scales the
+                 * same way rather than healing the flat nothing an unlisted food would.
+                 */
+                Food.ANGLERFISH, Food.BLIGHTED_ANGLERFISH -> {
                     val c =
                         when (p.getSkills().getBaseLevel(Skills.HITPOINTS)) {
                             in 25..49 -> 4
@@ -63,7 +85,7 @@ object Foods {
         val foodName = getItem(getRSCM(food.item)).name
 
         p.animate(anim)
-        p.playSound(EAT_FOOD_SOUND)
+        p.playSound(if (food.option == "drink") DRINK_SOUND else EAT_FOOD_SOUND)
         if (heal > 0) {
             p.heal(heal, if (food.overheal) heal else 0)
         }
