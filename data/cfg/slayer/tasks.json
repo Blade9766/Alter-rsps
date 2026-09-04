@@ -1,0 +1,652 @@
+[
+ {
+  "name": "Aberrant spectres",
+  "assignmentId": 41,
+  "slayerLevel": 60,
+  "monsters": [
+   "Aberrant spectre"
+  ]
+ },
+ {
+  "name": "Abyssal demons",
+  "assignmentId": 42,
+  "slayerLevel": 85,
+  "monsters": [
+   "Abyssal demon"
+  ]
+ },
+ {
+  "name": "Ankou",
+  "assignmentId": 79,
+  "monsters": []
+ },
+ {
+  "name": "Aviansies",
+  "assignmentId": 94,
+  "monsters": []
+ },
+ {
+  "name": "Banshees",
+  "assignmentId": 38,
+  "slayerLevel": 15,
+  "monsters": [
+   "Banshee"
+  ]
+ },
+ {
+  "name": "Basilisks",
+  "assignmentId": 43,
+  "slayerLevel": 40,
+  "monsters": [
+   "Basilisk"
+  ]
+ },
+ {
+  "name": "Bats",
+  "assignmentId": 8,
+  "monsters": [
+   "Bat",
+   "Giant bat",
+   "Albino bat"
+  ]
+ },
+ {
+  "name": "Bears",
+  "assignmentId": 13,
+  "monsters": [
+   "Black bear"
+  ]
+ },
+ {
+  "name": "Birds",
+  "assignmentId": 5,
+  "monsters": [
+   "Bird",
+   "Chicken",
+   "Rooster",
+   "Seagull",
+   "Terrorbird",
+   "Vulture",
+   "Undead chicken",
+   "Chompy bird"
+  ]
+ },
+ {
+  "name": "Black demons",
+  "assignmentId": 30,
+  "monsters": [
+   "Black demon"
+  ]
+ },
+ {
+  "name": "Black dragons",
+  "assignmentId": 27,
+  "monsters": [
+   "Black dragon",
+   "Baby black dragon",
+   "Brutal black dragon"
+  ]
+ },
+ {
+  "name": "Bloodveld",
+  "assignmentId": 48,
+  "slayerLevel": 50,
+  "monsters": [
+   "Bloodveld"
+  ]
+ },
+ {
+  "name": "Blue dragons",
+  "assignmentId": 25,
+  "monsters": [
+   "Blue dragon",
+   "Baby blue dragon",
+   "Brutal blue dragon"
+  ]
+ },
+ {
+  "name": "Bosses",
+  "assignmentId": 98,
+  "monsters": []
+ },
+ {
+  "name": "Brine rats",
+  "assignmentId": 84,
+  "slayerLevel": 47,
+  "monsters": []
+ },
+ {
+  "name": "Catablepon",
+  "assignmentId": 78,
+  "monsters": []
+ },
+ {
+  "name": "Cave bugs",
+  "assignmentId": 63,
+  "slayerLevel": 7,
+  "monsters": []
+ },
+ {
+  "name": "Cave crawlers",
+  "assignmentId": 37,
+  "slayerLevel": 10,
+  "monsters": [
+   "Cave crawler"
+  ]
+ },
+ {
+  "name": "Cave horrors",
+  "assignmentId": 80,
+  "slayerLevel": 58,
+  "monsters": []
+ },
+ {
+  "name": "Cave kraken",
+  "assignmentId": 92,
+  "slayerLevel": 87,
+  "monsters": []
+ },
+ {
+  "name": "Cave slime",
+  "assignmentId": 62,
+  "slayerLevel": 17,
+  "monsters": []
+ },
+ {
+  "name": "Cockatrice",
+  "assignmentId": 44,
+  "slayerLevel": 25,
+  "monsters": [
+   "Cockatrice"
+  ]
+ },
+ {
+  "name": "Cows",
+  "assignmentId": 6,
+  "monsters": [
+   "Cow",
+   "Cow calf",
+   "Undead cow"
+  ]
+ },
+ {
+  "name": "Crabs",
+  "assignmentId": 118,
+  "monsters": [
+   "Sand Crab",
+   "Rock Crab",
+   "Ammonite Crab"
+  ]
+ },
+ {
+  "name": "Crawling Hands",
+  "assignmentId": 39,
+  "slayerLevel": 5,
+  "monsters": [
+   "Crawling Hand"
+  ]
+ },
+ {
+  "name": "Crocodiles",
+  "assignmentId": 65,
+  "monsters": []
+ },
+ {
+  "name": "Dagannoth",
+  "assignmentId": 35,
+  "monsters": [
+   "Dagannoth"
+  ]
+ },
+ {
+  "name": "Dark beasts",
+  "assignmentId": 66,
+  "slayerLevel": 90,
+  "monsters": []
+ },
+ {
+  "name": "Dogs",
+  "assignmentId": 22,
+  "monsters": []
+ },
+ {
+  "name": "Drakes",
+  "assignmentId": 112,
+  "slayerLevel": 84,
+  "monsters": []
+ },
+ {
+  "name": "Dust devils",
+  "assignmentId": 49,
+  "slayerLevel": 65,
+  "monsters": []
+ },
+ {
+  "name": "Dwarves",
+  "assignmentId": 57,
+  "monsters": [
+   "Dwarf",
+   "Black Guard",
+   "Chaos dwarf"
+  ]
+ },
+ {
+  "name": "Elves",
+  "assignmentId": 56,
+  "monsters": []
+ },
+ {
+  "name": "Fever spiders",
+  "assignmentId": 69,
+  "slayerLevel": 42,
+  "monsters": []
+ },
+ {
+  "name": "Fire giants",
+  "assignmentId": 16,
+  "monsters": []
+ },
+ {
+  "name": "Fleshcrawlers",
+  "assignmentId": 77,
+  "monsters": []
+ },
+ {
+  "name": "Fossil Island Wyverns",
+  "assignmentId": 106,
+  "slayerLevel": 66,
+  "monsters": []
+ },
+ {
+  "name": "Gargoyles",
+  "assignmentId": 46,
+  "slayerLevel": 75,
+  "monsters": [
+   "Gargoyle"
+  ]
+ },
+ {
+  "name": "Ghosts",
+  "assignmentId": 12,
+  "monsters": [
+   "Ghost",
+   "Tortured soul"
+  ]
+ },
+ {
+  "name": "Ghouls",
+  "assignmentId": 23,
+  "monsters": []
+ },
+ {
+  "name": "Goblins",
+  "assignmentId": 2,
+  "monsters": [
+   "Goblin",
+   "Cave goblin"
+  ]
+ },
+ {
+  "name": "Greater demons",
+  "assignmentId": 29,
+  "monsters": [
+   "Greater demon"
+  ]
+ },
+ {
+  "name": "Harpie Bug Swarms",
+  "assignmentId": 70,
+  "slayerLevel": 33,
+  "monsters": []
+ },
+ {
+  "name": "Hellhounds",
+  "assignmentId": 31,
+  "monsters": [
+   "Hellhound"
+  ]
+ },
+ {
+  "name": "Hill Giants",
+  "assignmentId": 14,
+  "monsters": [
+   "Hill Giant",
+   "Cyclops"
+  ]
+ },
+ {
+  "name": "Hobgoblins",
+  "assignmentId": 21,
+  "monsters": [
+   "Hobgoblin"
+  ]
+ },
+ {
+  "name": "Ice giants",
+  "assignmentId": 15,
+  "monsters": [
+   "Ice giant"
+  ]
+ },
+ {
+  "name": "Ice warriors",
+  "assignmentId": 19,
+  "monsters": [
+   "Ice warrior"
+  ]
+ },
+ {
+  "name": "Icefiends",
+  "assignmentId": 75,
+  "monsters": []
+ },
+ {
+  "name": "Infernal Mages",
+  "assignmentId": 40,
+  "slayerLevel": 45,
+  "monsters": [
+   "Infernal Mage"
+  ]
+ },
+ {
+  "name": "Jellies",
+  "assignmentId": 50,
+  "slayerLevel": 52,
+  "monsters": [
+   "Jelly"
+  ]
+ },
+ {
+  "name": "Jungle horrors",
+  "assignmentId": 81,
+  "monsters": []
+ },
+ {
+  "name": "Kalphite",
+  "assignmentId": 53,
+  "monsters": []
+ },
+ {
+  "name": "Killerwatts",
+  "assignmentId": 73,
+  "slayerLevel": 37,
+  "monsters": []
+ },
+ {
+  "name": "Kurask",
+  "assignmentId": 45,
+  "slayerLevel": 70,
+  "monsters": [
+   "Kurask"
+  ]
+ },
+ {
+  "name": "Lesser demons",
+  "assignmentId": 28,
+  "monsters": [
+   "Lesser demon"
+  ]
+ },
+ {
+  "name": "Lizardmen",
+  "assignmentId": 90,
+  "monsters": []
+ },
+ {
+  "name": "Lizards",
+  "assignmentId": 68,
+  "slayerLevel": 22,
+  "monsters": []
+ },
+ {
+  "name": "Minotaurs",
+  "assignmentId": 76,
+  "monsters": []
+ },
+ {
+  "name": "Mogres",
+  "assignmentId": 67,
+  "slayerLevel": 32,
+  "monsters": []
+ },
+ {
+  "name": "Molanisks",
+  "assignmentId": 87,
+  "slayerLevel": 39,
+  "monsters": []
+ },
+ {
+  "name": "Monkeys",
+  "assignmentId": 1,
+  "monsters": []
+ },
+ {
+  "name": "Moss giants",
+  "assignmentId": 17,
+  "monsters": [
+   "Moss giant",
+   "Bryophyta"
+  ]
+ },
+ {
+  "name": "Mutated zygomites",
+  "assignmentId": 74,
+  "slayerLevel": 57,
+  "monsters": []
+ },
+ {
+  "name": "Nechryael",
+  "assignmentId": 52,
+  "slayerLevel": 80,
+  "monsters": [
+   "Nechryael"
+  ]
+ },
+ {
+  "name": "Ogres",
+  "assignmentId": 20,
+  "monsters": [
+   "Ogre",
+   "Ogre chieftain",
+   "Enclave guard",
+   "Ogress Shaman",
+   "Ogress Warrior"
+  ]
+ },
+ {
+  "name": "Otherworldly beings",
+  "assignmentId": 55,
+  "monsters": []
+ },
+ {
+  "name": "Pyrefiends",
+  "assignmentId": 47,
+  "slayerLevel": 30,
+  "monsters": [
+   "Pyrefiend"
+  ]
+ },
+ {
+  "name": "Rats",
+  "assignmentId": 3,
+  "monsters": [
+   "Rat",
+   "Giant rat",
+   "Dungeon rat",
+   "Crypt rat"
+  ]
+ },
+ {
+  "name": "Red dragons",
+  "assignmentId": 26,
+  "monsters": [
+   "Red dragon",
+   "Baby red dragon"
+  ]
+ },
+ {
+  "name": "Rockslugs",
+  "assignmentId": 51,
+  "slayerLevel": 20,
+  "monsters": [
+   "Rockslug"
+  ]
+ },
+ {
+  "name": "Scorpions",
+  "assignmentId": 7,
+  "monsters": [
+   "Scorpion",
+   "King Scorpion",
+   "Poison Scorpion",
+   "Pit Scorpion",
+   "Lobstrosity"
+  ]
+ },
+ {
+  "name": "Sea snakes",
+  "assignmentId": 71,
+  "slayerLevel": 40,
+  "monsters": []
+ },
+ {
+  "name": "Shades",
+  "assignmentId": 64,
+  "monsters": []
+ },
+ {
+  "name": "Shadow warriors",
+  "assignmentId": 32,
+  "monsters": []
+ },
+ {
+  "name": "Skeletal Wyverns",
+  "assignmentId": 72,
+  "slayerLevel": 72,
+  "monsters": []
+ },
+ {
+  "name": "Skeletons",
+  "assignmentId": 11,
+  "monsters": [
+   "Skeleton",
+   "Skogre",
+   "Monkey skeleton",
+   "Skeleton Mage"
+  ]
+ },
+ {
+  "name": "Smoke devils",
+  "assignmentId": 95,
+  "slayerLevel": 93,
+  "monsters": []
+ },
+ {
+  "name": "Spiders",
+  "assignmentId": 4,
+  "monsters": [
+   "Spider",
+   "Giant spider",
+   "Shadow spider",
+   "Jungle spider",
+   "Deadly red spider",
+   "Poison spider",
+   "Blessed spider",
+   "Crypt spider"
+  ]
+ },
+ {
+  "name": "Spiritual creatures",
+  "assignmentId": 89,
+  "slayerLevel": 63,
+  "monsters": []
+ },
+ {
+  "name": "Suqahs",
+  "assignmentId": 83,
+  "monsters": []
+ },
+ {
+  "name": "Terror dogs",
+  "assignmentId": 86,
+  "slayerLevel": 40,
+  "monsters": []
+ },
+ {
+  "name": "Trolls",
+  "assignmentId": 18,
+  "monsters": []
+ },
+ {
+  "name": "Turoth",
+  "assignmentId": 36,
+  "slayerLevel": 55,
+  "monsters": [
+   "Turoth"
+  ]
+ },
+ {
+  "name": "TzHaar",
+  "assignmentId": 96,
+  "monsters": []
+ },
+ {
+  "name": "Vampyres",
+  "assignmentId": 34,
+  "monsters": []
+ },
+ {
+  "name": "Wall beasts",
+  "assignmentId": 61,
+  "slayerLevel": 35,
+  "monsters": []
+ },
+ {
+  "name": "Warped creatures",
+  "assignmentId": 122,
+  "monsters": []
+ },
+ {
+  "name": "Waterfiends",
+  "assignmentId": 88,
+  "monsters": []
+ },
+ {
+  "name": "Werewolves",
+  "assignmentId": 33,
+  "monsters": []
+ },
+ {
+  "name": "Wolves",
+  "assignmentId": 9,
+  "monsters": [
+   "Wolf",
+   "White wolf",
+   "Big Wolf",
+   "Desert Wolf",
+   "Dire Wolf",
+   "Ice wolf",
+   "Jungle Wolf"
+  ]
+ },
+ {
+  "name": "Wyrms",
+  "assignmentId": 111,
+  "slayerLevel": 62,
+  "monsters": []
+ },
+ {
+  "name": "Zombies",
+  "assignmentId": 10,
+  "monsters": [
+   "Zombie",
+   "Zombie rat",
+   "Zombie pirate",
+   "Undead one",
+   "Undead Druid",
+   "Monkey Zombie",
+   "Zogre",
+   "Vorkath"
+  ]
+ }
+]

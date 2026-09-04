@@ -4,6 +4,8 @@ import org.alter.api.ElementalWeakness
 import org.alter.api.Elements
 import org.alter.game.model.combat.CombatStyle
 import org.alter.plugins.content.npcs.WeightedDrop
+import org.alter.plugins.content.npcs.slayer.SeedRoll
+import org.alter.plugins.content.npcs.slayer.SeedTable
 
 /**
  * The residents of the Ogre Enclave, the Temple of Ikov, Taverley Dungeon and the Yanille
@@ -39,19 +41,16 @@ import org.alter.plugins.content.npcs.WeightedDrop
  * The **baby** dragons are here rather than in that list: baby blue and baby black dragons
  * have no dragonfire in OSRS, so they genuinely are melee stat blocks.
  *
- * **Two things the wiki publishes that this engine cannot express**, flagged rather than
- * faked:
+ * **The poison scorpion (`Yes (3)`) and poison spider (`Yes (6)`) do poison**, through
+ * `poisonDamage` below. That used to be impossible - `NpcCombatDef.poisonChance` existed and the
+ * DSL set it, but nothing in the engine read it, so filling it in would have been theatre. It is
+ * read now; see [org.alter.plugins.content.mechanics.poison.CombatPoison].
  *
- * 1. **Poison.** The poison scorpion (`Yes (3)`) and poison spider (`Yes (6)`) both poison
- *    on hit. `NpcCombatDef.poisonChance` exists and the DSL sets it, but **nothing in the
- *    engine ever reads it** - the only mentions outside the def and the DSL are CowPlugin
- *    setting it to 0.0 - so filling it in would be theatre. Both are wired as ordinary melee
- *    monsters and will not poison.
- * 2. **The chaos druid's magic.** Its attack style is "Crush, Magic" and its observed
- *    animation set includes 710 (`Animation.DRUID_BIND`), but the wiki quotes only a melee
- *    max hit, so it is wired crush-only. That is unlike the monk of Zamorak, excluded above,
- *    where magic is the dominant attack at 13 against 5 melee; a melee-only chaos druid is
- *    close to the real thing, a melee-only monk would not be.
+ * **The chaos druid has moved out**, to `content/npcs/chaosdruid`. This file used to carry it and
+ * flag its magic as something the engine could not express; that spell is real now, and it needed
+ * a package of its own to hold it, a herb table that drops one *or two* herbs, and the three
+ * locations of its five that are not dungeons. The **chaos druid warrior** is a separate monster
+ * with a separate page and stays here: no magic, no herb table.
  *
  * **Drops are wired in full**, in [DungeonDrops]: every 100% row, every weighted main-table
  * row, and a roll on the shared [org.alter.plugins.content.npcs.GemDropTable] for the eleven
@@ -103,6 +102,12 @@ internal data class DungeonMonster(
     val deathAnimation: Int,
     /** Aggro radius in tiles, or 0 where the wiki says the monster is not aggressive. */
     val aggroRadius: Int = 0,
+    /**
+     * The wiki's `poisonous = Yes (N)` value: the damage this monster's poison starts at, or 0 if
+     * it cannot poison. The rate is not published for any monster and is left to
+     * [org.alter.game.model.combat.NpcCombatDef.DEFAULT_POISON_CHANCE].
+     */
+    val poisonDamage: Int = 0,
     val elementalWeakness: ElementalWeakness? = null,
     /** rscm item keys dropped on every kill - the wiki's 100% section. */
     val guaranteedDrops: List<String> = emptyList(),
@@ -110,9 +115,66 @@ internal data class DungeonMonster(
     val table: List<WeightedDrop> = emptyList(),
     /** Chance of also rolling the shared gem drop table, or null if this monster never does. */
     val gemTableChance: Double? = null,
+    /**
+     * Chance of also rolling the shared herb table, or null if this monster never does.
+     *
+     * An independent roll, not a row in [table] - which is what the wiki means by "There is a
+     * 7/128 chance of rolling the herb drop table". The same shape `content/npcs/slayer` uses.
+     */
+    val herbTableChance: Double? = null,
+    /** The shared seed table this monster reaches, if any. Independent of [table], like the herbs. */
+    val seedRoll: SeedRoll? = null,
+    /**
+     * Drops rolled **independently** of [table], each with its own published chance.
+     *
+     * This is the distinction the hill giant table used to lose. A tertiary at 1/5000 folded into
+     * a weighted table as one row among ninety-odd is not a 1/5000 drop, it is a ~1/94 drop - the
+     * giant champion scroll was fifty times too common, the long bone four times, and the ensouled
+     * head nearly four times. Tertiaries belong here, not in [table].
+     */
+    val tertiaryDrops: List<TertiaryDrop> = emptyList(),
+)
+
+/**
+ * One independently rolled drop.
+ *
+ * @param wildernessOnly when true, only rolled if the killer is in the Wilderness - the wiki's
+ *   "Looting bags are only dropped by those found in the Wilderness".
+ */
+internal data class TertiaryDrop(
+    val item: String,
+    val chance: Double,
+    val wildernessOnly: Boolean = false,
 )
 
 internal object DungeonMonsters {
+    /** Wiki: "There is a 7/128 chance of rolling the herb drop table for members." */
+    private const val HILL_GIANT_HERB_CHANCE = 7.0 / 128.0
+
+    /**
+     * Wiki: "There is an 18/128 chance of rolling the seed drop table for members", through
+     * `{{GeneralSeedDropLines|18/128|28|f2p=yes}}` - the general seed table, whose sub-table is
+     * chosen by the monster's own combat level, which is why it is rolled as [SeedTable.GENERAL]
+     * rather than as a flat list.
+     */
+    private const val HILL_GIANT_SEED_CHANCE = 18.0 / 128.0
+
+    /**
+     * The hill giant tertiaries, shared by the regular and Giants' Plateau entries.
+     *
+     * The looting bag is Wilderness-only on the wiki, and so is the second giant key roll: the
+     * page gives the key 1/128 normally and 2/128 inside the Wilderness. The base 1/128 is a row
+     * of [DungeonDrops.HILL_GIANT]; this adds the second 1/128 where the doubling applies, which
+     * reproduces the published rate on both sides of the ditch even though the real mechanism is
+     * a pre-roll rather than two rolls.
+     */
+    private val HILL_GIANT_TERTIARIES: List<TertiaryDrop> =
+        DungeonDrops.HILL_GIANT_TERTIARY.map { (item, chance) -> TertiaryDrop(item, chance) } +
+            listOf(
+                TertiaryDrop("item.looting_bag", 1.0 / 5.0, wildernessOnly = true),
+                TertiaryDrop("item.giant_key", 1.0 / 128.0, wildernessOnly = true),
+            )
+
     /** Wiki mage = 1 and range = 1 on every monster in this file. */
     const val MAGIC_LEVEL = 1
     const val RANGED_LEVEL = 1
@@ -145,6 +207,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_22_UNARMED,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_22_UNARMED_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 1.0 / 128.0,
         ),
         DungeonMonster(
@@ -173,6 +236,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_22,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_22_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         DungeonMonster(
@@ -201,6 +265,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_25_ARMED,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_25_ARMED_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 2.0 / 128.0,
         ),
         DungeonMonster(
@@ -229,6 +294,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_25,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_25_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         DungeonMonster(
@@ -257,6 +323,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_45_ARMED,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_45_ARMED_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 2.0 / 128.0,
         ),
         DungeonMonster(
@@ -285,6 +352,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 35),
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.SKELETON_LEVEL_45,
+            tertiaryDrops = DungeonDrops.SKELETON_LEVEL_45_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         DungeonMonster(
@@ -394,34 +462,8 @@ internal object DungeonMonsters {
             aggroRadius = 4,
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.CHAOS_DWARF,
+            tertiaryDrops = DungeonDrops.CHAOS_DWARF_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 5.0 / 128.0,
-        ),
-        DungeonMonster(
-            name = "Chaos druid",
-            combatLevel = 13,
-            npcKeys = listOf("npc.chaos_druid"),
-            hitpoints = 20,
-            attack = 8,
-            strength = 8,
-            defence = 12,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.CRUSH,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 0,
-            defenceCrush = 0,
-            defenceMagic = 0,
-            defenceRanged = 0,
-            slayerXp = 20.0,
-            respawnCycles = 25,
-            attackAnimation = 422,
-            blockAnimation = 425,
-            deathAnimation = 836,
-            aggroRadius = 4,
-            guaranteedDrops = listOf("item.bones"),
-            table = DungeonDrops.CHAOS_DRUID,
-            gemTableChance = 1.0 / 128.0,
         ),
         DungeonMonster(
             name = "Chaos druid warrior",
@@ -448,10 +490,12 @@ internal object DungeonMonsters {
             aggroRadius = 4,
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.CHAOS_DRUID_WARRIOR,
+            tertiaryDrops = DungeonDrops.CHAOS_DRUID_WARRIOR_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 1.0 / 128.0,
         ),
         DungeonMonster(
             name = "Poison scorpion",
+            poisonDamage = 3,
             combatLevel = 20,
             npcKeys = listOf("npc.poison_scorpion"),
             hitpoints = 23,
@@ -476,12 +520,17 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.FIRE, 25),
             guaranteedDrops = emptyList(),
             table = DungeonDrops.POISON_SCORPION,
+            tertiaryDrops = DungeonDrops.POISON_SCORPION_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         DungeonMonster(
             name = "Hill giant",
             combatLevel = 28,
-            npcKeys = listOf("npc.hill_giant", "npc.hill_giant_13502", "npc.hill_giant_2099", "npc.hill_giant_13503", "npc.hill_giant_2100", "npc.hill_giant_13504", "npc.hill_giant_2101", "npc.hill_giant_2102", "npc.hill_giant_2103", "npc.hill_giant_12848", "npc.hill_giant_12849", "npc.hill_giant_12850"),
+            // Every published id whose drops match the regular table: the nine Regular ones, the
+            // three Varlamore ones (the page gives them no drop differences), and the Catacombs
+            // giant 7261, which was simply missing. The three Giants' Plateau ids are NOT here -
+            // they swap four rows of the drop table, so they are their own entry below.
+            npcKeys = HillGiantSpawns.REGULAR_IDS + HillGiantSpawns.VARLAMORE_IDS + HillGiantSpawns.KOUREND_IDS,
             hitpoints = 35,
             attack = 18,
             strength = 22,
@@ -505,11 +554,52 @@ internal object DungeonMonsters {
             guaranteedDrops = listOf("item.big_bones"),
             table = DungeonDrops.HILL_GIANT,
             gemTableChance = 3.0 / 128.0,
+            herbTableChance = HILL_GIANT_HERB_CHANCE,
+            seedRoll = SeedRoll(SeedTable.GENERAL, chance = HILL_GIANT_SEED_CHANCE),
+            tertiaryDrops = HILL_GIANT_TERTIARIES,
+        ),
+        /*
+         * The Giants' Plateau hill giants, from the Hill Giant page's fourth infobox. Identical
+         * to the entry above in every combat number - the page repeats the same block - and
+         * separate only because of the drops: the wiki flags `iron med helm` and `steel scimitar`
+         * as "Only dropped by giants on the Giants' Plateau", and `iron full helm` and
+         * `steel longsword` as "Only dropped by giants not on the Giants' Plateau".
+         */
+        DungeonMonster(
+            name = "Hill giant (Giants' Plateau)",
+            combatLevel = 28,
+            npcKeys = HillGiantSpawns.PLATEAU_IDS,
+            hitpoints = 35,
+            attack = 18,
+            strength = 22,
+            defence = 26,
+            attackSpeed = 6,
+            combatStyle = CombatStyle.CRUSH,
+            attackBonus = 18,
+            strengthBonus = 16,
+            defenceStab = 0,
+            defenceSlash = 0,
+            defenceCrush = 0,
+            defenceMagic = 0,
+            defenceRanged = 0,
+            slayerXp = 35.0,
+            respawnCycles = 30,
+            attackAnimation = 4652,
+            blockAnimation = 4651,
+            deathAnimation = 4653,
+            aggroRadius = 4,
+            elementalWeakness = ElementalWeakness(Elements.EARTH, 25),
+            guaranteedDrops = listOf("item.big_bones"),
+            table = DungeonDrops.HILL_GIANT_PLATEAU,
+            gemTableChance = 3.0 / 128.0,
+            herbTableChance = HILL_GIANT_HERB_CHANCE,
+            seedRoll = SeedRoll(SeedTable.GENERAL, chance = HILL_GIANT_SEED_CHANCE),
+            tertiaryDrops = HILL_GIANT_TERTIARIES,
         ),
         DungeonMonster(
             name = "Magic axe",
             combatLevel = 42,
-            npcKeys = listOf("npc.magic_axe", "npc.magic_axe_7269"),
+            npcKeys = listOf("npc.magic_axe"),
             hitpoints = 44,
             attack = 38,
             strength = 38,
@@ -529,9 +619,54 @@ internal object DungeonMonsters {
             blockAnimation = 186,
             deathAnimation = 188,
             aggroRadius = 4,
+            // The normal magic axe has no weighted table at all: the wiki gives it one 100% drop
+            // and one tertiary. The five-battleaxe roll belongs to the Catacombs version below.
             guaranteedDrops = listOf("item.iron_battleaxe"),
-            table = DungeonDrops.MAGIC_AXE,
             gemTableChance = null,
+            tertiaryDrops = listOf(TertiaryDrop("item.looting_bag", 1.0 / 3.0, wildernessOnly = true)),
+        ),
+        /*
+         * The Catacombs of Kourend magic axe, npc 7269 - the page's `version2`.
+         *
+         * Every combat number is identical to the normal axe above; the page publishes one
+         * unversioned block for both. What differs is the drops, and they differ completely: no
+         * guaranteed iron battleaxe but a five-way battleaxe roll out of 500, no Wilderness
+         * looting bag (it is not in the Wilderness), and a medium clue scroll instead.
+         *
+         * Its **Catacombs tertiary** table is not modelled - that is a shared Kourend drop system
+         * this server does not have, the same gap the Catacombs hill giant has.
+         */
+        DungeonMonster(
+            name = "Magic axe (Catacombs of Kourend)",
+            combatLevel = 42,
+            npcKeys = listOf("npc.magic_axe_7269"),
+            hitpoints = 44,
+            attack = 38,
+            strength = 38,
+            defence = 29,
+            attackSpeed = 4,
+            combatStyle = CombatStyle.SLASH,
+            attackBonus = 0,
+            strengthBonus = 0,
+            defenceStab = 10,
+            defenceSlash = 5,
+            defenceCrush = 15,
+            defenceMagic = 5,
+            defenceRanged = 10,
+            slayerXp = 44.0,
+            respawnCycles = 30,
+            attackAnimation = 185,
+            blockAnimation = 186,
+            deathAnimation = 188,
+            aggroRadius = 4,
+            table = DungeonDrops.MAGIC_AXE_CATACOMBS,
+            gemTableChance = null,
+            /*
+             * Wiki `{{DropsLineClue|type=medium|rarity=1/256|altrarity=1/128}}`. The base rate is
+             * used; the alternate and the 1/64 the page footnotes for a ring of wealth (i) both
+             * need a wealth-ring check this server does not have.
+             */
+            tertiaryDrops = listOf(TertiaryDrop("item.clue_scroll_medium", 1.0 / 256.0)),
         ),
         DungeonMonster(
             name = "Jailer",
@@ -585,66 +720,12 @@ internal object DungeonMonsters {
             aggroRadius = 4,
             guaranteedDrops = listOf("item.bones"),
             table = DungeonDrops.BLACK_KNIGHT,
+            tertiaryDrops = DungeonDrops.BLACK_KNIGHT_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 3.0 / 128.0,
         ),
         DungeonMonster(
-            name = "Baby blue dragon",
-            combatLevel = 48,
-            npcKeys = listOf("npc.baby_blue_dragon", "npc.baby_blue_dragon_242", "npc.baby_blue_dragon_243", "npc.baby_blue_dragon_14105", "npc.baby_blue_dragon_14106"),
-            hitpoints = 50,
-            attack = 40,
-            strength = 40,
-            defence = 40,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.SLASH,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 50,
-            defenceCrush = 50,
-            defenceMagic = 40,
-            defenceRanged = 30,
-            slayerXp = 50.0,
-            respawnCycles = 30,
-            attackAnimation = 25,
-            blockAnimation = 26,
-            deathAnimation = 28,
-            aggroRadius = 4,
-            elementalWeakness = ElementalWeakness(Elements.WATER, 50),
-            guaranteedDrops = listOf("item.babydragon_bones"),
-            table = DungeonDrops.BABY_BLUE_DRAGON,
-            gemTableChance = null,
-        ),
-        DungeonMonster(
-            name = "Baby black dragon",
-            combatLevel = 83,
-            npcKeys = listOf("npc.baby_black_dragon", "npc.baby_black_dragon_1872", "npc.baby_black_dragon_7955"),
-            hitpoints = 80,
-            attack = 70,
-            strength = 70,
-            defence = 70,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.SLASH,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 50,
-            defenceCrush = 50,
-            defenceMagic = 40,
-            defenceRanged = 30,
-            slayerXp = 80.0,
-            respawnCycles = 30,
-            attackAnimation = 25,
-            blockAnimation = 26,
-            deathAnimation = 28,
-            aggroRadius = 4,
-            elementalWeakness = ElementalWeakness(Elements.WATER, 50),
-            guaranteedDrops = listOf("item.babydragon_bones"),
-            table = DungeonDrops.BABY_BLACK_DRAGON,
-            gemTableChance = null,
-        ),
-        DungeonMonster(
             name = "Poison spider",
+            poisonDamage = 6,
             combatLevel = 64,
             npcKeys = listOf("npc.poison_spider", "npc.poison_spider_11999"),
             hitpoints = 64,
@@ -669,6 +750,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.FIRE, 40),
             guaranteedDrops = emptyList(),
             table = DungeonDrops.POISON_SPIDER,
+            tertiaryDrops = DungeonDrops.POISON_SPIDER_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         DungeonMonster(
@@ -697,63 +779,8 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.FIRE, 100),
             guaranteedDrops = emptyList(),
             table = DungeonDrops.ICE_SPIDER,
+            tertiaryDrops = DungeonDrops.ICE_SPIDER_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
-        ),
-        DungeonMonster(
-            name = "Lesser demon",
-            combatLevel = 82,
-            npcKeys = listOf("npc.lesser_demon", "npc.lesser_demon_2006", "npc.lesser_demon_2007", "npc.lesser_demon_2008", "npc.lesser_demon_2018", "npc.lesser_demon_7656", "npc.lesser_demon_7657", "npc.lesser_demon_7664"),
-            hitpoints = 79,
-            attack = 68,
-            strength = 70,
-            defence = 71,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.SLASH,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 0,
-            defenceCrush = 0,
-            defenceMagic = -10,
-            defenceRanged = 0,
-            slayerXp = 79.0,
-            respawnCycles = 30,
-            attackAnimation = 64,
-            blockAnimation = 65,
-            deathAnimation = 67,
-            aggroRadius = 4,
-            elementalWeakness = ElementalWeakness(Elements.WATER, 40),
-            guaranteedDrops = listOf("item.vile_ashes"),
-            table = DungeonDrops.LESSER_DEMON,
-            gemTableChance = 4.0 / 128.0,
-        ),
-        DungeonMonster(
-            name = "Greater demon",
-            combatLevel = 92,
-            npcKeys = listOf("npc.greater_demon", "npc.greater_demon_2026", "npc.greater_demon_2027", "npc.greater_demon_2028", "npc.greater_demon_2029", "npc.greater_demon_2030", "npc.greater_demon_2031", "npc.greater_demon_2032"),
-            hitpoints = 87,
-            attack = 76,
-            strength = 78,
-            defence = 81,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.SLASH,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 0,
-            defenceCrush = 0,
-            defenceMagic = -10,
-            defenceRanged = 0,
-            slayerXp = 87.0,
-            respawnCycles = 15,
-            attackAnimation = 64,
-            blockAnimation = 65,
-            deathAnimation = 67,
-            aggroRadius = 4,
-            elementalWeakness = ElementalWeakness(Elements.WATER, 40),
-            guaranteedDrops = listOf("item.vile_ashes"),
-            table = DungeonDrops.GREATER_DEMON,
-            gemTableChance = 5.0 / 128.0,
         ),
         DungeonMonster(
             name = "Black demon",
@@ -781,35 +808,8 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.WATER, 40),
             guaranteedDrops = listOf("item.malicious_ashes"),
             table = DungeonDrops.BLACK_DEMON,
+            tertiaryDrops = DungeonDrops.BLACK_DEMON_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = 5.0 / 128.0,
-        ),
-        DungeonMonster(
-            name = "Hellhound",
-            combatLevel = 122,
-            npcKeys = listOf("npc.hellhound_104", "npc.hellhound_105", "npc.hellhound_7256"),
-            hitpoints = 116,
-            attack = 105,
-            strength = 104,
-            defence = 102,
-            attackSpeed = 4,
-            combatStyle = CombatStyle.STAB,
-            attackBonus = 0,
-            strengthBonus = 0,
-            defenceStab = 0,
-            defenceSlash = 0,
-            defenceCrush = 0,
-            defenceMagic = 0,
-            defenceRanged = 0,
-            slayerXp = 116.0,
-            respawnCycles = 89,
-            attackAnimation = 6562,
-            blockAnimation = 6566,
-            deathAnimation = 6576,
-            aggroRadius = 4,
-            elementalWeakness = ElementalWeakness(Elements.WATER, 50),
-            guaranteedDrops = listOf("item.vile_ashes"),
-            table = DungeonDrops.HELLHOUND,
-            gemTableChance = null,
         ),
         DungeonMonster(
             name = "Ogre chieftain",
@@ -837,6 +837,7 @@ internal object DungeonMonsters {
             elementalWeakness = ElementalWeakness(Elements.EARTH, 20),
             guaranteedDrops = listOf("item.big_bones"),
             table = DungeonDrops.OGRE_CHIEFTAIN,
+            tertiaryDrops = DungeonDrops.OGRE_CHIEFTAIN_TERTIARY.map { (item, chance, wild) -> TertiaryDrop(item, chance, wild) },
             gemTableChance = null,
         ),
         )

@@ -142,20 +142,9 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.ghost_472", x = 2936, z = 9829, walkRadius = 6, direction = Direction.NORTH)
         spawnNpc(npc = "npc.ghost_473", x = 2938, z = 9836, walkRadius = 6, direction = Direction.EAST)
 
-        // Hellhounds (13), level 122.
-        spawnNpc(npc = "npc.hellhound_104", x = 2851, z = 9849, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.hellhound_105", x = 2855, z = 9837, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.hellhound_7256", x = 2856, z = 9847, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.hellhound_104", x = 2857, z = 9841, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.hellhound_105", x = 2859, z = 9852, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.hellhound_7256", x = 2861, z = 9837, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.hellhound_104", x = 2864, z = 9851, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.hellhound_105", x = 2867, z = 9840, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.hellhound_7256", x = 2868, z = 9833, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.hellhound_104", x = 2869, z = 9829, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.hellhound_105", x = 2870, z = 9826, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.hellhound_7256", x = 2871, z = 9819, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.hellhound_104", x = 2871, z = 9822, walkRadius = 6, direction = Direction.NORTH)
+        // Hellhounds are spawned by `content/npcs/hellhound`, at the wiki's own thirteen pins for
+        // this dungeon rather than the hand-picked ones that used to be here. Respawning
+        // them here would double them.
 
         // Poison spiders (8), level 64.
         spawnNpc(npc = "npc.poison_spider", x = 2850, z = 9808, walkRadius = 6, direction = Direction.NORTH)
@@ -201,19 +190,13 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.chaos_dwarf", x = 2932, z = 9784, walkRadius = 6, direction = Direction.NORTH)
         spawnNpc(npc = "npc.chaos_dwarf", x = 2938, z = 9788, walkRadius = 6, direction = Direction.EAST)
 
-        // Hill giants (5), level 28.
-        spawnNpc(npc = "npc.hill_giant", x = 2902, z = 9736, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.hill_giant_13502", x = 2905, z = 9732, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.hill_giant_2099", x = 2907, z = 9735, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.hill_giant_13503", x = 2913, z = 9732, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.hill_giant_2100", x = 2913, z = 9741, walkRadius = 6, direction = Direction.NORTH)
+        // Hill giants are NOT spawned here any more. Taverley's five used to be the entire hill
+        // giant population of the server; they now live with the other twelve published
+        // locations in content/npcs/dungeon/HillGiantSpawns, on these same five tiles. Adding
+        // them back here would double them.
 
-        // Lesser demons (5), level 82.
-        spawnNpc(npc = "npc.lesser_demon", x = 2926, z = 9802, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.lesser_demon_2006", x = 2931, z = 9798, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.lesser_demon_2007", x = 2931, z = 9807, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.lesser_demon_2008", x = 2932, z = 9810, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.lesser_demon_2018", x = 2936, z = 9793, walkRadius = 6, direction = Direction.NORTH)
+        // Lesser demons are spawned by `content/npcs/demon`, at the wiki's own five pins for this
+        // dungeon. Respawning them here would double them.
 
         // Poison scorpions (5), level 20.
         spawnNpc(npc = "npc.poison_scorpion", x = 2929, z = 9752, walkRadius = 6, direction = Direction.NORTH)

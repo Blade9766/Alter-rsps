@@ -57,9 +57,7 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.ice_spider_10722", x = 2744, z = 9840, walkRadius = 6, direction = Direction.WEST)
         spawnNpc(npc = "npc.ice_spider_13798", x = 2745, z = 9829, walkRadius = 6, direction = Direction.NORTH)
 
-        // Lesser demons (3), level 82.
-        spawnNpc(npc = "npc.lesser_demon", x = 2630, z = 9867, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.lesser_demon_2006", x = 2631, z = 9880, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.lesser_demon_2007", x = 2632, z = 9874, walkRadius = 6, direction = Direction.SOUTH)
+        // Lesser demons are spawned by `content/npcs/demon`, at the wiki's own three pins for this
+        // dungeon. Respawning them here would double them.
     }
 }

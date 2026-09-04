@@ -50,12 +50,8 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.ogre_chieftain", x = 2611, z = 9454, walkRadius = 6, direction = Direction.NORTH)
         spawnNpc(npc = "npc.ogre_chieftain", x = 2616, z = 9447, walkRadius = 6, direction = Direction.EAST)
 
-        // Greater demons (5), level 92.
-        spawnNpc(npc = "npc.greater_demon", x = 2586, z = 9458, walkRadius = 6, direction = Direction.NORTH)
-        spawnNpc(npc = "npc.greater_demon_2026", x = 2612, z = 9423, walkRadius = 6, direction = Direction.EAST)
-        spawnNpc(npc = "npc.greater_demon_2027", x = 2615, z = 9423, walkRadius = 6, direction = Direction.SOUTH)
-        spawnNpc(npc = "npc.greater_demon_2028", x = 2615, z = 9426, walkRadius = 6, direction = Direction.WEST)
-        spawnNpc(npc = "npc.greater_demon_2029", x = 2618, z = 9424, walkRadius = 6, direction = Direction.NORTH)
+        // Greater demons are spawned by `content/npcs/demon`, at the wiki's own five pins for this
+        // dungeon. Respawning them here would double them.
 
         // Skeletons (3), level 22.
         spawnNpc(npc = "npc.skeleton", x = 2576, z = 9436, walkRadius = 6, direction = Direction.NORTH)
