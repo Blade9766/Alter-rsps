@@ -30,7 +30,9 @@ class SpawnPlugin(
         spawnNpc(npc = "npc.rat_2854", x = 3207, z = 3203, walkRadius = 10, direction = Direction.NORTH)
         spawnNpc(npc = "npc.rat_2854", x = 3205, z = 3209, walkRadius = 10, direction = Direction.EAST)
         spawnNpc(npc = "npc.rat_2854", x = 3207, z = 3209, walkRadius = 10, direction = Direction.EAST)
-        spawnNpc(npc = "npc.imp_5007", x = 3217, z = 3226, walkRadius = 20, direction = Direction.EAST)
+        // The Lumbridge Castle imp moved to org.alter.plugins.content.npcs.imp.ImpSpawns,
+        // which places it on this same tile along with the other 119 the wiki publishes.
+        // Spawning it from both places would give Lumbridge two imps.
         spawnNpc(npc = "npc.sheep_2789", x = 3196, z = 3263, walkRadius = 10, direction = Direction.NORTH)
         spawnNpc(npc = "npc.sheep_2789", x = 3199, z = 3261, walkRadius = 10, direction = Direction.EAST)
         spawnNpc(npc = "npc.sheep_2789", x = 3201, z = 3272, walkRadius = 10, direction = Direction.SOUTH)
