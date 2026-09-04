@@ -7,6 +7,7 @@ import org.alter.api.ext.*
 import org.alter.game.*
 import org.alter.game.model.*
 import org.alter.game.model.attr.*
+import org.alter.game.model.attr.INTERACTING_SLOT_ATTR
 import org.alter.game.model.attr.NEW_ACCOUNT_ATTR
 import org.alter.game.model.container.*
 import org.alter.game.model.container.key.*
@@ -17,14 +18,19 @@ import org.alter.game.model.shop.*
 import org.alter.game.model.timer.*
 import org.alter.game.plugin.*
 import org.alter.plugins.content.combat.Combat
+import org.alter.plugins.content.combat.WeaponStyles
 import org.alter.plugins.content.combat.specialattack.SpecialAttacks
 import org.alter.plugins.content.combat.strategy.magic.CombatSpell
 import org.alter.plugins.content.interfaces.attack.AttackTab
 import org.alter.plugins.content.interfaces.attack.AttackTab.ATTACK_STYLE_VARP
 import org.alter.plugins.content.interfaces.attack.AttackTab.ATTACK_TAB_INTERFACE_ID
 import org.alter.plugins.content.interfaces.attack.AttackTab.DISABLE_AUTO_RETALIATE_VARP
+import org.alter.plugins.content.interfaces.attack.AttackTab.SPECIAL_ATTACK_BAR_COMPONENT
 import org.alter.plugins.content.interfaces.attack.AttackTab.SPECIAL_ATTACK_VARP
+import org.alter.plugins.content.interfaces.attack.AttackTab.SPECIAL_ORB_COMPONENT
+import org.alter.plugins.content.interfaces.attack.AttackTab.SPECIAL_ORB_INTERFACE_ID
 import org.alter.plugins.content.interfaces.attack.AttackTab.setEnergy
+import org.alter.plugins.content.magic.AutocastInterface
 import org.alter.plugins.content.magic.MagicSpells
 
 class AttackTabPlugin(
@@ -32,7 +38,7 @@ class AttackTabPlugin(
     world: World,
     server: Server
 ) : KotlinPlugin(r, world, server) {
-        
+
     init {
         /**
          * First log-in logic (when accounts have just been made).
@@ -42,6 +48,7 @@ class AttackTabPlugin(
                 setEnergy(player, 100)
             }
             AttackTab.resetRestorationTimer(player)
+            syncAutocastWeapon(player)
         }
 
         onTimer(AttackTab.SPEC_RESTORE) {
@@ -73,30 +80,42 @@ class AttackTabPlugin(
         }
 
         /**
-         * Autocast / Defensive Autocast - real dedicated components (confirmed via the
-         * server's unhandled-button debug log: `component=[593:22]` and
-         * `component=[593:27]`), only meaningful with a magic staff equipped.
+         * The Autocast and Defensive Autocast rows - real, dedicated components of the
+         * Combat Options tab, both carrying a "Choose spell" option. Verified straight
+         * out of the cache: both are layers with clickMask 0x2 and a single "Choose
+         * spell" action, and neither carries a clientscript listener, so the click comes
+         * to us.
          *
-         * The real client shows a dedicated Autocast interface (id 201, confirmed via
-         * RuneLite's gameval `InterfaceID.AUTOCAST`/`InterfaceID.Autocast.SPELLS`) here,
-         * but populating its spell grid turned out to be a genuine dead end: this
-         * project has *zero* existing precedent anywhere for pushing an item array into
-         * an arbitrary interface component without a real, known inventory-type id
-         * (every other `sendItemContainer` call in the codebase uses an established key
-         * like the bank/trade/equipment containers) - doing it anyway
-         * (`inventoryId = 0`, not a real type) silently killed the connection with no
-         * logged exception, which lines up with this server explicitly running with
-         * `inventoryObjCheck`/`clientscriptVerification` enabled. Rather than guess
-         * again at a live server's expense, this reuses the chatbox choice dialog
-         * already proven safe elsewhere (Cheat Menu, Fishing) - less visually authentic
-         * than the native grid, but it won't crash anything.
+         * Note which is which - [AutocastInterface.DEFENSIVE_ROW_COMPONENT] is the
+         * *upper* row despite having the lower component number, and it is the defensive
+         * one. Both rows tell the client which they are through their own clientscript
+         * hook, so getting this backwards sets the spell correctly but highlights the
+         * other row.
+         *
+         * Both open the client's own native spell grid, [AutocastInterface.INTERFACE_ID],
+         * over the Combat Options tab - which it is sized for almost to the pixel: the
+         * grid layer is 175 tall and the info panel below it is parentHeight - 180,
+         * against the tab's 190x261. See [AutocastInterface] for why the server does not
+         * have to populate that grid, and why the previous attempt at doing so killed
+         * the connection.
          */
-        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = 22) {
-            player.queue(TaskPriority.STANDARD) { chooseAutocastSpell(this, player, defensive = false) }
+        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = AutocastInterface.DEFENSIVE_ROW_COMPONENT) {
+            openAutocastPicker(player, defensive = true)
         }
 
-        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = 27) {
-            player.queue(TaskPriority.STANDARD) { chooseAutocastSpell(this, player, defensive = true) }
+        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = AutocastInterface.AUTOCAST_ROW_COMPONENT) {
+            openAutocastPicker(player, defensive = false)
+        }
+
+        /**
+         * A spell picked out of the native grid. Every icon is a dynamic child the
+         * client created on [AutocastInterface.SPELL_GRID_COMPONENT], so the click is
+         * reported against that one component with the child's id - the autocast spell
+         * index - in [INTERACTING_SLOT_ATTR].
+         */
+        onButton(interfaceId = AutocastInterface.INTERFACE_ID, component = AutocastInterface.SPELL_GRID_COMPONENT) {
+            val slot = player.attr[INTERACTING_SLOT_ATTR] ?: return@onButton
+            selectAutocastSpell(player, slot)
         }
 
         /**
@@ -106,29 +125,24 @@ class AttackTabPlugin(
             player.toggleVarp(DISABLE_AUTO_RETALIATE_VARP)
         }
 
-        onButton(interfaceId = 160, component = 35) {
-            val weaponId = player.equipment[EquipmentType.WEAPON.id]!!.id
-            if (SpecialAttacks.executeOnEnable(weaponId)) {
-                if (!SpecialAttacks.execute(player, null, world)) {
-                    player.message("You don't have enough power left.")
-                }
-            } else {
-                player.toggleVarp(SPECIAL_ATTACK_VARP)
-            }
+        /**
+         * The special attack bar, in both places the client draws one: the orb under the
+         * minimap and the bar along the bottom of this tab.
+         *
+         * The tab's bar is component **38**, not 36. 36 is the "Toggle set effect" button
+         * that sits beside Auto retaliate - read straight out of the cache, 593:36 carries
+         * the op "Toggle set effect" and watches varbit 4157, while 593:38 is the only
+         * component on the interface with the op "Use <col=00ff00>Special Attack</col>" and
+         * has no clientscript of its own, so its click comes to us. Bound to 36, every
+         * click on the real bar fell through to the unhandled-button branch and the special
+         * was never armed - which is what made specials look completely dead in the tab.
+         */
+        onButton(interfaceId = SPECIAL_ORB_INTERFACE_ID, component = SPECIAL_ORB_COMPONENT) {
+            toggleSpecialAttack(player)
         }
 
-        /**
-         * Toggle special attack.
-         */
-        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = 36) {
-            val weaponId = player.equipment[EquipmentType.WEAPON.id]!!.id
-            if (SpecialAttacks.executeOnEnable(weaponId)) {
-                if (!SpecialAttacks.execute(player, null, world)) {
-                    player.message("You don't have enough power left.")
-                }
-            } else {
-                player.toggleVarp(SPECIAL_ATTACK_VARP)
-            }
+        onButton(interfaceId = ATTACK_TAB_INTERFACE_ID, component = SPECIAL_ATTACK_BAR_COMPONENT) {
+            toggleSpecialAttack(player)
         }
 
         /**
@@ -142,6 +156,18 @@ class AttackTabPlugin(
                 player.setVarbit(Combat.SELECTED_AUTOCAST_VARBIT, 0)
                 player.setVarbit(Combat.DEFENSIVE_MAGIC_CAST_VARBIT, 0)
             }
+            syncAutocastWeapon(player)
+            resetStyleIfAbsent(player)
+        }
+
+        /**
+         * Same as above for an empty weapon hand - the grid has to stop offering a
+         * staff's spell set the moment the staff comes off.
+         */
+        onUnequipFromSlot(EquipmentType.WEAPON.id) {
+            player.setVarbit(Combat.SELECTED_AUTOCAST_VARBIT, 0)
+            player.setVarbit(Combat.DEFENSIVE_MAGIC_CAST_VARBIT, 0)
+            syncAutocastWeapon(player)
         }
 
         /**
@@ -153,35 +179,96 @@ class AttackTabPlugin(
     }
 
     /**
-     * Whether the player's equipped weapon is a magic-capable staff (Staff of Air,
-     * battlestaves, etc.) rather than a melee-only "staff" like a quarterstaff.
+     * One click of the special attack bar or orb.
      *
-     * Deliberately does **not** use [org.alter.api.ext.hasWeaponType] - that reads
-     * `Varbit.WEAPON_TYPE_VARBIT` (357), which is only ever read anywhere in this
-     * codebase, never written by anything. It's dead state: always 0, so
-     * `hasWeaponType` can never return true for *any* weapon type, for *any* weapon,
-     * server-wide - not just staves. That's the actual reason autocast never opened
-     * anything: this check was always false. Reading the weapon's real cache-derived
-     * `weaponType` directly (populated once at startup by `ItemMetadataService`, the
-     * same value `hasWeaponType` was supposed to be checking) sidesteps the bug rather
-     * than depending on it. The broader bug (affecting every other `hasWeaponType`
-     * caller - ranged combat-class detection, weapon attack sounds, magic bonus checks)
-     * is a separate, bigger fix and out of scope here.
+     * Most specials arm the next attack: the varp goes to 1, the client lights the bar up, and
+     * [org.alter.plugins.content.combat.CombatPlugin] spends it on the next swing. A handful
+     * (Rampage, the dragon pickaxe) hit nobody and are registered `executeInstantly`, so the
+     * click fires them on the spot with a null target.
+     *
+     * Everything that used to go wrong here happens before either of those. The weapon was read
+     * with `!!`, so a click while unarmed threw out of the button handler; a weapon with no
+     * special registered, and a weapon whose bar was simply too low, both produced the same
+     * "You don't have enough power left."; and arming a special the player could not pay for
+     * left the bar lit until the next swing quietly turned it back off.
      */
-    private fun isWieldingMagicStaff(player: Player): Boolean =
-        player.getEquipment(EquipmentType.WEAPON)?.getDef()?.weaponType == WeaponType.MAGIC_STAFF.id
+    private fun toggleSpecialAttack(player: Player) {
+        val weapon = player.equipment[EquipmentType.WEAPON.id]
+        if (weapon == null) {
+            player.setVarp(SPECIAL_ATTACK_VARP, 0)
+            player.message("You need a weapon with a special attack to do that.")
+            return
+        }
+
+        val cost = SpecialAttacks.energyRequired(weapon.id)
+        if (cost == null) {
+            player.setVarp(SPECIAL_ATTACK_VARP, 0)
+            player.message("Your weapon has no special attack.")
+            return
+        }
+
+        // Disarming never costs anything, so let it through before the energy check.
+        if (!SpecialAttacks.executeOnEnable(weapon.id) && AttackTab.isSpecialEnabled(player)) {
+            player.setVarp(SPECIAL_ATTACK_VARP, 0)
+            return
+        }
+
+        if (AttackTab.getEnergy(player) < cost) {
+            player.setVarp(SPECIAL_ATTACK_VARP, 0)
+            player.message("You don't have enough power left.")
+            return
+        }
+
+        if (SpecialAttacks.executeOnEnable(weapon.id)) {
+            SpecialAttacks.execute(player, null, world)
+        } else {
+            player.setVarp(SPECIAL_ATTACK_VARP, 1)
+        }
+    }
 
     /**
-     * Lists every Standard-spellbook combat spell the player's current Magic level
-     * reaches as a chatbox choice, then sets [Combat.SELECTED_AUTOCAST_VARBIT] to the
-     * chosen spell's autocast id - the engine's existing combat loop
-     * (`CombatPlugin.cycle`) already re-selects that spell every attack on its own once
-     * this varbit is non-zero, so nothing else is needed to make it actually repeat.
-     * Curse spells are excluded (`autoCastId = -1` sentinel, they were never
-     * autocastable in real OSRS either).
+     * Whether the player's equipped weapon is a magic-capable staff (Staff of Air,
+     * battlestaves, etc.) rather than a melee-only staff or a powered staff, which have
+     * their own weapon types and no autocast buttons.
      */
-    private suspend fun chooseAutocastSpell(
-        task: QueueTask,
+    private fun isWieldingMagicStaff(player: Player): Boolean = player.hasWeaponType(WeaponType.MAGIC_STAFF, WeaponType.STAFF_HALBERD)
+
+    /**
+     * Writes the equipped weapon into [AutocastInterface.AUTOCAST_WEAPON_VARP], which is
+     * the single thing the client needs from us to render the spell grid: clientscript
+     * 243 switches on it to decide which spells appear and where, and its default case
+     * hides every one of them. Kept in sync on login and on every weapon change rather
+     * than only when the grid opens, since the client re-renders the grid by itself
+     * whenever worn equipment changes.
+     */
+    private fun syncAutocastWeapon(player: Player) {
+        val weaponId = player.equipment[EquipmentType.WEAPON.id]?.id ?: -1
+        player.setVarp(AutocastInterface.AUTOCAST_WEAPON_VARP, AutocastInterface.weaponVarpValue(weaponId))
+    }
+
+    /**
+     * Drops the selected attack style back to the first button when the newly equipped
+     * weapon's panel has no button at that index.
+     *
+     * Panels do not all have four buttons: a scimitar's third button is Lunge, but a
+     * warhammer only has Pound, Pummel and Block, and a bulwark has one option. Switching
+     * from the former to the latter leaves [ATTACK_STYLE_VARP] pointing at a button that no
+     * longer exists, and [org.alter.plugins.content.combat.WeaponStyles] then has no style to
+     * report - which means no attack type, no invisible level boost and no experience skill.
+     * Real OSRS resets the selection the same way.
+     */
+    private fun resetStyleIfAbsent(player: Player) {
+        if (WeaponStyles.get(player.getWeaponType(), player.getAttackStyle()) == null) {
+            player.setVarp(ATTACK_STYLE_VARP, 0)
+        }
+    }
+
+    /**
+     * Replaces the Combat Options tab with the client's native autocast spell grid,
+     * remembering whether the player asked for the plain or the defensive row so the
+     * eventual pick can set [Combat.DEFENSIVE_MAGIC_CAST_VARBIT] accordingly.
+     */
+    private fun openAutocastPicker(
         player: Player,
         defensive: Boolean,
     ) {
@@ -189,61 +276,81 @@ class AttackTabPlugin(
             player.message("You need a magic staff equipped to autocast spells.")
             return
         }
-
-        val magicLevel = player.getSkills().getCurrentLevel(Skills.MAGIC)
-        val eligible =
-            CombatSpell.values
-                .filter { spell ->
-                    spell.autoCastId > 0 &&
-                        MagicSpells.getMetadata(spell.id)?.let { it.spellbook == player.getSpellbook().id && it.lvl <= magicLevel } == true
-                }.sortedBy { MagicSpells.getMetadata(it.id)?.lvl ?: 0 }
-
-        if (eligible.isEmpty()) {
-            player.message("You don't know any spells you can autocast yet.")
-            return
-        }
-
-        val names = eligible.map { MagicSpells.getMetadata(it.id)?.name ?: it.name }
-        val choice = task.pagedOptions(player, names, title = "Choose a spell to autocast")
-        val chosen = eligible.getOrNull(choice - 1) ?: return
-
-        player.setVarbit(Combat.SELECTED_AUTOCAST_VARBIT, chosen.autoCastId)
-        player.setVarbit(Combat.DEFENSIVE_MAGIC_CAST_VARBIT, if (defensive) 1 else 0)
-        player.setVarp(ATTACK_STYLE_VARP, if (defensive) 3 else 0)
-        player.message("You will now autocast ${MagicSpells.getMetadata(chosen.id)?.name ?: chosen.name}.")
+        player.attr[Combat.AWAITING_AUTOCAST_SELECTION] = defensive
+        syncAutocastWeapon(player)
+        player.openInterface(AutocastInterface.INTERFACE_ID, InterfaceDestination.ATTACK, false)
+        player.setInterfaceEvents(
+            interfaceId = AutocastInterface.INTERFACE_ID,
+            component = AutocastInterface.SPELL_GRID_COMPONENT,
+            AutocastInterface.SPELL_SLOTS,
+            InterfaceEvent.ClickOp1,
+        )
     }
 
     /**
-     * Chatbox choice list, paginated 3-per-page beyond 5 total (the native chatbox
-     * choice interface only comfortably fits 5 options at once) - same pattern already
-     * used for the Cheat Menu's item/style pickers.
+     * Puts the Combat Options tab back where the spell grid was. There is no close
+     * button on the grid itself - real OSRS makes you pick a spell or Cancel - so this
+     * is the only way back out.
      */
-    private suspend fun QueueTask.pagedOptions(
+    private fun closeAutocastPicker(player: Player) {
+        player.attr.remove(Combat.AWAITING_AUTOCAST_SELECTION)
+        player.openInterface(InterfaceDestination.ATTACK)
+    }
+
+    /**
+     * Handles one pick out of the native grid. [slot] is the dynamic child's id, which
+     * is the autocast spell index shared by enum 1986 and [CombatSpell.autoCastId] -
+     * except for [AutocastInterface.CANCEL_SLOT], the "Cancel" row, which switches
+     * autocast back off.
+     *
+     * The client decides what to draw but does not gate what can be chosen, so the
+     * spellbook and Magic level are still checked here, from the same cache-driven
+     * metadata the cast-requirement checks in
+     * [org.alter.plugins.content.combat.strategy.MagicCombatStrategy] use.
+     */
+    private fun selectAutocastSpell(
         player: Player,
-        items: List<String>,
-        title: String,
-        pageSize: Int = 3,
-    ): Int {
-        if (items.size <= 5) {
-            return options(player, *items.toTypedArray(), title = title)
+        slot: Int,
+    ) {
+        if (slot == AutocastInterface.CANCEL_SLOT) {
+            player.setVarbit(Combat.SELECTED_AUTOCAST_VARBIT, 0)
+            player.setVarbit(Combat.DEFENSIVE_MAGIC_CAST_VARBIT, 0)
+            // Leaving the varp on a spell slot would strand the player on a Magic
+            // attack style with no spell behind it, so drop back to the first button.
+            player.setVarp(ATTACK_STYLE_VARP, 0)
+            closeAutocastPicker(player)
+            player.message("You will no longer autocast a spell.")
+            return
         }
-        val totalPages = (items.size + pageSize - 1) / pageSize
-        var page = 0
-        while (true) {
-            val start = page * pageSize
-            val end = minOf(start + pageSize, items.size)
-            val pageItems = items.subList(start, end).toMutableList()
-            val itemCount = pageItems.size
-            if (page > 0) pageItems.add("<< Previous page")
-            if (page < totalPages - 1) pageItems.add("Next page >>")
-            val choice = options(player, *pageItems.toTypedArray(), title = "$title (${page + 1}/$totalPages)")
-            if (choice == -1) return -1
-            val idx = choice - 1
-            when {
-                idx < itemCount -> return start + idx + 1
-                page > 0 && idx == itemCount -> page--
-                else -> page++
-            }
+
+        if (!isWieldingMagicStaff(player)) {
+            player.message("You need a magic staff equipped to autocast spells.")
+            closeAutocastPicker(player)
+            return
         }
+
+        val spell = CombatSpell.values.firstOrNull { it.autoCastId == slot }
+        val metadata = spell?.let { MagicSpells.getMetadata(it.id) }
+        if (spell == null || metadata == null) {
+            player.message("You can't autocast that spell yet.")
+            return
+        }
+
+        if (metadata.spellbook != player.getSpellbook().id) {
+            player.message("You need to be on a different spellbook to autocast that spell.")
+            return
+        }
+
+        if (player.getSkills().getCurrentLevel(Skills.MAGIC) < metadata.lvl) {
+            player.message("You need a Magic level of ${metadata.lvl} to autocast that spell.")
+            return
+        }
+
+        val defensive = player.attr[Combat.AWAITING_AUTOCAST_SELECTION] ?: false
+        player.setVarbit(Combat.SELECTED_AUTOCAST_VARBIT, spell.autoCastId)
+        player.setVarbit(Combat.DEFENSIVE_MAGIC_CAST_VARBIT, if (defensive) 1 else 0)
+        player.setVarp(ATTACK_STYLE_VARP, if (defensive) AutocastInterface.DEFENSIVE_AUTOCAST_STYLE else AutocastInterface.AUTOCAST_STYLE)
+        closeAutocastPicker(player)
+        player.message("You will now autocast ${metadata.name}.")
     }
 }

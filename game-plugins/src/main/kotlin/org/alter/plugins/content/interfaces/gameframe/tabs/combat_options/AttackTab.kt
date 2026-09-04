@@ -17,6 +17,17 @@ object AttackTab {
     private const val SPECIAL_ATTACK_ENERGY_VARP = 300
     const val SPECIAL_ATTACK_VARP = 301
 
+    /**
+     * The special attack bar along the bottom of the Combat Options tab - the component
+     * carrying the op "Use <col=00ff00>Special Attack</col>" in the cache. Not 36, which is
+     * the "Toggle set effect" button next to Auto retaliate.
+     */
+    const val SPECIAL_ATTACK_BAR_COMPONENT = 38
+
+    /** The special attack orb under the minimap, the tab bar's twin. */
+    const val SPECIAL_ORB_INTERFACE_ID = 160
+    const val SPECIAL_ORB_COMPONENT = 35
+
     val SPEC_RESTORE = TimerKey()
 
     fun setEnergy(

@@ -1,114 +1,77 @@
 package org.alter.plugins.content.interfaces.gameframe.tabs.settings.options.tabs
 
-import org.alter.api.*
 import org.alter.api.ClientScript
-import org.alter.api.cfg.*
-import org.alter.api.dsl.*
-import org.alter.api.ext.*
-import org.alter.game.*
-import org.alter.game.model.*
-import org.alter.game.model.attr.*
+import org.alter.api.cfg.Varbit
+import org.alter.api.cfg.Varp
+import org.alter.api.ext.InterfaceEvent
+import org.alter.api.ext.getInteractingSlot
+import org.alter.api.ext.getVarbit
+import org.alter.api.ext.getVarp
+import org.alter.api.ext.openInterface
+import org.alter.api.ext.player
+import org.alter.api.ext.runClientScript
+import org.alter.api.ext.setInterfaceEvents
+import org.alter.api.ext.setVarbit
+import org.alter.api.ext.setVarp
+import org.alter.api.ext.toggleDisplayInterface
+import org.alter.api.ext.toggleVarbit
+import org.alter.api.ext.toggleVarp
+import org.alter.game.Server
+import org.alter.game.model.World
+import org.alter.game.model.attr.AttributeKey
 import org.alter.game.model.attr.DISPLAY_MODE_CHANGE_ATTR
 import org.alter.game.model.attr.INTERACTING_SLOT_ATTR
-import org.alter.game.model.container.*
-import org.alter.game.model.container.key.*
-import org.alter.game.model.entity.*
+import org.alter.game.model.entity.Player
 import org.alter.game.model.interf.DisplayMode
-import org.alter.game.model.item.*
-import org.alter.game.model.queue.*
-import org.alter.game.model.shop.*
-import org.alter.game.model.timer.*
-import org.alter.game.plugin.*
+import org.alter.game.plugin.KotlinPlugin
+import org.alter.game.plugin.Plugin
+import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.interfaces.options.OptionsTab
 
+/**
+ * The Settings side tab, interface 116: the Controls / Audio / Display panels and the button that
+ * opens the full "All Settings" window.
+ *
+ * ### Component numbers
+ *
+ * These were read back out of the cache rather than carried over, because most of the ones this file
+ * used before did not exist as buttons in this revision. Interface 116 has only fifteen components
+ * with a click mask; everything else is a type-5 graphic, and a binding on one of those can never
+ * fire. The three tab buttons, all four mute buttons and the music unlock toggle were all bound to
+ * graphics, so none of them did anything, and the Display tab was additionally bound to the value for
+ * Audio.
+ *
+ * The tab buttons are identified by `[clientscript,3910]`, which labels 59 "Controls", 67 "Audio" and
+ * 68 "Display" and hands each one an index for varbit [Varbit.SETTINGS_TAB_FOCUS]. The four volume
+ * groups are identified by their own onload scripts - 7099 on component 84 is Master, 3933 on 98 is
+ * Music, 3934 on 112 is Sound Effects and 3935 on 126 is Area Sound - each of which sets its mute
+ * button's text with `if_setop`. The mute button of each group is the first child.
+ *
+ * ### What is deliberately not bound
+ *
+ * The four volume *bars* and the brightness and camera-zoom bars are dragged, not clicked: they carry
+ * an `onMouseRepeat` handler (`[clientscript,526]`) and no op at all, so there is no click for the
+ * server to receive. The bindings that used to exist for them pointed at the slider's background
+ * sprites. House Options (31) and the Bond Pouch (33) are left unbound because neither has content
+ * behind it yet; they are live buttons, so they can be picked up as soon as there is. Toggle Run
+ * (30) belongs to [org.alter.plugins.content.mechanics.run.RunEnergyPlugin], which is where the
+ * "not enough run energy" case lives.
+ */
 class OptionsTabFirstPlugin(
     r: PluginRepository,
     world: World,
-    server: Server
+    server: Server,
 ) : KotlinPlugin(r, world, server) {
-        
+
     init {
-
-        val SKULL_PROTECTION_BUTTON = 5
-        val PLAYER_ATTACK_OPTION = 38
-        val NPC_ATTACK_OPTION = 39
-        val BRIGHTNES_BAR = 23
-        val ZOOM_TOGGLE_BUTTON = 44
-        val DISPLAY_MODE = 41
-        val MUTE_MUSIC = 93
-        val MUSIC_BAR = 104
-        val MUTE_SOUND = 107
-        val SOUND_BAR = 118
-        val MUTE_AREA_SOUND = 122
-        val AREA_SOUND_BAR = 133
-        val MUSIC_UNLOCK_MESSAGE = 121
-        val ACCEPT_AID_BUTTON = 29
-        val RUN_MODE_BUTTON = 30
-        val HOUSE_OPT_BUTTON = 31
-        val BOND_BUTTON = 33
-        val ALL_SETTINGS_BUTTON = 32
-
-        val MUTE_MASTER_SOUND = 79
-        val MUTE_MASTER_SOUND_BAR = 90
-
-        val AUDIO_MUSIC_VOLUME = AttributeKey<Int>()
-        val SOUND_EFFECT_VOLUME = AttributeKey<Int>()
-        val AREA_SOUND_VOLUME = AttributeKey<Int>()
-        val MASTER_SOUND_VOLUME = AttributeKey<Int>()
-
         onLogin {
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 55, 0..21, setting = InterfaceEvent.ClickOp1)
+            // The shared dropdown's rows are populated at open time and carry no click mask of their
+            // own, so they are the one part of this interface the server has to open itself. Every
+            // button below already has op 1 in its cache mask.
             player.setInterfaceEvents(
                 interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = DISPLAY_MODE,
-                0..21,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = BRIGHTNES_BAR,
-                0..21,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 84, 1..3, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 82, 1..4, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 81, 1..5, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 69, 0..21, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = SOUND_BAR,
-                0..21,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = PLAYER_ATTACK_OPTION,
-                1..5,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = NPC_ATTACK_OPTION,
-                1..4,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = MUSIC_BAR,
-                0..21,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = DISPLAY_MODE,
-                1..3,
-                setting = InterfaceEvent.ClickOp1,
-            )
-            player.setInterfaceEvents(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = 90, 0..21, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(
-                interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB,
-                component = AREA_SOUND_BAR,
-                0..21,
+                component = DROPDOWN_ROWS,
+                range = 0..DROPDOWN_MAX_ROWS,
                 setting = InterfaceEvent.ClickOp1,
             )
         }
@@ -121,10 +84,7 @@ class OptionsTabFirstPlugin(
             val mode =
                 when (change) {
                     2 ->
-                        if (player.getVarbit(
-                                Varbit.SIDESTONES_ARRAGEMENT_VARBIT,
-                            ) == 1
-                        ) {
+                        if (player.getVarbit(Varbit.SIDESTONES_ARRAGEMENT_VARBIT) == 1) {
                             DisplayMode.RESIZABLE_LIST
                         } else {
                             DisplayMode.RESIZABLE_NORMAL
@@ -134,7 +94,7 @@ class OptionsTabFirstPlugin(
             player.toggleDisplayInterface(mode)
         }
 
-        bind_setting(child = DISPLAY_MODE) {
+        bindSetting(DISPLAY_MODE) {
             val slot = player.attr[INTERACTING_SLOT_ATTR]!!
             val mode =
                 when (slot) {
@@ -154,105 +114,116 @@ class OptionsTabFirstPlugin(
             player.toggleDisplayInterface(mode)
         }
 
-        bind_setting(child = PLAYER_ATTACK_OPTION) {
-            val slot = player.attr[INTERACTING_SLOT_ATTR]!!.toInt() - 1
-            player.setVarp(Varp.PLAYER_ATTACK_PRIORITY_VARP, slot)
+        bindSetting(PLAYER_ATTACK_OPTION) {
+            player.setVarp(Varp.PLAYER_ATTACK_PRIORITY_VARP, player.getInteractingSlot() - 1)
         }
 
-        bind_setting(child = NPC_ATTACK_OPTION) {
-            val slot = player.attr[INTERACTING_SLOT_ATTR]!!.toInt() - 1
-            player.setVarp(Varp.NPC_ATTACK_PRIORITY_VARP, slot)
+        bindSetting(NPC_ATTACK_OPTION) {
+            player.setVarp(Varp.NPC_ATTACK_PRIORITY_VARP, player.getInteractingSlot() - 1)
         }
 
-        bind_setting(child = RUN_MODE_BUTTON) {
-            player.toggleVarp(Varp.RUN_MODE_VARP)
-        }
-
-        bind_setting(child = ACCEPT_AID_BUTTON) {
+        bindSetting(ACCEPT_AID_BUTTON) {
             player.toggleVarp(Varp.ACCEPT_AID_VARP)
         }
-        bind_setting(child = SKULL_PROTECTION_BUTTON) {
+
+        bindSetting(SKULL_PROTECTION_BUTTON) {
             player.toggleVarbit(Varbit.PK_PREVENT_SKULL)
         }
 
-        bind_setting(63) {
-            player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 0)
-        }
-        bind_setting(68) {
-            player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 1)
-        }
-        bind_setting(69) {
-            player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 2)
-        }
-        bind_setting(MUSIC_BAR) {
-            player.setVarp(Varp.AUDIO_MUSIC_VOLUME, player.getInteractingSlot() * 5)
-        }
-        bind_setting(SOUND_BAR) {
-            player.setVarp(Varp.AUDIO_SOUND_EFFECT_VOLUME, player.getInteractingSlot() * 5)
-        }
-        bind_setting(AREA_SOUND_BAR) {
-            player.setVarp(Varp.AUDIO_AREA_SOUND_VOLUME, player.getInteractingSlot() * 5)
-        }
-
-        bind_setting(MUTE_MASTER_SOUND_BAR) {
-            player.setVarp(Varp.MASTER_SOUND_VOLUME, player.getInteractingSlot() * 5)
-        }
-        bind_setting(MUTE_MUSIC) {
-            if (player.getVarp(Varp.AUDIO_MUSIC_VOLUME) == 0) {
-                player.setVarp(Varp.AUDIO_MUSIC_VOLUME, player.attr[AUDIO_MUSIC_VOLUME] ?: 100)
-            } else {
-                player.attr[AUDIO_MUSIC_VOLUME] = player.getVarp(Varp.AUDIO_MUSIC_VOLUME)
-                player.setVarp(Varp.AUDIO_MUSIC_VOLUME, 0)
-            }
-        }
-
-
-        bind_setting(ZOOM_TOGGLE_BUTTON) {
+        bindSetting(ZOOM_TOGGLE_BUTTON) {
             player.toggleVarbit(Varbit.DISABLE_ZOOM)
         }
 
-        bind_setting(MUTE_MASTER_SOUND) {
-            if (player.getVarp(Varp.MASTER_SOUND_VOLUME) == 0) {
-                player.setVarp(Varp.MASTER_SOUND_VOLUME, player.attr[MASTER_SOUND_VOLUME] ?: 100)
-            } else {
-                player.attr[MASTER_SOUND_VOLUME] = player.getVarp(Varp.MASTER_SOUND_VOLUME)
-                player.setVarp(Varp.MASTER_SOUND_VOLUME, 0)
-            }
+        bindSetting(MUSIC_UNLOCK_MESSAGE) {
+            player.toggleVarbit(OptionsTab.MUSIC_UNLOCK_MESSAGE_VARBIT)
         }
 
-        bind_setting(MUTE_SOUND) {
-            if (player.getVarp(Varp.AUDIO_SOUND_EFFECT_VOLUME) == 0) {
-                player.setVarp(Varp.AUDIO_SOUND_EFFECT_VOLUME, player.attr[SOUND_EFFECT_VOLUME] ?: 100)
-            } else {
-                player.attr[SOUND_EFFECT_VOLUME] = player.getVarp(Varp.AUDIO_SOUND_EFFECT_VOLUME)
-                player.setVarp(Varp.AUDIO_SOUND_EFFECT_VOLUME, 0)
-            }
-        }
+        /**
+         * The three tab buttons. The client switches the visible panel itself from
+         * `[clientscript,3915]`; mirroring it here is what makes the tab survive a relog.
+         */
+        bindSetting(TAB_CONTROLS) { player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 0) }
+        bindSetting(TAB_AUDIO) { player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 1) }
+        bindSetting(TAB_DISPLAY) { player.setVarbit(Varbit.SETTINGS_TAB_FOCUS, 2) }
 
-        bind_setting(MUTE_AREA_SOUND) {
-            if (player.getVarp(Varp.AUDIO_AREA_SOUND_VOLUME) == 0) {
-                player.setVarp(Varp.AUDIO_AREA_SOUND_VOLUME, player.attr[AREA_SOUND_VOLUME] ?: 100)
-            } else {
-                player.attr[AREA_SOUND_VOLUME] = player.getVarp(Varp.AUDIO_AREA_SOUND_VOLUME)
-                player.setVarp(Varp.AUDIO_AREA_SOUND_VOLUME, 0)
-            }
-        }
+        bindSetting(MUTE_MASTER_SOUND) { player.toggleVolume(Varp.MASTER_SOUND_VOLUME, MASTER_SOUND_VOLUME) }
+        bindSetting(MUTE_MUSIC) { player.toggleVolume(Varp.AUDIO_MUSIC_VOLUME, AUDIO_MUSIC_VOLUME) }
+        bindSetting(MUTE_SOUND) { player.toggleVolume(Varp.AUDIO_SOUND_EFFECT_VOLUME, SOUND_EFFECT_VOLUME) }
+        bindSetting(MUTE_AREA_SOUND) { player.toggleVolume(Varp.AUDIO_AREA_SOUND_VOLUME, AREA_SOUND_VOLUME) }
 
-        bind_setting(ALL_SETTINGS_BUTTON) {
-            player.openInterface(parent = 161, child = 18, interfaceId = 134)
-            player.setInterfaceEvents(interfaceId = 134, component = 23, range = 0..9, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = 134, component = 19, range = 0..449, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = 134, component = 28, range = 0..41, setting = InterfaceEvent.ClickOp1)
-            player.setInterfaceEvents(interfaceId = 134, component = 21, range = 0..219, setting = InterfaceEvent.ClickOp1)
+        /**
+         * Opens the "All Settings" window. The ops its rows need are opened once at login by
+         * [org.alter.plugins.content.interfaces.gameframe.tabs.settings.SettingsPlugin], which is
+         * also what handles the clicks that come back.
+         */
+        bindSetting(ALL_SETTINGS_BUTTON) {
+            player.openInterface(parent = 161, child = 18, interfaceId = OptionsTab.ALL_SETTINGS_INTERFACE_ID)
         }
     }
 
-fun bind_setting(
-    child: Int,
-    plugin: Plugin.() -> Unit,
-) {
-    onButton(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = child) {
-        plugin(this)
+    /**
+     * Mute restores the volume the player had rather than a fixed level, which is what the client's
+     * own "Unmute" op implies. The remembered level is per session; a mute that outlives a logout
+     * comes back as a mute, because the volume varp itself is what persists.
+     */
+    private fun Player.toggleVolume(
+        varp: Int,
+        remembered: AttributeKey<Int>,
+    ) {
+        if (getVarp(varp) == 0) {
+            setVarp(varp, attr[remembered] ?: FULL_VOLUME)
+        } else {
+            attr[remembered] = getVarp(varp)
+            setVarp(varp, 0)
+        }
     }
-}
+
+    private fun bindSetting(
+        child: Int,
+        logic: Plugin.() -> Unit,
+    ) {
+        onButton(interfaceId = OptionsTab.SETTINGS_INTERFACE_TAB, component = child) {
+            logic(this)
+        }
+    }
+
+    private companion object {
+        /** Controls panel. */
+        const val SKULL_PROTECTION_BUTTON = 5
+        const val ACCEPT_AID_BUTTON = 29
+        const val ALL_SETTINGS_BUTTON = 32
+
+        /** Tab strip, labelled by `[clientscript,3910]`. */
+        const val TAB_CONTROLS = 59
+        const val TAB_AUDIO = 67
+        const val TAB_DISPLAY = 68
+
+        /** Audio panel: the mute button of each volume group. */
+        const val MUTE_MASTER_SOUND = 85
+        const val MUTE_MUSIC = 99
+        const val MUTE_SOUND = 113
+        const val MUTE_AREA_SOUND = 128
+        const val MUSIC_UNLOCK_MESSAGE = 127
+
+        /** Display panel. Op 1 toggles scroll-wheel zoom; op 2 is the client's own reset. */
+        const val ZOOM_TOGGLE_BUTTON = 44
+
+        /**
+         * The rows of the one dropdown this interface shares between its settings. Which setting a
+         * row belongs to depends on the dropdown that opened it, which is why they are bound
+         * individually rather than as a range.
+         */
+        const val DROPDOWN_ROWS = 36
+        const val DROPDOWN_MAX_ROWS = 5
+        const val PLAYER_ATTACK_OPTION = 38
+        const val NPC_ATTACK_OPTION = 39
+        const val DISPLAY_MODE = 41
+
+        const val FULL_VOLUME = 100
+
+        val AUDIO_MUSIC_VOLUME = AttributeKey<Int>()
+        val SOUND_EFFECT_VOLUME = AttributeKey<Int>()
+        val AREA_SOUND_VOLUME = AttributeKey<Int>()
+        val MASTER_SOUND_VOLUME = AttributeKey<Int>()
+    }
 }
