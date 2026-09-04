@@ -1,6 +1,7 @@
 package org.alter.plugins.content.npcs.kbd
 
 import org.alter.api.*
+import org.alter.api.cfg.Sound
 import org.alter.api.ext.*
 import org.alter.game.*
 import org.alter.game.model.*
@@ -14,6 +15,7 @@ import org.alter.plugins.content.combat.*
 import org.alter.plugins.content.combat.formula.DragonfireFormula
 import org.alter.plugins.content.combat.formula.MeleeCombatFormula
 import org.alter.plugins.content.combat.strategy.RangedCombatStrategy
+import org.alter.plugins.content.combat.strategy.playSpellSound
 import org.alter.plugins.content.mechanics.poison.poison
 
 class KbdCombatPlugin(
@@ -35,7 +37,7 @@ class KbdCombatPlugin(
 
         while (canEngageCombat(target)) {
             facePawn(target)
-            if (moveToAttackRange(it, target, distance = 6, projectile = true) && isAttackDelayReady()) {
+            if (moveToAttackRange(it, target, distance = Combat.npcAttackRange(this, FALLBACK_ATTACK_RANGE), projectile = true) && isAttackDelayReady()) {
                 if (this.world.chance(1, 4) && canAttackMelee(it, target, moveIfNeeded = false)) {
                     this.meleeAttack(target)
                 } else {
@@ -83,6 +85,7 @@ class KbdCombatPlugin(
         npc.prepareAttack(CombatClass.MAGIC, CombatStyle.MAGIC, AttackStyle.ACCURATE)
         npc.animate(81)
         world.spawn(projectile)
+        playSpellSound(npc, target, Sound.DRAGONBREATH)
         npc.dealHit(
             target = target,
             formula = DragonfireFormula(maxHit = 65),
@@ -97,6 +100,7 @@ class KbdCombatPlugin(
         prepareAttack(CombatClass.MAGIC, CombatStyle.MAGIC, AttackStyle.ACCURATE)
         animate(82)
         this.world.spawn(projectile)
+        playSpellSound(this, target, Sound.TOXICBREATH)
         val hit =
             dealHit(
                 target = target,
@@ -123,6 +127,7 @@ class KbdCombatPlugin(
         prepareAttack(CombatClass.MAGIC, CombatStyle.MAGIC, AttackStyle.ACCURATE)
         animate(83)
         this.world.spawn(projectile)
+        playSpellSound(this, target, Sound.KINGICEBREATH)
         val hit =
             dealHit(
                 target = target,
@@ -149,6 +154,7 @@ class KbdCombatPlugin(
         prepareAttack(CombatClass.MAGIC, CombatStyle.MAGIC, AttackStyle.ACCURATE)
         animate(84)
         this.world.spawn(projectile)
+        playSpellSound(this, target, Sound.LIGHTNINGBREATH)
         val hit =
             dealHit(
                 target = target,
@@ -169,4 +175,8 @@ class KbdCombatPlugin(
         }
     }
 
+    private companion object {
+        /** Only a fallback - the live value is `attackRange` in KbdConfigsPlugin. */
+        const val FALLBACK_ATTACK_RANGE = 6
+    }
 }

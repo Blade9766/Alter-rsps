@@ -13,6 +13,7 @@ import org.alter.game.model.entity.*
 import org.alter.rscm.RSCM.getRSCM
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
+import org.alter.plugins.content.combat.playAttackSound
 import org.alter.plugins.content.combat.createProjectile
 import org.alter.plugins.content.combat.dealExactHit
 import org.alter.plugins.content.combat.dealHit
@@ -23,6 +24,7 @@ import org.alter.plugins.content.combat.strategy.ranged.RangedAoe
 import org.alter.plugins.content.combat.strategy.ranged.ammo.Darts
 import org.alter.plugins.content.combat.strategy.ranged.ammo.EnchantedBolt
 import org.alter.plugins.content.combat.strategy.ranged.ammo.Knives
+import org.alter.plugins.content.combat.strategy.ranged.ammo.Thrownaxes
 import org.alter.plugins.content.combat.strategy.ranged.weapon.BowType
 import org.alter.plugins.content.combat.strategy.ranged.weapon.Bows
 import org.alter.plugins.content.combat.strategy.ranged.weapon.CrossbowType
@@ -35,34 +37,126 @@ object RangedCombatStrategy : CombatStrategy {
 
     private const val MAX_ATTACK_RANGE = 10
 
+    /** Every Longrange style adds the same two tiles, before the [MAX_ATTACK_RANGE] cap. */
+    private const val LONG_RANGE_BONUS = 2
+
+    /**
+     * The wiki's "long-range crossbows" row - crossbows with extended range, as opposed
+     * to the ordinary metal line which sits on [DEFAULT_ATTACK_RANGE]. Note that the
+     * dragon hunter crossbow is *not* one of them despite its name.
+     */
+    private val EXTENDED_RANGE_CROSSBOWS =
+        arrayOf(
+            CrossbowType.ARMADYL_CROSSBOW,
+            CrossbowType.HUNTER_CROSSBOW,
+            CrossbowType.KARIL_CROSSBOW,
+            CrossbowType.KARIL_CROSSBOW_0,
+            CrossbowType.KARIL_CROSSBOW_25,
+            CrossbowType.KARIL_CROSSBOW_50,
+            CrossbowType.KARIL_CROSSBOW_75,
+            CrossbowType.KARIL_CROSSBOW_100,
+        ).map { it.item }.toIntArray()
+
+    private val COMPOSITE_BOWS =
+        arrayOf(BowType.WILLOW_COMP_BOW, BowType.YEW_COMP_BOW, BowType.MAGIC_COMP_BOW).map { it.item }.toIntArray()
+
+    private val DARK_BOWS =
+        arrayOf(
+            BowType.DARK_BOW,
+            BowType.BLUE_DARK_BOW,
+            BowType.GREEN_DARK_BOW,
+            BowType.WHITE_DARK_BOW,
+            BowType.YELLOW_DARK_BOW,
+        ).map { it.item }.toIntArray()
+
+    private val CRAWS_BOWS by lazy { intArrayOf(getRSCM("item.craws_bow"), getRSCM("item.craws_bow_u")) }
+
+    private val CHINCHOMPAS by lazy {
+        intArrayOf(
+            getRSCM("item.chinchompa_10033"),
+            getRSCM("item.red_chinchompa_10034"),
+            getRSCM("item.black_chinchompa"),
+        )
+    }
+
     /** A chinchompa detonates over the 3x3 centred on its target, hitting up to nine. */
     private const val BLAST_RADIUS = 1
     private const val MAX_BLAST_TARGETS = 9
 
+    /**
+     * How far [pawn] can shoot from, in tiles.
+     *
+     * The weapon table below is the wiki's (Attack range), which every row of confirms
+     * the same two rules this uses: Longrange adds exactly 2, and nothing exceeds 10.
+     * The rows that read "10 / 10" on the wiki are weapons already at the cap, not
+     * exceptions to the +2.
+     *
+     * Most of these were previously missing and silently fell through to the 7-tile
+     * default, which is only correct for shortbows and the ordinary metal crossbows.
+     * A dark bow and a twisted bow shot 7 tiles instead of 10; a blowpipe 7 instead of
+     * 5. Three of the rows that *were* present disagreed with the wiki outright -
+     * knives were 6 (should be 4), longbows 9 (should be 10) and Craw's bow 10 (should
+     * be 9).
+     *
+     * Salamanders are range 1 with no Longrange column at all, and are handled by
+     * [SalamanderCombatStrategy] rather than reaching this at all.
+     *
+     * Weapons the wiki lists that this codebase does not model yet are simply absent
+     * and take the default: ballistae (9), Tonalztics (7), Venator bow (6), Eclipse
+     * atlatl (6), Bow of Faerdhinen / Scorching bow / Webweaver bow (10, 10, 9),
+     * blisterwood stake and cursed goblin bow (6), and the oddities - holy water,
+     * hunter's spear, mud pie (4, 5, 6). Toktz-xil-ul is 7 and so is already right.
+     */
     override fun getAttackRange(pawn: Pawn): Int {
-        if (pawn is Player) {
-            val weapon = pawn.getEquipment(EquipmentType.WEAPON)
-            val attackStyle = CombatConfigs.getAttackStyle(pawn)
+        if (pawn !is Player) {
+            return Combat.npcAttackRange(pawn, DEFAULT_ATTACK_RANGE)
+        }
 
-            var range =
-                when (weapon?.id) {
-                    getRSCM("item.armadyl_crossbow") -> 8
-                    getRSCM("item.craws_bow"), getRSCM("item.craws_bow_u") -> 10
-                    getRSCM("item.chinchompa_10033"), getRSCM("item.red_chinchompa_10034"), getRSCM("item.black_chinchompa") -> 9
-                    in Bows.LONG_BOWS -> 9
-                    in Knives.KNIVES -> 6
-                    in Darts.DARTS -> 3
-                    in Bows.CRYSTAL_BOWS -> 10
-                    else -> DEFAULT_ATTACK_RANGE
-                }
+        // -1 for an empty weapon slot, which matches nothing and falls to the default.
+        val id = pawn.getEquipment(EquipmentType.WEAPON)?.id ?: -1
+        val range =
+            when {
+                id in Darts.DARTS -> 3
 
-            if (attackStyle == AttackStyle.LONG_RANGE) {
-                range += 2
+                id in Knives.KNIVES -> 4
+                id in Thrownaxes.THROWNAXES -> 4
+
+                /*
+                 * A blowpipe holds its own darts rather than drawing from the quiver,
+                 * so it is matched by weapon rather than by ammo.
+                 */
+                Blowpipe.equipped(pawn) != null -> 5
+                id == CrossbowType.PHOENIX_CROSSBOW.item -> 5
+                id == BowType.COMP_OGRE_BOW.item -> 5
+
+                id == CrossbowType.DORGESHUUN_CROSSBOW.item -> 6
+
+                id in EXTENDED_RANGE_CROSSBOWS -> 8
+                id == BowType.SEERCULL.item -> 8
+
+                id in CHINCHOMPAS -> 9
+                id == BowType.THIRD_AGE_BOW.item -> 9
+                id in CRAWS_BOWS -> 9
+
+                id in Bows.LONG_BOWS -> MAX_ATTACK_RANGE
+                id in Bows.CRYSTAL_BOWS -> MAX_ATTACK_RANGE
+                id in COMPOSITE_BOWS -> MAX_ATTACK_RANGE
+                id in DARK_BOWS -> MAX_ATTACK_RANGE
+                id == BowType.OGRE_BOW.item -> MAX_ATTACK_RANGE
+                id == BowType.TWISTED_BOW.item -> MAX_ATTACK_RANGE
+                /*
+                 * The plain Crossbow (item 837, Lowe's) really is a 10, which the wiki
+                 * calls "the longest rapid-style attack range of any crossbow in the
+                 * game". It is not the metal crossbow line - those are the 7s below.
+                 */
+                id == CrossbowType.CROSSBOW.item -> MAX_ATTACK_RANGE
+
+                // Shortbows and the ordinary metal crossbows.
+                else -> DEFAULT_ATTACK_RANGE
             }
 
-            return Math.min(MAX_ATTACK_RANGE, range)
-        }
-        return DEFAULT_ATTACK_RANGE
+        val longRangeBonus = if (CombatConfigs.getAttackStyle(pawn) == AttackStyle.LONG_RANGE) LONG_RANGE_BONUS else 0
+        return Math.min(MAX_ATTACK_RANGE, range + longRangeBonus)
     }
 
     override fun canAttack(
@@ -114,16 +208,7 @@ object RangedCombatStrategy : CombatStrategy {
 
         val animation = CombatConfigs.getAttackAnimation(pawn)
         if (pawn is Npc) {
-            val def = pawn.combatDef
-            if (def.defaultAttackSound > 0) {
-                if (def.defaultAttackSoundArea) {
-                    world.spawn(
-                        AreaSound(pawn.tile, def.defaultAttackSound, def.defaultAttackSoundRadius, def.defaultAttackSoundVolume),
-                    )
-                } else if (target is Player) {
-                    target.playSound(def.defaultAttackSound, def.defaultAttackSoundVolume)
-                }
-            }
+            pawn.playAttackSound(target)
         } else if (pawn is Player) {
             world.spawn(AreaSound(pawn.tile, CombatConfigs.getWeaponAttackSound(pawn), 5, 1))
         }
@@ -375,7 +460,7 @@ object RangedCombatStrategy : CombatStrategy {
             npc.graphic(def.rangedDrawbackGfx, def.rangedDrawbackHeight)
         }
         if (def.rangedImpactGfx != -1) {
-            target.graphic(def.rangedImpactGfx, def.rangedImpactHeight, projectile.lifespan)
+            target.graphic(def.rangedImpactGfx, def.rangedImpactHeight, projectile.impactDelay)
         }
         npc.world.spawn(projectile)
     }

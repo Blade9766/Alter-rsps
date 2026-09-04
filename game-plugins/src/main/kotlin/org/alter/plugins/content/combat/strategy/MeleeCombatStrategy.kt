@@ -11,20 +11,28 @@ import org.alter.game.model.entity.Pawn
 import org.alter.game.model.entity.Player
 import org.alter.plugins.content.combat.Combat
 import org.alter.plugins.content.combat.CombatConfigs
+import org.alter.plugins.content.combat.playAttackSound
 import org.alter.plugins.content.combat.dealHit
 import org.alter.plugins.content.combat.formula.MeleeCombatFormula
+import org.alter.plugins.content.combat.specialattack.WeaponPassives
 import java.lang.IllegalStateException
 
 /**
  * @author Tom <rspsmods@gmail.com>
  */
 object MeleeCombatStrategy : CombatStrategy {
+    /** Adjacent only, matching an ordinary one-handed weapon. */
+    private const val DEFAULT_ATTACK_RANGE = 1
+
+    /** Nothing travels: a swing needs line of *walk*, not line of sight. */
+    override val usesProjectile: Boolean = false
+
     override fun getAttackRange(pawn: Pawn): Int {
         if (pawn is Player) {
             val halberd = pawn.hasWeaponType(WeaponType.HALBERD)
             return if (halberd) 2 else 1
         }
-        return 1
+        return Combat.npcAttackRange(pawn, DEFAULT_ATTACK_RANGE)
     }
 
     override fun canAttack(
@@ -42,16 +50,7 @@ object MeleeCombatStrategy : CombatStrategy {
         val animation = CombatConfigs.getAttackAnimation(pawn)
         pawn.animate(animation)
         if (pawn is Npc) {
-            val def = pawn.combatDef
-            if (def.defaultAttackSound > 0) {
-                if (def.defaultAttackSoundArea) {
-                    world.spawn(
-                        AreaSound(pawn.tile, def.defaultAttackSound, def.defaultAttackSoundRadius, def.defaultAttackSoundVolume),
-                    )
-                } else if (target is Player) {
-                    target.playSound(def.defaultAttackSound, def.defaultAttackSoundVolume)
-                }
-            }
+            pawn.playAttackSound(target)
         } else if (pawn is Player) {
             world.spawn(AreaSound(pawn.tile, CombatConfigs.getWeaponAttackSound(pawn), 5, 1))
         }
@@ -60,14 +59,31 @@ object MeleeCombatStrategy : CombatStrategy {
         val maxHit = formula.getMaxHit(pawn, target)
         val landHit = accuracy >= world.randomDouble()
 
-        val damage = pawn.dealHit(target = target, maxHit = maxHit, landHit = landHit, delay = 1).hit.hitmarks.sumOf { it.damage }
+        // Melee has no travel time: the hit lands on the cycle of the swing itself.
+        val damage = pawn.dealHit(target = target, maxHit = maxHit, landHit = landHit, delay = 0).hit.hitmarks.sumOf { it.damage }
+
+        if (pawn is Player) {
+            /*
+             * Weapons that build a resource up over ordinary swings - the soulreaper axe's soul
+             * stacks, the sunlight spear's sunlight stacks - earn it here, on a miss as well as on
+             * a hit, which is what the real weapons do.
+             */
+            WeaponPassives.attacked(pawn, target)
+        }
 
         if (damage > 0 && pawn.entityType.isPlayer) {
             addCombatXp(pawn as Player, target, damage)
         }
     }
 
-    private fun addCombatXp(
+    /**
+     * Public so special attacks can grant the same experience an ordinary swing would.
+     *
+     * They deal their damage through [org.alter.plugins.content.combat.dealHit] directly rather
+     * than through [attack], and so used to award nothing at all - a player specialling a monster
+     * down got the kill and none of the Attack, Strength, Defence or Hitpoints experience for it.
+     */
+    fun addCombatXp(
         player: Player,
         target: Pawn,
         damage: Int,

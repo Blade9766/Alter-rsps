@@ -6,11 +6,11 @@ import org.alter.game.Server
 import org.alter.game.model.Direction
 import org.alter.game.model.World
 import org.alter.game.model.attr.KILLER_ATTR
-import org.alter.game.model.entity.GroundItem
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Player
 import org.alter.game.plugin.KotlinPlugin
 import org.alter.game.plugin.PluginRepository
+import org.alter.plugins.content.npcs.MonsterLoot
 import org.alter.plugins.content.npcs.darkwizard.DarkWizardData.DropTier
 import org.alter.rscm.RSCM.getRSCM
 
@@ -73,6 +73,7 @@ class DarkWizardConfigsPlugin(
             setCombatDef(variant.npcKey) {
                 configs {
                     attackSpeed = 4
+                    attackRange = 8
                     respawnDelay = RESPAWN_CYCLES
                 }
                 aggro {
@@ -132,7 +133,7 @@ class DarkWizardConfigsPlugin(
         }
 
         drops.forEach { (item, amount) ->
-            world.spawn(GroundItem(item = item, amount = amount, tile = npc.tile, owner = killer))
+            MonsterLoot.drop(world, killer, item, amount, npc.tile)
         }
     }
 
@@ -159,8 +160,25 @@ class DarkWizardConfigsPlugin(
         const val RESPAWN_CYCLES = 50 // wiki respawn = 50, in game ticks
         const val NOTHING_WEIGHT = 16 // "Nothing" roll weight, both tables
 
-        const val ATTACK_ANIMATION = 425
-        const val BLOCK_ANIMATION = 717
+        /**
+         * The three combat animations on the def, corrected after `AnimationRoleAudit` caught them
+         * in the wrong roles.
+         *
+         * They used to read `attack = 425, block = 717`, and `Animation`'s own names say both were
+         * wrong: **425 is `HUMAN_DEFEND_COWARDLY`** - a hit reaction, which the wizard was swinging -
+         * and **717 is `CAST_WEAKEN_WIZARD`**, so a dark wizard that got punched answered by casting
+         * Weaken at nothing. `content/npcs/chaosdruid` reads the same rig the same way: npc 520's
+         * observed set is "[425, 710, 422, 836] - block, this, punch, death".
+         *
+         * The attack is now **711**, `UNARMED_MAGIC_SPELL_CAST`, which is the right idle-hands cast
+         * for a wizard and is in every dark wizard's observed set. It is also mostly cosmetic:
+         * [DarkWizardCombatPlugin] plays each spell's own `castAnimation` when it casts, so this is
+         * what shows only on the rare ordinary swing.
+         */
+        const val ATTACK_ANIMATION = 711
+
+        const val BLOCK_ANIMATION = 425
+
         const val DEATH_ANIMATION = 836
 
         val LOW_MAIN_TABLE: List<WeightedDrop?> =

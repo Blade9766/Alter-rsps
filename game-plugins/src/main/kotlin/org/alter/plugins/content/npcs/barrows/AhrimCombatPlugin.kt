@@ -4,6 +4,7 @@ import org.alter.api.HitType
 import org.alter.api.Skills
 import org.alter.api.cfg.Animation
 import org.alter.api.cfg.Graphic
+import org.alter.api.cfg.Sound
 import org.alter.api.ext.*
 import org.alter.game.Server
 import org.alter.game.model.World
@@ -19,6 +20,7 @@ import org.alter.game.plugin.PluginRepository
 import org.alter.plugins.content.combat.*
 import org.alter.plugins.content.combat.formula.MagicCombatFormula
 import org.alter.plugins.content.combat.strategy.MagicCombatStrategy
+import org.alter.plugins.content.combat.strategy.playSpellSound
 
 /**
  * Ahrim the Blighted's magic attack.
@@ -67,7 +69,7 @@ class AhrimCombatPlugin(
 
         while (canEngageCombat(target)) {
             facePawn(target)
-            if (moveToAttackRange(task, target, distance = ATTACK_RANGE, projectile = true) && isAttackDelayReady()) {
+            if (moveToAttackRange(task, target, distance = Combat.npcAttackRange(this, FALLBACK_ATTACK_RANGE), projectile = true) && isAttackDelayReady()) {
                 castAttack(target)
                 postAttackLogic(target)
             }
@@ -82,6 +84,18 @@ class AhrimCombatPlugin(
     private fun Npc.castAttack(target: Pawn) {
         prepareAttack(CombatClass.MAGIC, CombatStyle.MAGIC, AttackStyle.ACCURATE)
         animate(ATTACK_ANIMATION)
+        /*
+         * `Sound.AHRIM_ATTACK` pairs with the animation directly: 2078 is
+         * `Animation.HUMAN_AHRIMS_STAFF_ATTACK` and 1317 is the clip that staff makes. An
+         * `onNpcCombat` loop never reads `defaultAttackSound`, so without this line the whole fight
+         * is silent - and Ahrim has no entry in `named-combat-media.json` to fill that field anyway.
+         *
+         * Sounded here rather than through an entry in that file for the reason
+         * `npc-animations/README.md` records about the Barrows brothers: `AHRIM_ATTACK` has no HIT or
+         * DEATH sibling, so it cannot supply the three-role triple an entry needs. It is exactly
+         * right for this one swing.
+         */
+        playSpellSound(this, target, Sound.AHRIM_ATTACK)
 
         val hitDelay = MagicCombatStrategy.getHitDelay(getFrontFacingTile(target), target.getCentreTile())
         val landed = MagicCombatFormula.getAccuracy(this, target) >= world.randomDouble()
@@ -111,6 +125,9 @@ class AhrimCombatPlugin(
         }
         target.getSkills().alterCurrentLevel(Skills.STRENGTH, -minOf(AURA_DRAIN, current))
         target.graphic(id = Graphic.AHRIMS_BLIGHTED_AURA, height = 124)
+        // The proc has a clip named for it - `Sound.AHRIMS_AURA` sits next to `AHRIM_ATTACK` - and
+        // the aura is the one moment in the fight worth hearing.
+        playSpellSound(this, target, Sound.AHRIMS_AURA)
         target.message("Ahrim's blighted aura saps your strength.")
     }
 
@@ -123,7 +140,8 @@ class AhrimCombatPlugin(
         /** Wiki max hit. Rolled flat 0..20 - he casts no identifiable standard spell. */
         const val MAX_HIT = 20
 
-        const val ATTACK_RANGE = 8
+        /** Only a fallback - the live value is `attackRange` in AhrimPlugin's combat def. */
+        const val FALLBACK_ATTACK_RANGE = 8
 
         const val AURA_CHANCE_NUMERATOR = 1
         const val AURA_CHANCE_DENOMINATOR = 5 // 20%

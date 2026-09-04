@@ -2,7 +2,10 @@
   "ABYSSAL_DEMON": {
     "attackAnimation": 1537,
     "blockAnimation": 2309,
-    "deathAnimation": 1538
+    "deathAnimation": 1538,
+    "attackSound": 276,
+    "blockSound": 278,
+    "deathSound": 277
   },
   "AIR_ELEMENTAL": {
     "attackAnimation": 1040,
@@ -15,12 +18,39 @@
   "ALT_GHOST": {
     "attackAnimation": 5540,
     "blockAnimation": 5541,
-    "deathAnimation": 5542
+    "deathAnimation": 5542,
+    "attackSound": 436,
+    "blockSound": 439,
+    "deathSound": 438
+  },
+  "AL_KHARID_WARRIOR": {
+    "attackAnimation": 390,
+    "blockAnimation": 388,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
+  },
+  "ARMED_HUMAN": {
+    "attackAnimation": 386,
+    "blockAnimation": 388,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
   },
   "ARMED_ZOMBIE": {
     "attackAnimation": 5571,
     "blockAnimation": 5574,
-    "deathAnimation": 5575
+    "deathAnimation": 5575,
+    "attackSound": 918,
+    "blockSound": 923,
+    "deathSound": 922
+  },
+  "ARTIO": {
+    "attackAnimation": 10012,
+    "blockAnimation": 10016,
+    "deathAnimation": 10017
   },
   "AVIANSIE": {
     "attackAnimation": 6956,
@@ -34,6 +64,46 @@
     "attackSound": 405,
     "blockSound": 407,
     "deathSound": 406
+  },
+  "BABY_BLACK_DRAGON": {
+    "attackAnimation": 25,
+    "blockAnimation": 26,
+    "deathAnimation": 28,
+    "attackSound": 405,
+    "blockSound": 407,
+    "deathSound": 406
+  },
+  "BABY_BLUE_DRAGON": {
+    "attackAnimation": 25,
+    "blockAnimation": 26,
+    "deathAnimation": 28,
+    "attackSound": 405,
+    "blockSound": 407,
+    "deathSound": 406
+  },
+  "BABY_GREEN_DRAGON": {
+    "attackAnimation": 25,
+    "blockAnimation": 26,
+    "deathAnimation": 28,
+    "attackSound": 405,
+    "blockSound": 407,
+    "deathSound": 406
+  },
+  "BABY_RED_DRAGON": {
+    "attackAnimation": 25,
+    "blockAnimation": 26,
+    "deathAnimation": 28,
+    "attackSound": 405,
+    "blockSound": 407,
+    "deathSound": 406
+  },
+  "BANDIT": {
+    "attackAnimation": 386,
+    "blockAnimation": 388,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
   },
   "BANDOSIAN_JOGRE": {
     "attackAnimation": 2930,
@@ -52,6 +122,14 @@
     "attackSound": 282,
     "blockSound": 286,
     "deathSound": 285
+  },
+  "BARBARIAN": {
+    "attackAnimation": 422,
+    "blockAnimation": 425,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
   },
   "BARBARIAN_SPIRIT": {
     "attackAnimation": 6726,
@@ -74,6 +152,11 @@
     "blockSound": 294,
     "deathSound": 293
   },
+  "BATTLE_MAGE": {
+    "attackAnimation": 811,
+    "blockAnimation": 415,
+    "deathAnimation": 836
+  },
   "BEAR": {
     "attackAnimation": 4925,
     "blockAnimation": 4927,
@@ -81,11 +164,6 @@
     "attackSound": 300,
     "blockSound": 302,
     "deathSound": 301
-  },
-  "BEAR_CUB": {
-    "attackAnimation": 4926,
-    "blockAnimation": 4928,
-    "deathAnimation": 4930
   },
   "BEARMAN": {
     "attackAnimation": 1760,
@@ -95,6 +173,11 @@
     "blockSound": 305,
     "deathSound": 304
   },
+  "BEAR_CUB": {
+    "attackAnimation": 4926,
+    "blockAnimation": 4928,
+    "deathAnimation": 4930
+  },
   "BIRD": {
     "attackAnimation": 6775,
     "blockAnimation": 6776,
@@ -102,6 +185,19 @@
     "attackSound": 306,
     "blockSound": 308,
     "deathSound": 307
+  },
+  "BLACK_DRAGON": {
+    "attackAnimation": 80,
+    "blockAnimation": 89,
+    "deathAnimation": 92,
+    "attackSound": 408,
+    "blockSound": 410,
+    "deathSound": 409
+  },
+  "BLACK_HEATHER": {
+    "attackAnimation": 390,
+    "blockAnimation": 388,
+    "deathAnimation": 836
   },
   "BLOODVELD": {
     "attackAnimation": 1552,
@@ -111,6 +207,14 @@
     "blockSound": 314,
     "deathSound": 313
   },
+  "BLUE_DRAGON": {
+    "attackAnimation": 80,
+    "blockAnimation": 89,
+    "deathAnimation": 92,
+    "attackSound": 408,
+    "blockSound": 410,
+    "deathSound": 409
+  },
   "BREE": {
     "attackAnimation": 7026,
     "blockAnimation": 7027,
@@ -119,12 +223,33 @@
   "BRINE_RAT": {
     "attackAnimation": 6117,
     "blockAnimation": 6116,
-    "deathAnimation": 6115
+    "deathAnimation": 6115,
+    "attackSound": 710,
+    "blockSound": 713,
+    "deathSound": 711
+  },
+  "BRONZE_DRAGON": {
+    "attackAnimation": 91,
+    "blockAnimation": 89,
+    "deathAnimation": 92,
+    "attackSound": 408,
+    "blockSound": 410,
+    "deathSound": 409
   },
   "BUNNY": {
     "attackAnimation": 1245,
     "blockAnimation": 1244,
     "deathAnimation": 1246
+  },
+  "CALLISTO": {
+    "attackAnimation": 10012,
+    "blockAnimation": 10016,
+    "deathAnimation": 10017
+  },
+  "CALVAR_ION": {
+    "attackAnimation": 9969,
+    "blockAnimation": 9973,
+    "deathAnimation": 9980
   },
   "CAVE_BUG": {
     "attackAnimation": 6079,
@@ -158,12 +283,31 @@
   "CAVE_LIZARD": {
     "attackAnimation": 3855,
     "blockAnimation": 3856,
-    "deathAnimation": 7326
+    "deathAnimation": 7326,
+    "attackSound": 605,
+    "blockSound": 607,
+    "deathSound": 606
   },
   "CAVE_SLIME": {
     "attackAnimation": 1789,
     "blockAnimation": 1791,
-    "deathAnimation": 1792
+    "deathAnimation": 1792,
+    "attackSound": 784,
+    "blockSound": 786,
+    "deathSound": 785
+  },
+  "CHAOS_ELEMENTAL": {
+    "attackAnimation": 3149,
+    "blockAnimation": 3146,
+    "deathAnimation": 3147,
+    "attackSound": 345,
+    "blockSound": 351,
+    "deathSound": 347
+  },
+  "CHAOS_FANATIC": {
+    "attackAnimation": 811,
+    "blockAnimation": 415,
+    "deathAnimation": 836
   },
   "CHICKEN": {
     "attackAnimation": 5387,
@@ -215,7 +359,15 @@
   "CRAWLING_HAND": {
     "attackAnimation": 1592,
     "blockAnimation": 1591,
-    "deathAnimation": 1590
+    "deathAnimation": 1590,
+    "attackSound": 377,
+    "blockSound": 379,
+    "deathSound": 378
+  },
+  "CRAZY_ARCHAEOLOGIST": {
+    "attackAnimation": 3353,
+    "blockAnimation": 425,
+    "deathAnimation": 836
   },
   "CROCODILE": {
     "attackAnimation": 2039,
@@ -237,6 +389,14 @@
     "attackSound": 389,
     "blockSound": 391,
     "deathSound": 390
+  },
+  "DEADLY_RED_SPIDER": {
+    "attackAnimation": 5327,
+    "blockAnimation": 5328,
+    "deathAnimation": 5329,
+    "attackSound": 3605,
+    "blockSound": 3607,
+    "deathSound": 3606
   },
   "DEATH_SPAWN": {
     "attackAnimation": 1540,
@@ -283,6 +443,11 @@
     "blockSound": 1533,
     "deathSound": 1532
   },
+  "ELDER_CHAOS_DRUID": {
+    "attackAnimation": 727,
+    "blockAnimation": 425,
+    "deathAnimation": 836
+  },
   "EVIL_CHICKEN": {
     "attackAnimation": 2302,
     "blockAnimation": 2300,
@@ -293,6 +458,19 @@
     "attackAnimation": 1582,
     "blockAnimation": 1581,
     "deathAnimation": 1580
+  },
+  "FIREBAT": {
+    "attackAnimation": 2621,
+    "blockAnimation": 2622,
+    "deathAnimation": 2620,
+    "attackSound": 291,
+    "blockSound": 296,
+    "deathSound": 295
+  },
+  "FIREBIRD": {
+    "attackAnimation": 6811,
+    "blockAnimation": 6810,
+    "deathAnimation": 6812
   },
   "FIRE_ELEMENTAL": {
     "attackAnimation": 1029,
@@ -308,19 +486,6 @@
     "deathAnimation": 4668,
     "attackSound": 447
   },
-  "FIREBAT": {
-    "attackAnimation": 2621,
-    "blockAnimation": 2622,
-    "deathAnimation": 2620,
-    "attackSound": 291,
-    "blockSound": 296,
-    "deathSound": 295
-  },
-  "FIREBIRD": {
-    "attackAnimation": 6811,
-    "blockAnimation": 6810,
-    "deathAnimation": 6812
-  },
   "FLESH_CRAWLER": {
     "attackAnimation": 1184,
     "blockAnimation": 1186,
@@ -330,6 +495,14 @@
     "attackAnimation": 6562,
     "blockAnimation": 6569,
     "deathAnimation": 6570
+  },
+  "FROG": {
+    "attackAnimation": 1793,
+    "blockAnimation": 1794,
+    "deathAnimation": 1795,
+    "attackSound": 842,
+    "blockSound": 844,
+    "deathSound": 843
   },
   "FROGEEL": {
     "attackAnimation": 5842,
@@ -363,12 +536,26 @@
   "GIANT_CRYPT_RAT": {
     "attackAnimation": 4933,
     "blockAnimation": 4934,
-    "deathAnimation": 4935
+    "deathAnimation": 4935,
+    "attackSound": 710,
+    "blockSound": 713,
+    "deathSound": 711
+  },
+  "GIANT_FROG": {
+    "attackAnimation": 1793,
+    "blockAnimation": 1794,
+    "deathAnimation": 1795,
+    "attackSound": 838,
+    "blockSound": 840,
+    "deathSound": 839
   },
   "GIANT_SPIDER": {
     "attackAnimation": 5327,
     "blockAnimation": 5328,
-    "deathAnimation": 5329
+    "deathAnimation": 5329,
+    "attackSound": 3605,
+    "blockSound": 3607,
+    "deathSound": 3606
   },
   "GNOME": {
     "attackAnimation": 192,
@@ -377,6 +564,11 @@
     "attackSound": 453,
     "blockSound": 455,
     "deathSound": 454
+  },
+  "GNOME_BATTLE_MAGE": {
+    "attackAnimation": 197,
+    "blockAnimation": 193,
+    "deathAnimation": 196
   },
   "GOAT": {
     "attackAnimation": 4936,
@@ -390,6 +582,14 @@
     "attackSound": 469,
     "blockSound": 472,
     "deathSound": 471
+  },
+  "GOD_WARS_HELLHOUND": {
+    "attackAnimation": 6581,
+    "blockAnimation": 6574,
+    "deathAnimation": 6576,
+    "attackSound": 544,
+    "blockSound": 546,
+    "deathSound": 911
   },
   "GOLEM": {
     "attackAnimation": 153,
@@ -415,6 +615,19 @@
     "blockSound": 481,
     "deathSound": 480
   },
+  "GREATER_SKELETON_HELLHOUND": {
+    "attackAnimation": 6579,
+    "blockAnimation": 6578,
+    "deathAnimation": 6558
+  },
+  "GREEN_DRAGON": {
+    "attackAnimation": 80,
+    "blockAnimation": 89,
+    "deathAnimation": 92,
+    "attackSound": 408,
+    "blockSound": 410,
+    "deathSound": 409
+  },
   "GROWLER": {
     "attackAnimation": 7037,
     "blockAnimation": 7035,
@@ -431,12 +644,31 @@
   "HARPIE_BUG_SWARM": {
     "attackAnimation": 3110,
     "blockAnimation": 3109,
-    "deathAnimation": 3111
+    "deathAnimation": 3111,
+    "attackSound": 2743,
+    "blockSound": 2745,
+    "deathSound": 2744
+  },
+  "HELLHOUND": {
+    "attackAnimation": 6562,
+    "blockAnimation": 6566,
+    "deathAnimation": 6576,
+    "attackSound": 544,
+    "blockSound": 546,
+    "deathSound": 911
+  },
+  "HERO": {
+    "attackAnimation": 390,
+    "blockAnimation": 403,
+    "deathAnimation": 836
   },
   "HOBGOBLIN": {
     "attackAnimation": 164,
     "blockAnimation": 165,
-    "deathAnimation": 167
+    "deathAnimation": 167,
+    "attackSound": 469,
+    "blockSound": 472,
+    "deathSound": 471
   },
   "HUMAN": {
     "attackAnimation": 422,
@@ -449,12 +681,33 @@
   "ICE_GIANT": {
     "attackAnimation": 4672,
     "blockAnimation": 4671,
-    "deathAnimation": 4673
+    "deathAnimation": 4673,
+    "attackSound": 448,
+    "blockSound": 451,
+    "deathSound": 450
+  },
+  "ICE_SPIDER": {
+    "attackAnimation": 5327,
+    "blockAnimation": 5328,
+    "deathAnimation": 5329,
+    "attackSound": 3605,
+    "blockSound": 3607,
+    "deathSound": 3606
+  },
+  "ICE_WARRIOR": {
+    "attackAnimation": 391,
+    "blockAnimation": 389,
+    "deathAnimation": 843,
+    "blockSound": 530,
+    "deathSound": 529
   },
   "ICE_WOLF": {
     "attackAnimation": 6559,
     "blockAnimation": 6557,
-    "deathAnimation": 6558
+    "deathAnimation": 6558,
+    "attackSound": 909,
+    "blockSound": 912,
+    "deathSound": 911
   },
   "IMP": {
     "attackAnimation": 169,
@@ -545,8 +798,8 @@
     "deathSound": 624
   },
   "MAN": {
-    "attackAnimation": 425,
-    "blockAnimation": 422,
+    "attackAnimation": 422,
+    "blockAnimation": 425,
     "deathAnimation": 836,
     "attackSound": 2564,
     "blockSound": 511,
@@ -555,7 +808,18 @@
   "MARBLE_GARGOYLE": {
     "attackAnimation": 7811,
     "blockAnimation": 7814,
-    "deathAnimation": 7813
+    "deathAnimation": 7813,
+    "attackSound": 428,
+    "blockSound": 430,
+    "deathSound": 429
+  },
+  "MENAPHITE_THUG": {
+    "attackAnimation": 395,
+    "blockAnimation": 398,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
   },
   "MINOTAUR": {
     "attackAnimation": 4266,
@@ -587,7 +851,10 @@
   "MOUNTED_TERRORBIRD": {
     "attackAnimation": 6790,
     "blockAnimation": 6792,
-    "deathAnimation": 6791
+    "deathAnimation": 6791,
+    "attackSound": 832,
+    "blockSound": 834,
+    "deathSound": 833
   },
   "MUDSKIPPER": {
     "attackAnimation": 3433,
@@ -605,17 +872,28 @@
   "NECROMANCER_ZOMBIE": {
     "attackAnimation": 5578,
     "blockAnimation": 5579,
-    "deathAnimation": 5580
+    "deathAnimation": 5580,
+    "attackSound": 918,
+    "blockSound": 923,
+    "deathSound": 922
   },
   "NINJA_MONKEY": {
     "attackAnimation": 1393,
     "blockAnimation": 1392,
-    "deathAnimation": 1384
+    "deathAnimation": 1384,
+    "attackSound": 630,
+    "blockSound": 634,
+    "deathSound": 632
   },
   "OGRE": {
     "attackAnimation": 359,
     "blockAnimation": 360,
     "deathAnimation": 361
+  },
+  "OUTLAW": {
+    "attackAnimation": 390,
+    "blockAnimation": 388,
+    "deathAnimation": 836
   },
   "PENGUIN": {
     "attackAnimation": 5669,
@@ -628,7 +906,26 @@
   "PIT_SCORPION": {
     "attackAnimation": 6261,
     "blockAnimation": 6259,
-    "deathAnimation": 6260
+    "deathAnimation": 6260,
+    "attackSound": 3611,
+    "blockSound": 3612,
+    "deathSound": 3610
+  },
+  "POISON_SPIDER": {
+    "attackAnimation": 5327,
+    "blockAnimation": 5328,
+    "deathAnimation": 5329,
+    "attackSound": 3605,
+    "blockSound": 3607,
+    "deathSound": 3606
+  },
+  "PYREFIEND": {
+    "attackAnimation": 1582,
+    "blockAnimation": 1581,
+    "deathAnimation": 1580,
+    "attackSound": 696,
+    "blockSound": 698,
+    "deathSound": 697
   },
   "RABBIT": {
     "attackAnimation": 6090,
@@ -654,13 +951,13 @@
     "blockSound": 713,
     "deathSound": 711
   },
-  "ROCK_CRAB": {
-    "attackAnimation": 1312,
-    "blockAnimation": 1313,
-    "deathAnimation": 1314,
-    "attackSound": 718,
-    "blockSound": 720,
-    "deathSound": 719
+  "RED_DRAGON": {
+    "attackAnimation": 80,
+    "blockAnimation": 89,
+    "deathAnimation": 92,
+    "attackSound": 408,
+    "blockSound": 410,
+    "deathSound": 409
   },
   "ROCKSLUG": {
     "attackAnimation": 1567,
@@ -669,6 +966,22 @@
     "attackSound": 729,
     "blockSound": 731,
     "deathSound": 730
+  },
+  "ROCK_CRAB": {
+    "attackAnimation": 1312,
+    "blockAnimation": 1313,
+    "deathAnimation": 1314,
+    "attackSound": 718,
+    "blockSound": 720,
+    "deathSound": 719
+  },
+  "SCORPIA": {
+    "attackAnimation": 6254,
+    "blockAnimation": 6255,
+    "deathAnimation": 6256,
+    "attackSound": 3611,
+    "blockSound": 3612,
+    "deathSound": 3610
   },
   "SCORPION": {
     "attackAnimation": 6254,
@@ -681,7 +994,10 @@
   "SCREAMING_BANSHEE": {
     "attackAnimation": 7547,
     "blockAnimation": 7546,
-    "deathAnimation": 7548
+    "deathAnimation": 7548,
+    "attackSound": 282,
+    "blockSound": 286,
+    "deathSound": 285
   },
   "SHADE": {
     "attackAnimation": 1283,
@@ -707,6 +1023,11 @@
     "deathAnimation": 5491,
     "attackSound": 776,
     "deathSound": 777
+  },
+  "SKELETON_HELLHOUND": {
+    "attackAnimation": 6579,
+    "blockAnimation": 6578,
+    "deathAnimation": 6558
   },
   "SMALL_CRYPT_SPIDER": {
     "attackAnimation": 6249,
@@ -734,6 +1055,14 @@
     "blockSound": 275,
     "deathSound": 274
   },
+  "SPIDER": {
+    "attackAnimation": 6249,
+    "blockAnimation": 6250,
+    "deathAnimation": 6251,
+    "attackSound": 3604,
+    "blockSound": 3609,
+    "deathSound": 3608
+  },
   "SPIDER_KOLODION": {
     "attackAnimation": 5322,
     "blockAnimation": 5320,
@@ -743,6 +1072,16 @@
     "attackAnimation": 143,
     "blockAnimation": 144,
     "deathAnimation": 146
+  },
+  "SPINDEL": {
+    "attackAnimation": 9991,
+    "blockAnimation": 9987,
+    "deathAnimation": 9992
+  },
+  "SPINDEL_S_SPIDERLING": {
+    "attackAnimation": 6250,
+    "blockAnimation": 6249,
+    "deathAnimation": 6251
   },
   "STARLIGHT": {
     "attackAnimation": 6376,
@@ -761,6 +1100,14 @@
     "attackSound": 832,
     "blockSound": 834,
     "deathSound": 833
+  },
+  "THIEF": {
+    "attackAnimation": 422,
+    "blockAnimation": 425,
+    "deathAnimation": 836,
+    "attackSound": 2564,
+    "blockSound": 511,
+    "deathSound": 512
   },
   "TOAD": {
     "attackAnimation": 1793,
@@ -796,6 +1143,21 @@
     "blockAnimation": 3429,
     "deathAnimation": 3430
   },
+  "UNICORN": {
+    "attackAnimation": 6376,
+    "blockAnimation": 6375,
+    "deathAnimation": 6377
+  },
+  "VENENATIS": {
+    "attackAnimation": 9991,
+    "blockAnimation": 9987,
+    "deathAnimation": 9992
+  },
+  "VET_ION": {
+    "attackAnimation": 9969,
+    "blockAnimation": 9973,
+    "deathAnimation": 9980
+  },
   "VULTURE": {
     "attackAnimation": 2019,
     "blockAnimation": 2020,
@@ -821,9 +1183,9 @@
     "deathSound": 1544
   },
   "WOLF": {
-    "attackAnimation": 6581,
-    "blockAnimation": 6574,
-    "deathAnimation": 6576,
+    "attackAnimation": 6559,
+    "blockAnimation": 6557,
+    "deathAnimation": 6558,
     "attackSound": 909,
     "blockSound": 912,
     "deathSound": 911
