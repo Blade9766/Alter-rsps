@@ -78,6 +78,20 @@ object PawnPathAction {
         )
         pawn.walkRoute(route.toTileQueue(), stepType = MovementQueue.StepType.NORMAL)
 
+        /*
+         * Rooted - frozen or stunned - so nothing was queued. Without this the wait below falls
+         * straight through and the option runs from wherever the pawn is standing, trading with
+         * someone ten tiles away. An interaction already in range is still allowed; it needed no
+         * walk.
+         */
+        if (pawn.isRooted() && !pawn.tile.isWithinRadius(other.tile, lineOfSightRange ?: 1)) {
+            if (pawn is Player) {
+                pawn.rootedMessage()?.let { pawn.writeMessage(it) }
+                pawn.setMapFlag()
+            }
+            return
+        }
+
         while (pawn.hasMoveDestination()) {
             it.wait(1)
         }

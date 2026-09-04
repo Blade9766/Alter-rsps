@@ -296,6 +296,73 @@ object Combat {
             CombatClass.MAGIC -> MagicCombatStrategy
         }
 
+    /**
+     * The gap between the closest edges of [pawn]'s and [target]'s footprints, in tiles.
+     * Zero when the two boxes touch or overlap, one when they are adjacent.
+     *
+     * Range was previously tested with Euclidean distance between south-west corners
+     * against `attackRange + target.getSize()`, which is wrong twice over:
+     *
+     * - Euclidean distance overstates diagonals, so a 7-tile bow reached 7 tiles due
+     *   north but only 5 to the north-east.
+     * - Adding the target's size on top compensated for that by inflating every range,
+     *   which is where "melee connecting from two tiles away" came from: a 1-tile
+     *   weapon was really being allowed `ceil(sqrt(2)) = 2`.
+     *
+     * Measuring between box edges instead handles large npcs correctly on its own - a
+     * 3x3 dragon is in melee range when you are next to any of its nine tiles - so no
+     * size fudge is needed.
+     */
+    fun edgeDistance(
+        pawn: Pawn,
+        target: Pawn,
+    ): Int {
+        val a = Box(pawn.tile.x, pawn.tile.z, pawn.getSize() - 1, pawn.getSize() - 1)
+        val b = Box(target.tile.x, target.tile.z, target.getSize() - 1, target.getSize() - 1)
+        val dx = maxOf(0, maxOf(a.x1 - b.x2, b.x1 - a.x2))
+        val dz = maxOf(0, maxOf(a.y1 - b.y2, b.y1 - a.y2))
+        return maxOf(dx, dz)
+    }
+
+    /**
+     * Whether [pawn] can see [target] well enough to attack it - i.e. nothing solid
+     * stands between them.
+     *
+     * [projectile] picks which of the two line tests is used: `true` casts a line of
+     * *sight*, which is what arrows, bolts and spells travel along and which some
+     * objects (low fences, tables) deliberately let through; `false` casts a line of
+     * *walk*, the stricter test used for melee, where anything you cannot step over
+     * also stops you swinging.
+     *
+     * Both entities' sizes are passed through, so a large npc is attackable from any
+     * tile that can see any part of it rather than only from tiles that can see its
+     * south-west corner.
+     *
+     * A raycast across height levels is meaningless - and rayCast throws on one - so
+     * differing heights are rejected up front. Standing on the target's own tile always
+     * counts as visible, since there is no line to cast.
+     */
+    fun hasAttackLineOfSight(
+        pawn: Pawn,
+        target: Pawn,
+        projectile: Boolean,
+    ): Boolean {
+        if (pawn.tile.height != target.tile.height) {
+            return false
+        }
+        if (pawn.tile.sameAs(target.tile)) {
+            return true
+        }
+        return pawn.world.lineValidator.rayCast(
+            start = pawn.tile,
+            target = target.tile,
+            projectile = projectile,
+            srcSize = pawn.getSize(),
+            destWidth = target.getSize(),
+            destLength = target.getSize(),
+        )
+    }
+
     private fun areOverlapping(
         x1: Int,
         z1: Int,

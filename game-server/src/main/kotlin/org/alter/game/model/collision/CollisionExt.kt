@@ -22,16 +22,33 @@ const val ROOF_TILE = 0x4
  * Projectiles have a higher tolerance for certain objects when the object's
  * metadata explicitly allows them to.
  */
+/*
+ * @param srcSize
+ * @param destWidth
+ * @param destLength
+ * The footprints of the two entities, in tiles. The validator walks the line
+ * between the *nearest edges* of the two boxes rather than between their south-west
+ * corners, so a large npc is visible from the side of it that faces you.
+ *
+ * These must be passed as at least `1`. The underlying [LineValidator] defaults
+ * `destWidth`/`destLength` to `0`, and its edge-picking arithmetic
+ * (`a + size - 1`) then resolves a destination that is *west/south of* the target
+ * tile whenever the target sits east/north of the source - i.e. the line was being
+ * cast at the wrong tile in half of all directions.
+ */
 fun LineValidator.rayCast(
     start: Tile,
     target: Tile,
     projectile: Boolean,
+    srcSize: Int = 1,
+    destWidth: Int = 1,
+    destLength: Int = 1,
 ): Boolean {
     check(start.height == target.height) { "Tiles must be on the same height level." }
     return if (projectile) {
-        hasLineOfSight(start.height, start.x, start.z, target.x, target.z)
+        hasLineOfSight(start.height, start.x, start.z, target.x, target.z, srcSize, destWidth, destLength)
     } else {
-        hasLineOfWalk(start.height, start.x, start.z, target.x, target.z)
+        hasLineOfWalk(start.height, start.x, start.z, target.x, target.z, srcSize, destWidth, destLength)
     }
 }
 
