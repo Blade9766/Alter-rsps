@@ -243,6 +243,56 @@ class WaterVerify {
         assertTrue(duplicated.isEmpty(), "item-on-item pairs collide, which throws at boot: $duplicated")
     }
 
+    /**
+     * The left-click fill actions the plugin now binds.
+     *
+     * `onObjOption(obj, option)` calls `check(slot != -1)` at bind time, so an action name
+     * that has drifted out of the cache would stop the server booting; and `bindObject`
+     * throws on a repeated (object, option slot) pair. Both are pinned here, along with the
+     * set of sources that carry such an action at all - a cache update that adds one to
+     * another source should be looked at rather than becoming reachable silently.
+     */
+    @Test
+    fun `only the known sources carry a left-click fill action`() {
+        val withFillAction =
+            sources.keys
+                .associateWith { id ->
+                    CacheManager.getObject(id).actions.filterNotNull().filter { action ->
+                        action.equals("Fill-bucket", ignoreCase = true) ||
+                            action.equals("Fill-from", ignoreCase = true)
+                    }
+                }.filterValues { it.isNotEmpty() }
+
+        assertEquals(
+            mapOf(
+                9143 to listOf("Fill-bucket"),
+                41004 to listOf("Fill-bucket"),
+                35981 to listOf("Fill-from"),
+                36078 to listOf("Fill-from"),
+            ),
+            withFillAction,
+            "the set of water sources carrying a left-click fill action has changed",
+        )
+    }
+
+    @Test
+    fun `no fill action binds the same object option slot twice`() {
+        val slots =
+            sources.keys.flatMap { id ->
+                val actions = CacheManager.getObject(id).actions
+                actions
+                    .withIndex()
+                    .filter { (_, action) ->
+                        action != null &&
+                            (
+                                action.equals("Fill-bucket", ignoreCase = true) ||
+                                    action.equals("Fill-from", ignoreCase = true)
+                            )
+                    }.map { (index, _) -> id to index + 1 }
+            }
+        assertEquals(slots.size, slots.toSet().size, "a fill action binds the same object option twice")
+    }
+
     /** The hot-water tea chain the plugin ends with, checked end to end. */
     @Test
     fun `the hot water tea keys resolve to the right items`() {
