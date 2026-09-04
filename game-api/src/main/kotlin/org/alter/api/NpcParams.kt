@@ -2,6 +2,7 @@ package org.alter.api
 
 import org.alter.api.ext.enumSetOf
 import org.alter.game.model.combat.CombatClass
+import org.alter.game.model.combat.CombatStyle
 import org.alter.game.model.combat.NpcCombatDef
 import org.alter.game.model.weightedTableBuilder.LootTable
 
@@ -104,6 +105,8 @@ class NpcCombatBuilder {
 
     private var poisonChance = -1.0
 
+    private var poisonDamage = -1
+
     private var venomChance = -1.0
 
     private var slayerReq = -1
@@ -121,7 +124,10 @@ class NpcCombatBuilder {
     private var elementalWeaknessElement = -1
     private var elementalWeaknessPercent = 0
 
+    private var attackRange = -1
+
     private var combatClass = CombatClass.MELEE
+    private var combatStyle = CombatStyle.STAB
     private var rangedProjectileGfx = -1
     private var rangedProjectileType = -1
     private var rangedDrawbackGfx = -1
@@ -140,10 +146,45 @@ class NpcCombatBuilder {
         check(deathAnimList.isNotEmpty()) { "A death animation must be set. ${Throwable().stackTrace[3].fileName}" }
         check(respawnDelay != -1) { "Respawn delay must be set. ${Throwable().stackTrace[3].fileName}" }
 
+        /*
+         * Poison needs both halves or it is theatre. A chance with no damage was the state this
+         * codebase sat in for years - npcs declared `poisonChance` and nothing anywhere read it -
+         * so it fails loudly now rather than looking wired.
+         *
+         * Damage without a chance is the ordinary case, because the wiki publishes the damage for
+         * every poisonous monster and a rate for none, so that one takes the shared default.
+         */
+        check(poisonChance <= 0.0 || poisonDamage > 0) {
+            "Poison chance was set without a poison damage - the npc would never poison anything. " +
+                "${Throwable().stackTrace[3].fileName}"
+        }
+        if (poisonDamage > 0 && poisonChance <= 0.0) {
+            poisonChance = NpcCombatDef.DEFAULT_POISON_CHANCE
+        }
+
         poisonChance = Math.max(0.0, poisonChance)
+        poisonDamage = Math.max(0, poisonDamage)
         venomChance = Math.max(0.0, venomChance)
         slayerReq = Math.max(1, slayerReq)
         slayerXp = Math.max(0.0, slayerXp)
+
+        /*
+         * An `aggro { }` block that declares only a radius reads like it makes the npc
+         * aggressive, and both of the other two fields are load-bearing for that:
+         *
+         *  - `aggroTargetDelay` gates `NpcAggroPlugin`'s `onGlobalNpcSpawn`, which installs
+         *    `npc.aggroCheck` and schedules the sweep timer only when it is `> 0`. Left at -1
+         *    the npc never sweeps for a target at all.
+         *  - `aggressiveTimer` is what that plugin's default check compares against, and no
+         *    absolute value is ever `<= -1`, so an unset timer makes the check reject every
+         *    player and the npc is *silently passive* even once it does sweep.
+         *
+         * Neither has any sensible meaning as "unset" once a radius exists, so both take a
+         * default here rather than making every caller restate the same two numbers.
+         */
+        if (aggroRadius > 0 && aggroTargetDelay == -1) {
+            aggroTargetDelay = DEFAULT_AGGRO_SEARCH_DELAY
+        }
 
         if (aggroTimer == -1) {
             aggroTimer = DEFAULT_AGGRO_TIMER
@@ -177,6 +218,7 @@ class NpcCombatBuilder {
             aggroTargetDelay = aggroTargetDelay,
             aggressiveTimer = aggroTimer,
             poisonChance = poisonChance,
+            poisonDamage = poisonDamage,
             venomChance = venomChance,
             slayerReq = slayerReq,
             slayerXp = slayerXp,
@@ -189,7 +231,9 @@ class NpcCombatBuilder {
             immuneThralls = immuneThralls,
             elementalWeaknessElement = elementalWeaknessElement,
             elementalWeaknessPercent = elementalWeaknessPercent,
+            attackRange = attackRange,
             combatClass = combatClass,
+            combatStyle = combatStyle,
             rangedProjectileGfx = rangedProjectileGfx,
             rangedProjectileType = rangedProjectileType,
             rangedDrawbackGfx = rangedDrawbackGfx,
@@ -199,8 +243,28 @@ class NpcCombatBuilder {
         )
     }
 
+    /**
+     * Overrides how far this npc can attack from. -1 leaves it on its combat class's
+     * default, which is what every npc used before this existed - ranged monsters were
+     * all stuck on the same hardcoded 7 and casters on 10, regardless of what the wiki
+     * gives them.
+     */
+    fun setAttackRange(range: Int): NpcCombatBuilder {
+        attackRange = range
+        return this
+    }
+
     fun setCombatClass(combatClass: CombatClass): NpcCombatBuilder {
         this.combatClass = combatClass
+        return this
+    }
+
+    /**
+     * Which melee style this npc attacks with, and so whose defence bonus its hits are rolled
+     * against. See [NpcCombatDef.combatStyle]; only STAB, SLASH and CRUSH are meaningful.
+     */
+    fun setCombatStyle(style: CombatStyle): NpcCombatBuilder {
+        this.combatStyle = style
         return this
     }
 
@@ -415,6 +479,16 @@ class NpcCombatBuilder {
         return this
     }
 
+    /**
+     * Initial poison damage - the wiki's `poisonous = Yes (N)`. Without this an npc cannot poison,
+     * whatever [setPoisonChance] says.
+     */
+    fun setPoisonDamage(damage: Int): NpcCombatBuilder {
+        check(poisonDamage == -1) { "Poison damage already set. ${Throwable().stackTrace[2].fileName}" }
+        poisonDamage = damage
+        return this
+    }
+
     fun setPoisonChance(chance: Double): NpcCombatBuilder {
         check(poisonChance == -1.0) { "Poison chance already set. ${Throwable().stackTrace[2].fileName}" }
         poisonChance = chance
@@ -576,6 +650,19 @@ class NpcCombatBuilder {
 
     companion object {
         private const val BONUS_COUNT = 14
-        private const val DEFAULT_AGGRO_TIMER = 1000 // 10 minutes
+
+        /**
+         * How long after entering a region an npc stays aggressive, in cycles - ten minutes,
+         * the interval the real game uses before monsters lose interest in a player who has
+         * stood in their region that long.
+         */
+        const val DEFAULT_AGGRO_TIMER = 1000
+
+        /**
+         * Cycles between aggro sweeps when an `aggro { }` block declares a radius but no
+         * `searchDelay`. Four is what every monster package in the game had settled on
+         * independently before this was a default.
+         */
+        const val DEFAULT_AGGRO_SEARCH_DELAY = 4
     }
 }

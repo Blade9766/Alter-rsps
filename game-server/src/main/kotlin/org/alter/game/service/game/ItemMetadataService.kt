@@ -1,6 +1,7 @@
 package org.alter.game.service.game
 
 import AnimationData
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -65,7 +66,7 @@ class ItemMetadataService : Service {
                 val parts = line.split(",")
                 if (parts.size >= 2) {
                     val id = parts[0].toIntOrNull()
-                    val examine = line.substringAfter(',').trim()
+                    val examine = line.substringAfter(',').trim().removeSurrounding("\"")
                     if (id != null) {
                         getItem(id).examine = examine
                     }
@@ -112,30 +113,28 @@ class ItemMetadataService : Service {
                         def.getValidatedParam(ParamMapper.item.MAGIC_DEFENCE_BONUS),
                         def.getValidatedParam(ParamMapper.item.RANGED_DEFENCE_BONUS),
                         def.getValidatedParam(ParamMapper.item.MELEE_STRENGTH),
-                        def.getValidatedParam(ParamMapper.item.RANGED_STRENGTH_BONUS),
+                        def.rangedStrength(),
                         def.getValidatedParam(ParamMapper.item.MAGIC_DAMAGE_STRENGTH) / 10,
                         def.getValidatedParam(ParamMapper.item.PRAYER_BONUS),
                     )
 
-                if (def.params?.containsKey(ParamMapper.item.PRIMARY_SKILL) == true) {
-                    def.skillReqs = Byte2ByteOpenHashMap().apply {
-                        put(
-                            def.getValidatedParam(ParamMapper.item.PRIMARY_SKILL).toByte(),
-                            def.getValidatedParam(ParamMapper.item.PRIMARY_LEVEL).toByte()
-                        )
-                        put(
-                            def.getValidatedParam(ParamMapper.item.SECONDARY_SKILL).toByte(),
-                            def.getValidatedParam(ParamMapper.item.SECONDARY_LEVEL).toByte()
-                        )
-                        put(
-                            def.getValidatedParam(ParamMapper.item.TERTIARY_SKILL).toByte(),
-                            def.getValidatedParam(ParamMapper.item.TERTIARY_LEVEL).toByte()
-                        )
-                        put(
-                            def.getValidatedParam(ParamMapper.item.QUATERNARY_SKILL).toByte(),
-                            def.getValidatedParam(ParamMapper.item.QUATERNARY_LEVEL).toByte()
-                        )
+                /*
+                 * Only the requirement tiers the item actually declares may be read. Items with a
+                 * single requirement carry no secondary/tertiary/quaternary params at all, and
+                 * reading them through the defaulting accessor yields skill 0 (Attack) at level 0 -
+                 * which then overwrites a real Attack requirement written by the primary tier. That
+                 * left every Attack-gated weapon in the game wearable at level 1.
+                 */
+                val reqs = Byte2ByteOpenHashMap()
+                SKILL_REQ_PARAMS.forEach { (skillKey, levelKey) ->
+                    val skill = def.params?.get(skillKey) as? Int ?: return@forEach
+                    val level = def.params?.get(levelKey) as? Int ?: return@forEach
+                    if (level > 0) {
+                        reqs[skill.toByte()] = level.toByte()
                     }
+                }
+                if (!reqs.isEmpty()) {
+                    def.skillReqs = reqs
                 }
             }
 
@@ -185,13 +184,23 @@ class ItemMetadataService : Service {
             Files.walk(path.resolve("itemOverrides")).parallel().filter { it.toFile().isFile }.forEach { file ->
                 if (file.fileName.toString().contains("FileExample.yml")) return@forEach
 
-                val content = file.toFile().readText()
-                content.split(Regex("(?m)^---\\s*$"))
-                    .filter { it.isNotBlank() }.forEach { document ->
-                        val data = mapper.readValue(document, Metadata::class.java)
-                        load(data)
-                    }
+                /*
+                 * Per file, so one malformed document does not abandon every override that
+                 * would have been read after it.
+                 */
+                try {
+                    val content = file.toFile().readText()
+                    content.split(Regex("(?m)^---\\s*$"))
+                        .filter { it.hasMappings() }.forEach { document ->
+                            val data = mapper.readValue(document, Metadata::class.java)
+                            load(data)
+                        }
+                } catch (e: Exception) {
+                    logger.error(e) { "Could not load item overrides from $file." }
+                }
             }
+
+            loadEquipmentRequirements(mapper, path.resolve("equipmentRequirements.yml").toFile())
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -199,74 +208,159 @@ class ItemMetadataService : Service {
         ms = stopwatch.elapsed(TimeUnit.MILLISECONDS)
     }
 
+    /**
+     * Fills in the equip requirements the cache leaves out.
+     *
+     * The 228 cache carries requirements as item params, and the block above reads them - but it
+     * only has them from the rune tier upward, so every steel, black, white, mithril and adamant
+     * weapon and armour piece was equippable at level 1, along with a scattering of higher-tier
+     * items the cache simply forgot (the dragon halberd, the granite set). See the config's own
+     * header for the survey those numbers come from.
+     *
+     * Writes are **additive per skill**: a requirement is only recorded for a skill the item does
+     * not already declare. That is what lets this run last, after both the cache params and the
+     * per-item `itemOverrides/` documents, without being able to weaken either of them - the
+     * granite maul keeps the Attack 50 it already had, and only its variants gain one.
+     *
+     * A missing config is not an error; the file is optional and the server starts without it.
+     */
+    private fun loadEquipmentRequirements(
+        mapper: ObjectMapper,
+        file: File,
+    ) {
+        if (!file.exists()) {
+            logger.info { "No equipment requirement config at ${file.path}; cache params only." }
+            return
+        }
+
+        val config =
+            try {
+                mapper.readValue(file, EquipmentRequirements::class.java)
+            } catch (e: Exception) {
+                logger.error(e) { "Could not load equipment requirements from ${file.path}." }
+                return
+            }
+
+        var applied = 0
+        config.groups.forEach { group ->
+            val reqs = group.skillReqs.mapNotNull { req ->
+                val skill = req.skill ?: return@mapNotNull null
+                val level = req.level ?: return@mapNotNull null
+                getSkillId(skill) to level.toByte()
+            }
+            if (reqs.isEmpty()) {
+                return@forEach
+            }
+            group.items.forEach { entry ->
+                val def = getItem(entry.id)
+                val existing = def.skillReqs ?: Byte2ByteOpenHashMap().also { def.skillReqs = it }
+                reqs.forEach { (skill, level) ->
+                    if (!existing.containsKey(skill)) {
+                        existing[skill] = level
+                        applied++
+                    }
+                }
+            }
+        }
+        logger.info { "Applied $applied equipment requirements from ${file.name}." }
+    }
+
+    /**
+     * Applies one override document on top of the definition already built from the cache.
+     *
+     * Every field is optional, and only what a document actually declares is written. A document
+     * that names just a skill requirement has to leave the item's cache-derived bonuses, weight,
+     * attack speed and render animations alone: writing all of them unconditionally is what left
+     * all six Barrows sets with no equipment bonuses at all and an attack speed of one tick.
+     */
     fun load(item: Metadata) {
         val def = getItem(item.id)
 
-        def.name = item.name
-        def.examine = item.examine ?: ""
-        def.isTradeable = item.tradeable
-        def.weight = item.weight
+        item.name?.let { def.name = it }
+        item.examine?.let { def.examine = it }
+        item.tradeable?.let { def.isTradeable = it }
+        item.weight?.let { def.weight = it }
+        item.cost?.let { def.cost = it }
 
-        if (item.equipment != null) {
-            val equipment = item.equipment
-            val slots = if (equipment.equipSlot != null) getEquipmentSlots(equipment.equipSlot, def.id) else null
+        val equipment = item.equipment ?: return
+        val slots = equipment.equipSlot?.let { getEquipmentSlots(it, def.id) }
 
-            def.attackSpeed = equipment.attackSpeed
+        equipment.attackSpeed?.let { def.attackSpeed = it }
 
-            if (equipment.weaponType == -1 && slots != null) {
-                if (slots.slot == 3) def.weaponType = 17
-            } else {
-                def.weaponType = equipment.weaponType
-            }
-
-            def.renderAnimations = equipment.renderAnimations?.getAsArray()
-            /**
-             * TODO def.attackSounds = equipment.attackSounds
-             *  - Create Array of AttackStyleID -> It's Sound
-             *  accurateAnim : accurateSound
-             *  aggressiveAnim : aggressiveSound
-             *  controlledAnim : controlledSound
-             *  defensiveAnim : defensiveSound
-             *  <--- AttackStyleID:[Anim, Sound]
-             *  AttackStyle can be from 0-3
-             *  If no data on it, it will be -1
-             *  blockAnim = When target attacks the Pawn on next tick?
-             *
-             *
-             *  TODO def.equipSound = equipment.equipSound
-             */
-            if (slots != null) {
-                def.equipSlot = slots.slot
-                def.equipType = slots.secondary
-            }
-
-            if (equipment.skillReqs != null) {
-                val reqs = Byte2ByteOpenHashMap()
-                equipment.skillReqs.filter { it.skill != null }.forEach { req ->
-                    reqs[getSkillId(req.skill!!)] = req.level!!.toByte()
-                }
-
-                def.skillReqs = reqs
-            }
-
-            def.bonuses = intArrayOf(
-                equipment.attackStab,
-                equipment.attackSlash,
-                equipment.attackCrush,
-                equipment.attackMagic,
-                equipment.attackRanged,
-                equipment.defenceStab,
-                equipment.defenceSlash,
-                equipment.defenceCrush,
-                equipment.defenceMagic,
-                equipment.defenceRanged,
-                equipment.meleeStrength,
-                equipment.rangedStrength,
-                equipment.magicDamage,
-                equipment.prayer,
-            )
+        /*
+         * TODO def.attackSounds = equipment.attackSounds
+         *  - Create Array of AttackStyleID -> It's Sound
+         *  accurateAnim : accurateSound
+         *  aggressiveAnim : aggressiveSound
+         *  controlledAnim : controlledSound
+         *  defensiveAnim : defensiveSound
+         *  <--- AttackStyle can be from 0-3. If no data on it, it will be -1.
+         *  blockAnim = When target attacks the Pawn on next tick?
+         *
+         *  TODO def.equipSound = equipment.equipSound
+         */
+        when {
+            equipment.weaponType != null -> def.weaponType = equipment.weaponType
+            slots?.slot == WEAPON_SLOT && def.weaponType <= 0 -> def.weaponType = DEFAULT_WEAPON_TYPE
         }
+
+        equipment.renderAnimations?.let { def.renderAnimations = it.getAsArray() }
+
+        if (slots != null) {
+            def.equipSlot = slots.slot
+            def.equipType = slots.secondary
+        }
+
+        equipment.skillReqs?.let { declared ->
+            val reqs = Byte2ByteOpenHashMap()
+            declared.forEach { req ->
+                val skill = req.skill ?: return@forEach
+                val level = req.level ?: return@forEach
+                reqs[getSkillId(skill)] = level.toByte()
+            }
+            def.skillReqs = reqs
+        }
+
+        val bonuses = def.bonusesOrZero()
+        equipment.attackStab?.let { bonuses[BonusIndex.ATTACK_STAB] = it }
+        equipment.attackSlash?.let { bonuses[BonusIndex.ATTACK_SLASH] = it }
+        equipment.attackCrush?.let { bonuses[BonusIndex.ATTACK_CRUSH] = it }
+        equipment.attackMagic?.let { bonuses[BonusIndex.ATTACK_MAGIC] = it }
+        equipment.attackRanged?.let { bonuses[BonusIndex.ATTACK_RANGED] = it }
+        equipment.defenceStab?.let { bonuses[BonusIndex.DEFENCE_STAB] = it }
+        equipment.defenceSlash?.let { bonuses[BonusIndex.DEFENCE_SLASH] = it }
+        equipment.defenceCrush?.let { bonuses[BonusIndex.DEFENCE_CRUSH] = it }
+        equipment.defenceMagic?.let { bonuses[BonusIndex.DEFENCE_MAGIC] = it }
+        equipment.defenceRanged?.let { bonuses[BonusIndex.DEFENCE_RANGED] = it }
+        equipment.meleeStrength?.let { bonuses[BonusIndex.MELEE_STRENGTH] = it }
+        equipment.rangedStrength?.let { bonuses[BonusIndex.RANGED_STRENGTH] = it }
+        equipment.magicDamage?.let { bonuses[BonusIndex.MAGIC_DAMAGE] = it }
+        equipment.prayer?.let { bonuses[BonusIndex.PRAYER] = it }
+        def.bonuses = bonuses
     }
+
+    /**
+     * Whether a chunk between two `---` separators actually declares anything.
+     *
+     * A plain `isNotBlank()` is not enough. Splitting on `---` makes whatever precedes the
+     * first separator its own document, so a file that opens with a comment header yields a
+     * document of nothing but `#` lines - not blank, but with no mappings for Jackson to
+     * bind, which raises "No content to map due to end-of-input". That exception is caught
+     * per *file*, so one header comment silently discarded every override in the file
+     * beneath it.
+     */
+    private fun String.hasMappings(): Boolean =
+        lineSequence().any { line ->
+            val trimmed = line.trim()
+            trimmed.isNotEmpty() && !trimmed.startsWith("#")
+        }
+
+    /**
+     * [ItemType.bonuses] is `lateinit` and only populated for ids the cache actually knows about, so
+     * an override for a purely custom id has to start from an empty set rather than throw.
+     */
+    private fun ItemType.bonusesOrZero(): IntArray =
+        runCatching { bonuses }.getOrNull()?.copyOf() ?: IntArray(BONUS_COUNT)
 
     private fun getEquipmentSlots(
         slot: String,
@@ -314,6 +408,23 @@ class ItemMetadataService : Service {
 
     private data class EquipmentSlots(val slot: Int, val secondary: Int)
 
+
+    /**
+     * Ranged strength, from whichever of the two params the item happens to use.
+     *
+     * The cache splits this bonus across param 12 and param 189 with no overlap - 317 items
+     * declare the first, 59 the second, none both. Reading only param 12 is what left the
+     * twisted bow, the whole Masori set, Ava's assembler, Dizana's quiver, the necklace of
+     * anguish, the ballistae, the venator bows, Pegasian boots, Zaryte vambraces, the Odium
+     * ward and the twisted buckler all sitting at +0 ranged strength.
+     */
+    private fun ItemType.rangedStrength(): Int {
+        val primary = params?.get(ParamMapper.item.RANGED_STRENGTH_BONUS) as? Int
+        if (primary != null) {
+            return primary
+        }
+        return params?.get(ParamMapper.item.RANGED_STRENGTH_BONUS_ALT) as? Int ?: 0
+    }
 
     private fun ItemType.getValidatedParam(key: Int, defaultValue: Int = 0): Int {
         if (this.params?.get(key) != null) {
@@ -365,136 +476,146 @@ class ItemMetadataService : Service {
             else -> throw IllegalArgumentException("Illegal skill name: $name")
         }
 
+    /**
+     * One override document. Every field is optional: `null` means "the document did not mention
+     * this", and the value already loaded from the cache is kept. Field names are camelCase, with
+     * the snake_case spellings accepted as aliases.
+     */
     data class Metadata(
-        val id: Int = -1,
-        val name: String = "",
-        val examine: String? = null,
-        val tradeable: Boolean = false,
-        val weight: Double = 0.0,
-        val tradeable_on_ge: Boolean = false,
-        val cost: Int = 0,
-        val lowalch: Int = 0,
-        val highalch: Int = 0,
-        val buy_limit: Int? = null,
-        val equipment: Equipment? = null,
+        @field:JsonProperty("id") val id: Int = -1,
+        @field:JsonProperty("name") val name: String? = null,
+        @field:JsonProperty("examine") val examine: String? = null,
+        @field:JsonProperty("tradeable") val tradeable: Boolean? = null,
+        @field:JsonProperty("weight") val weight: Double? = null,
+        @field:JsonProperty("cost") val cost: Int? = null,
+        /*
+         * Accepted so existing documents keep parsing, but [ItemType] has nowhere to put them yet.
+         */
+        @field:JsonProperty("tradeable_on_ge") val tradeableOnGe: Boolean? = null,
+        @field:JsonProperty("lowalch") val lowalch: Int? = null,
+        @field:JsonProperty("highalch") val highalch: Int? = null,
+        @field:JsonProperty("buy_limit") val buyLimit: Int? = null,
+        @field:JsonProperty("equipment") val equipment: Equipment? = null,
     )
 
     data class Equipment(
-        @JsonProperty("equip_slot") val equipSlot: String? = null,
-        @JsonProperty("equip_sound") val equipSound: Int? = -1,
-        @JsonProperty("weapon_type") val weaponType: Int = -1,
-        @JsonProperty("attack_speed") val attackSpeed: Int = -1,
-        @JsonProperty("attack_stab") val attackStab: Int = 0,
-        @JsonProperty("attack_slash") val attackSlash: Int = 0,
-        @JsonProperty("attack_crush") val attackCrush: Int = 0,
-        @JsonProperty("attack_magic") val attackMagic: Int = 0,
-        @JsonProperty("attack_ranged") val attackRanged: Int = 0,
-        @JsonProperty("defence_stab") val defenceStab: Int = 0,
-        @JsonProperty("defence_slash") val defenceSlash: Int = 0,
-        @JsonProperty("defence_crush") val defenceCrush: Int = 0,
-        @JsonProperty("defence_magic") val defenceMagic: Int = 0,
-        @JsonProperty("defence_ranged") val defenceRanged: Int = 0,
-        @JsonProperty("melee_strength") val meleeStrength: Int = 0,
-        @JsonProperty("ranged_strength") val rangedStrength: Int = 0,
-        @JsonProperty("magic_damage") val magicDamage: Int = 0,
-        @JsonProperty("prayer") val prayer: Int = 0,
-        @JsonProperty("render_animations") val renderAnimations: RenderAnimations? = null,
-        @JsonProperty("attackSounds") val attackSounds: IntArray? = null,
-        @JsonProperty("skill_reqs") val skillReqs: Array<SkillRequirement>? = null,
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-            other as Equipment
-            if (equipSlot != other.equipSlot) return false
-            if (equipSound != other.equipSound) return false
-            if (weaponType != other.weaponType) return false
-            if (attackSpeed != other.attackSpeed) return false
-            if (attackStab != other.attackStab) return false
-            if (attackSlash != other.attackSlash) return false
-            if (attackCrush != other.attackCrush) return false
-            if (attackMagic != other.attackMagic) return false
-            if (attackRanged != other.attackRanged) return false
-            if (defenceStab != other.defenceStab) return false
-            if (defenceSlash != other.defenceSlash) return false
-            if (defenceCrush != other.defenceCrush) return false
-            if (defenceMagic != other.defenceMagic) return false
-            if (defenceRanged != other.defenceRanged) return false
-            if (meleeStrength != other.meleeStrength) return false
-            if (rangedStrength != other.rangedStrength) return false
-            if (magicDamage != other.magicDamage) return false
-            if (prayer != other.prayer) return false
-
-            if (renderAnimations != null) {
-                if (other.renderAnimations == null) return false
-            } else if (other.renderAnimations != null) {
-                return false
-            }
-
-            if (attackSounds != null) return false
-
-            if (skillReqs != null) {
-                if (other.skillReqs == null) return false
-                if (!skillReqs.contentEquals(other.skillReqs)) return false
-            } else if (other.skillReqs != null) {
-                return false
-            }
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = equipSlot?.hashCode() ?: 0
-            result = 31 * result + weaponType
-            result = 31 * result + attackSpeed
-            result = 31 * result + attackStab
-            result = 31 * result + attackSlash
-            result = 31 * result + attackCrush
-            result = 31 * result + attackMagic
-            result = 31 * result + attackRanged
-            result = 31 * result + defenceStab
-            result = 31 * result + defenceSlash
-            result = 31 * result + defenceCrush
-            result = 31 * result + defenceMagic
-            result = 31 * result + defenceRanged
-            result = 31 * result + meleeStrength
-            result = 31 * result + rangedStrength
-            result = 31 * result + magicDamage
-            result = 31 * result + prayer
-            result = 31 * result + (renderAnimations?.getAsArray().contentHashCode())
-            result = 31 * result + (skillReqs?.contentHashCode() ?: 0)
-            return result
-        }
-    }
+        @field:JsonProperty("equipSlot") @field:JsonAlias("equip_slot") val equipSlot: String? = null,
+        @field:JsonProperty("equipSound") @field:JsonAlias("equip_sound") val equipSound: Int? = null,
+        @field:JsonProperty("weaponType") @field:JsonAlias("weapon_type") val weaponType: Int? = null,
+        @field:JsonProperty("attackSpeed") @field:JsonAlias("attack_speed") val attackSpeed: Int? = null,
+        @field:JsonProperty("attackStab") @field:JsonAlias("attack_stab") val attackStab: Int? = null,
+        @field:JsonProperty("attackSlash") @field:JsonAlias("attack_slash") val attackSlash: Int? = null,
+        @field:JsonProperty("attackCrush") @field:JsonAlias("attack_crush") val attackCrush: Int? = null,
+        @field:JsonProperty("attackMagic") @field:JsonAlias("attack_magic") val attackMagic: Int? = null,
+        @field:JsonProperty("attackRanged") @field:JsonAlias("attack_ranged") val attackRanged: Int? = null,
+        @field:JsonProperty("defenceStab") @field:JsonAlias("defence_stab") val defenceStab: Int? = null,
+        @field:JsonProperty("defenceSlash") @field:JsonAlias("defence_slash") val defenceSlash: Int? = null,
+        @field:JsonProperty("defenceCrush") @field:JsonAlias("defence_crush") val defenceCrush: Int? = null,
+        @field:JsonProperty("defenceMagic") @field:JsonAlias("defence_magic") val defenceMagic: Int? = null,
+        @field:JsonProperty("defenceRanged") @field:JsonAlias("defence_ranged") val defenceRanged: Int? = null,
+        @field:JsonProperty("meleeStrength") @field:JsonAlias("melee_strength") val meleeStrength: Int? = null,
+        @field:JsonProperty("rangedStrength") @field:JsonAlias("ranged_strength") val rangedStrength: Int? = null,
+        @field:JsonProperty("magicDamage") @field:JsonAlias("magic_damage") val magicDamage: Int? = null,
+        @field:JsonProperty("prayer") val prayer: Int? = null,
+        @field:JsonProperty("renderAnimations") @field:JsonAlias("render_animations") val renderAnimations: RenderAnimations? = null,
+        @field:JsonProperty("attackSounds") @field:JsonAlias("attack_sounds") val attackSounds: List<Int>? = null,
+        @field:JsonProperty("skillReqs") @field:JsonAlias("skill_reqs") val skillReqs: List<SkillRequirement>? = null,
+    )
 
     data class RenderAnimations(
-        @JsonProperty("standAnimId") val standAnimId: Int = 0,
-        @JsonProperty("turnOnSpotAnim") val turnOnSpotAnim: Int = 0,
-        @JsonProperty("walkForwardAnimId") val walkForwardAnimId: Int = 0,
-        @JsonProperty("walkBackwardsAnimId") val walkBackwardsAnimId: Int = 0,
-        @JsonProperty("walkLeftAnimId") val walkLeftAnimId: Int = 0,
-        @JsonProperty("walkRightAnimId") val walkRightAnimId: Int = 0,
-        @JsonProperty("runAnimId") val runAnimId: Int = 0,
+        @field:JsonProperty("standAnimId") val standAnimId: Int = 0,
+        @field:JsonProperty("turnOnSpotAnim") val turnOnSpotAnim: Int = 0,
+        @field:JsonProperty("walkForwardAnimId") val walkForwardAnimId: Int = 0,
+        @field:JsonProperty("walkBackwardsAnimId") val walkBackwardsAnimId: Int = 0,
+        @field:JsonProperty("walkLeftAnimId") val walkLeftAnimId: Int = 0,
+        @field:JsonProperty("walkRightAnimId") val walkRightAnimId: Int = 0,
+        @field:JsonProperty("runAnimId") val runAnimId: Int = 0,
     ) {
-        fun getAsArray(): IntArray {
-            return listOf(
+        fun getAsArray(): IntArray =
+            intArrayOf(
                 standAnimId,
                 turnOnSpotAnim,
                 walkForwardAnimId,
                 walkBackwardsAnimId,
                 walkLeftAnimId,
                 walkRightAnimId,
-                runAnimId
-            ).toIntArray()
-        }
+                runAnimId,
+            )
     }
 
     data class SkillRequirement(
-        @JsonProperty("skill") val skill: String?,
-        @JsonProperty("level") val level: Int?,
+        @field:JsonProperty("skill") val skill: String? = null,
+        @field:JsonProperty("level") val level: Int? = null,
+    )
+
+    /**
+     * `equipmentRequirements.yml`: requirements grouped by the set of skills they gate on, so the
+     * hundreds of items sharing one rung of the metal ladder are listed once rather than each
+     * repeating its own requirement block.
+     */
+    data class EquipmentRequirements(
+        @field:JsonProperty("groups") val groups: List<RequirementGroup> = emptyList(),
+    )
+
+    data class RequirementGroup(
+        @field:JsonProperty("skillReqs") @field:JsonAlias("skill_reqs") val skillReqs: List<SkillRequirement> = emptyList(),
+        @field:JsonProperty("items") val items: List<RequirementItem> = emptyList(),
+    )
+
+    /**
+     * [name] is not read into anything - it is there so the file stays reviewable, and so the
+     * verify test can assert the id still carries that name in the cache.
+     */
+    data class RequirementItem(
+        @field:JsonProperty("id") val id: Int = -1,
+        @field:JsonProperty("name") val name: String? = null,
     )
 
     companion object {
         val logger = KotlinLogging.logger {}
+
+        /**
+         * Number of entries in [ItemType.bonuses], indexed by [BonusIndex].
+         */
+        private const val BONUS_COUNT = 14
+
+        private const val WEAPON_SLOT = 3
+
+        /**
+         * Positions within [ItemType.bonuses]. The first ten mirror `org.alter.api.BonusSlot`, which
+         * lives in a module this one cannot see.
+         */
+        private object BonusIndex {
+            const val ATTACK_STAB = 0
+            const val ATTACK_SLASH = 1
+            const val ATTACK_CRUSH = 2
+            const val ATTACK_MAGIC = 3
+            const val ATTACK_RANGED = 4
+            const val DEFENCE_STAB = 5
+            const val DEFENCE_SLASH = 6
+            const val DEFENCE_CRUSH = 7
+            const val DEFENCE_MAGIC = 8
+            const val DEFENCE_RANGED = 9
+            const val MELEE_STRENGTH = 10
+            const val RANGED_STRENGTH = 11
+            const val MAGIC_DAMAGE = 12
+            const val PRAYER = 13
+        }
+
+        /**
+         * Weapon type applied to an override that puts an item in the weapon slot without saying
+         * which animation set it uses.
+         */
+        private const val DEFAULT_WEAPON_TYPE = 17
+
+        /**
+         * The four equipment requirement tiers, as (skill param, level param) pairs.
+         */
+        private val SKILL_REQ_PARAMS = listOf(
+            ParamMapper.item.PRIMARY_SKILL to ParamMapper.item.PRIMARY_LEVEL,
+            ParamMapper.item.SECONDARY_SKILL to ParamMapper.item.SECONDARY_LEVEL,
+            ParamMapper.item.TERTIARY_SKILL to ParamMapper.item.TERTIARY_LEVEL,
+            ParamMapper.item.QUATERNARY_SKILL to ParamMapper.item.QUATERNARY_LEVEL,
+        )
     }
 }

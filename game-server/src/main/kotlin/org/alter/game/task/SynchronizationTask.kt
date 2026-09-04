@@ -156,6 +156,14 @@ fun Npc.npcPostSynchronizationTask() {
     }
     pawn.moved = false
     pawn.steps = null
+    /*
+     * Release this tick's claim on the npc's animation, the counterpart of the reset at the
+     * end of [org.alter.game.model.entity.Player.postCycle]. It runs here, after
+     * `npcInfoProtocol.update()` above has already encoded the cycle's extended info, so the
+     * claim covers exactly the window in which a second animate() would have overwritten the
+     * first one unsent.
+     */
+    pawn.previouslySetAnim = -1
 }
 
 /**

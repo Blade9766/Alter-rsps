@@ -5,6 +5,7 @@ import dev.openrune.cache.CacheManager.getNpc
 import gg.rsmod.util.ServerProperties
 import gg.rsmod.util.Stopwatch
 import io.github.oshai.kotlinlogging.KotlinLogging
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.CoroutineDispatcher
@@ -632,12 +633,37 @@ class World(val gameContext: GameContext, val devContext: DevContext) {
         }
     }
 
+    /**
+     * Combat stats for the monsters no plugin declares a `setCombatDef` for, keyed by npc id and
+     * filled by [org.alter.game.service.game.NpcMetadataService] from
+     * `data/cfg/npcs/monsterStats.json`. Consulted by [setNpcDefaults] only after
+     * [PluginRepository.npcCombatDefs], so it can never override hand-written content.
+     *
+     * Kept separate from [PluginRepository.npcCombatDefs] on purpose: `MonsterAnimationsPlugin`
+     * treats presence in that map as "this monster has authored animations, leave them alone",
+     * and these entries carry no animations at all.
+     */
+    val npcStats = Int2ObjectOpenHashMap<NpcCombatDef>()
+
     fun setNpcDefaults(npc: Npc) {
-        val combatDef = plugins.npcCombatDefs.getOrDefault(npc.id, null) ?: NpcCombatDef.DEFAULT
+        /*
+         * Three tiers, most specific first. A plugin's own `setCombatDef` block always wins;
+         * [npcStats] is the wiki's table for the thousands of monsters no plugin describes; and
+         * DEFAULT - ten hitpoints and zeroes - is what is left for anything neither knows about.
+         */
+        val combatDef =
+            plugins.npcCombatDefs.getOrDefault(npc.id, null)
+                ?: npcStats.getOrDefault(npc.id, null)
+                ?: NpcCombatDef.DEFAULT
         npc.combatDef = combatDef
         npc.combatDef.bonuses.forEachIndexed { index, bonus -> npc.equipmentBonuses[index] = bonus }
         npc.respawns = combatDef.respawnDelay > 0
         npc.combatClass = combatDef.combatClass
+        /*
+         * Plugins that set a style in an `onNpcSpawn` hook still override this: that hook runs
+         * after this method, in `World.add`.
+         */
+        npc.combatStyle = combatDef.combatStyle
         npc.setCurrentHp(npc.combatDef.hitpoints)
         setNpcStats(npc, combatDef)
     }

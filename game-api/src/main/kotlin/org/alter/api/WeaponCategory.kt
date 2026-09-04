@@ -1,12 +1,20 @@
 package org.alter.api
 
+/**
+ * The player-facing name of an item's cache weapon category, shown as "Category: ..." on the
+ * Combat Options tab.
+ *
+ * [weaponType] must stay in step with `org.alter.game.service.game.WeaponCategory`, which is the
+ * copy that actually populates `ItemType.weaponType` at start-up; the two are separate only
+ * because that module cannot see this one.
+ */
 enum class WeaponCategory(val id: List<Int>, val weaponName: String, val weaponType: Int) {
     BOW(listOf(64, 106), "Bow", 3),
     SLASH_SWORD(listOf(21), "Slash sword", 9),
-    TWO_HANDED(listOf(61), "Two-handed sword", 23),
+    TWO_HANDED(listOf(61), "Two-handed sword", 10),
     AXE(listOf(35), "Axe", 1),
     BANNER(listOf(92, 42), "Banner", 25),
-    BLUNT(listOf(26, 55, 15), "Blunt", 27),
+    BLUNT(listOf(26, 55, 15), "Blunt", 2),
     BULWARK(listOf(1014), "Bulwark", 28),
     CLAWS(listOf(65), "Claws", 4),
     PICKAXE(listOf(67), "Pickaxe", 11),
@@ -23,7 +31,7 @@ enum class WeaponCategory(val id: List<Int>, val weaponName: String, val weaponT
     THROWN(listOf(24), "Thrown", 19),
     STAFF(listOf(1), "Staff", 18),
     SALAMANDER(listOf(586), "Salamander", 6),
-    PARTISAN(listOf(1588), "Partisan", 17),
+    PARTISAN(listOf(1588), "Partisan", 30),
     MULTISTYLE(listOf(975), "Multi-style", 31),
 
     // Not able to equip

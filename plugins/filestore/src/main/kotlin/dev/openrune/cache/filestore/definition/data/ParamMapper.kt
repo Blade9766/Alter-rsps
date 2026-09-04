@@ -15,9 +15,26 @@ object ParamMapper {
         val MELEE_STRENGTH = 10
         val PRAYER_BONUS = 11
         val ATTACK_RATE = 14
+
+        val MAGIC_DAMAGE_STRENGTH = 299 // Tenths of a percent; divide by 10.
+
+        /**
+         * Whole percent, and set on the five salamanders alone. Deliberately *not* folded into
+         * an item's magic damage bonus: the live game does not show it in the equipment screen
+         * and applies it only to the Blaze attack style, which `SalamanderCombatStrategy`
+         * computes from its own copy of these numbers. Reading it here would instead multiply
+         * every ordinary spell cast while holding a salamander.
+         */
         val MAGIC_DAMAGE_BONUS_SALAMANDER = 65
-        val MAGIC_DAMAGE_STRENGTH = 299 // Should be divided by 10
-        val RANGED_STRENGTH_BONUS = 189
+
+        /**
+         * Ranged strength likewise comes in two params. 12 carries it for 317 older items
+         * (arrows, bolts, blowpipes); 189 for 59 newer ones - the twisted bow, the Masori set,
+         * Ava's assembler, Dizana's quiver, the necklace of anguish, ballistae, venator bows.
+         * No item in the cache declares both, so reading 12 alone left all 59 at zero.
+         */
+        val RANGED_STRENGTH_BONUS = 12
+        val RANGED_STRENGTH_BONUS_ALT = 189
         val PRIMARY_SKILL = 434
         val PRIMARY_LEVEL = 436
         val SECONDARY_SKILL = 435

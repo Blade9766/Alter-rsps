@@ -27,6 +27,13 @@ import java.lang.ref.WeakReference
 object NpcDeathAction {
     private val logger = KotlinLogging.logger {}
 
+    /**
+     * How long to hold a skeletal death animation for, since the cache decoder never reads a
+     * length for one. Three seconds: long enough to see any of them through, short enough not to
+     * noticeably delay a respawn if a given one is briefer than that.
+     */
+    private const val SKELETAL_DEATH_CYCLES = 5
+
     var deathPlugin: Plugin.() -> Unit = {
         val npc = ctx as Npc
         if (!npc.world.plugins.executeNpcFullDeath(npc)) {
@@ -86,9 +93,28 @@ object NpcDeathAction {
                 logger.warn { "Npc ${npc.id} has an unknown death animation and will skip it: $anim" }
                 return@forEach
             }
-            npc.animate(def.id, def.cycleLength)
-            if (def.cycleLength > 0) {
-                wait(def.cycleLength)
+            /*
+             * `interruptable`, because death outranks everything. This runs from `hitsCycle`
+             * on a tick where the npc may already have claimed its animation by swinging, and
+             * without this the killing blow would leave it standing in its attack pose.
+             */
+            npc.animate(def.id, def.cycleLength, interruptable = true)
+            /*
+             * A *skeletal* sequence always reports `cycleLength = 0`, and that zero is an
+             * artefact rather than a real length: `SequenceDecoder` only computes
+             * `lengthInCycles` from the classic frame-list opcode, and never from the skeleton
+             * data a skeletal animation stores its timing in. Waiting zero there cuts the
+             * animation off the instant it starts - the npc snaps back to its spawn tile and
+             * vanishes mid-death - which is what the remodelled bosses (Vet'ion and Calvar'ion,
+             * whose whole animation set is skeletal) would otherwise do.
+             *
+             * The fallback is deliberately keyed on `skeletalId` rather than on the zero alone:
+             * a non-skeletal sequence reporting zero genuinely has no frames to wait for, and
+             * should still be skipped exactly as before.
+             */
+            val length = def.cycleLength.takeIf { it > 0 } ?: SKELETAL_DEATH_CYCLES.takeIf { def.skeletalId != -1 }
+            if (length != null) {
+                wait(length)
             }
         }
         world.plugins.executeNpcDeath(npc)

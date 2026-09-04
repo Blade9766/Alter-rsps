@@ -43,7 +43,7 @@ fun Npc.createProjectile(
             .setSlope(angle = angle, steepness = if (steepness == -1) Math.min(255, ((getSize() shr 1) + 1) * 32) else steepness)
             .setTimes(
                 delay = delay,
-                lifespan = if (lifespan == -1) (delay + (start.getChebyshevDistance(target.getCentreTile()) * 5)) else lifespan,
+                lifespan = if (lifespan == -1) (start.getChebyshevDistance(target.getCentreTile()) * 5) else lifespan,
             )
 
     return builder.build()

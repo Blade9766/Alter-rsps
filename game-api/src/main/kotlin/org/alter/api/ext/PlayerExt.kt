@@ -839,7 +839,19 @@ fun Player.hasSkullIcon(icon: SkullIcon): Boolean = skullIcon == icon.id
 fun Player.isClientResizable(): Boolean =
     interfaces.displayMode == DisplayMode.RESIZABLE_NORMAL || interfaces.displayMode == DisplayMode.RESIZABLE_LIST
 
-fun Player.inWilderness(): Boolean = getInterfaceAt(InterfaceDestination.OVERLAY) != -1
+/**
+ * Whether the player is standing in the Wilderness.
+ *
+ * This used to be "the overlay slot has something in it", which nothing in the codebase ever put
+ * an interface into - so it was permanently false, and every caller of it was silently dead:
+ * PvP was impossible anywhere (`Combat.inPvpArea`), the looting bag could never be filled, and
+ * wilderness-only tertiary drops never rolled. It is answered from the tile now, which is also
+ * what `content/areas/wilderness` drives the on-screen overlay from.
+ */
+fun Player.inWilderness(): Boolean = tile.isInWilderness()
+
+/** The player's current wilderness level, or 0 outside it. */
+fun Player.getWildernessLevel(): Int = tile.getWildernessLevel()
 
 fun Player.sendWorldMapTile() {
     runClientScript(CommonClientScripts.WORLD_MAP_TILE, tile.as30BitInteger)

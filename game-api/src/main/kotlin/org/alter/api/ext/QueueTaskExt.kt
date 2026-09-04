@@ -164,7 +164,10 @@ suspend fun QueueTask.inputPlayer(
  * for an item.
  *
  * @return
- * The selected item's id.
+ * The selected item's id, with a bank placeholder resolved to the item it stands for - see
+ * [Item.unwrapPlaceholder]. The search dialog offers placeholders alongside real items and
+ * they are indistinguishable in it, so without this the caller hands the player an item id
+ * no content recognises.
  */
 suspend fun QueueTask.searchItemInput(
     player: Player,
@@ -175,16 +178,19 @@ suspend fun QueueTask.searchItemInput(
     terminateAction = closeInput(player)
     waitReturnValue()
 
-    return requestReturnValue as? Int ?: -1
+    val picked = requestReturnValue as? Int ?: return -1
+    return Item(picked).unwrapPlaceholder().id
 }
 
 /**
  * Prompts the player with a chatbox interface that allows them to search
  * for an item.
- * Difference from [QueueTask.searchItemInput] It let's you choose untradeable items too.
+ * Difference from [QueueTask.searchItemInput] It let's you choose untradeable items too -
+ * which is how a bank placeholder gets into the results, so resolving one is the more
+ * important here of the two.
  *
  * @return
- * The selected item's id.
+ * The selected item's id, with a bank placeholder resolved to the item it stands for.
  */
 suspend fun QueueTask.searchItemInputT(
     player: Player,
@@ -195,7 +201,8 @@ suspend fun QueueTask.searchItemInputT(
     terminateAction = closeInput(player)
     waitReturnValue()
 
-    return requestReturnValue as? Int ?: -1
+    val picked = requestReturnValue as? Int ?: return -1
+    return Item(picked).unwrapPlaceholder().id
 }
 
 suspend fun QueueTask.searchItemWithPrevious(

@@ -40,6 +40,22 @@ public operator fun CollisionFlagMap.get(coords: Tile): Int =
 public operator fun CollisionFlagMap.set(coords: Tile, mask: Int): Unit =
     set(coords.x, coords.z, coords.height, mask)
 
+/**
+ * Whether a player-sized pawn can occupy [coords].
+ *
+ * [CollisionFlag.GROUND_DECOR] counts as blocking because rsmod folds it in beside
+ * [CollisionFlag.BLOCK_WALK] as `FLOOR_BLOCKED` in every directional block mask. Note this is
+ * deliberately narrower than `isClipped`, which is true for *any* flag and so also trips on
+ * `BLOCK_NPCS` and `BLOCK_PLAYERS` - tiles a player can walk on perfectly well.
+ *
+ * An unallocated zone reads as fully blocked, so this answers `false` off the loaded map, which is
+ * the safe direction for callers deciding whether to move someone somewhere.
+ */
+public fun CollisionFlagMap.canOccupy(coords: Tile): Boolean {
+    val blocked = CollisionFlag.BLOCK_WALK or CollisionFlag.LOC or CollisionFlag.GROUND_DECOR
+    return (this[coords] and blocked) == 0
+}
+
 public fun CollisionFlagMap.add(coords: Tile, mask: Int): Unit =
     add(coords.x, coords.z, coords.height, mask)
 

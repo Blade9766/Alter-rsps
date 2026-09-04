@@ -42,6 +42,26 @@ val FROZEN_TIMER = TimerKey()
 val STUN_TIMER = TimerKey()
 
 /**
+ * Timer key set while a pawn's overhead protection prayers are being ignored by incoming attacks.
+ *
+ * The dragon scimitar's Sever special is the only thing that sets it: the prayer stays on and its
+ * icon stays up - the target has not lost the prayer, attacks are simply going straight through it
+ * for the duration.
+ */
+val PROTECTION_PRAYER_BLOCK_TIMER = TimerKey()
+
+/**
+ * Timer keys for the two temporary damage modifiers special attacks apply.
+ *
+ * Both are the lifetime of an attribute rather than an effect in themselves: the multiplier lives on
+ * `Combat.DAMAGE_TAKE_MULTIPLIER` / `Combat.MELEE_DAMAGE_TAKE_MULTIPLIER`, and
+ * `SpecialAttackTemporariesPlugin` clears it when the matching timer lapses. Kept as timers so they
+ * tick down on npcs too - the plugin's `onTimer` fires for any pawn.
+ */
+val DAMAGE_TAKEN_MODIFIER_TIMER = TimerKey()
+val MELEE_DAMAGE_TAKEN_MODIFIER_TIMER = TimerKey()
+
+/**
  * Timer key for poison ticks.
  */
 val POISON_TIMER = TimerKey()
@@ -80,3 +100,17 @@ val BURY_BONE_DELAY = TimerKey()
  * Timer key for delay in between burying bones.
  */
 val BONE_OFFER_DELAY = TimerKey()
+
+/**
+ * Ticks a pawn's outstanding burn damage down.
+ *
+ * See [org.alter.game.model.attr.SPECIAL_ATTACK_BURN_ATTR] for why burn is a counter with a timer
+ * rather than a set of queued hits.
+ */
+val SPECIAL_ATTACK_BURN_TIMER = TimerKey()
+
+/**
+ * Counts down a weapon's built-up stacks - soul stacks on the soulreaper axe, sunlight stacks on
+ * the sunlight spear - which fall off one at a time after fifty ticks without attacking.
+ */
+val WEAPON_STACK_DECAY_TIMER = TimerKey()

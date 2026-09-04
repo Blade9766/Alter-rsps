@@ -31,10 +31,13 @@ import org.alter.game.model.Tile
  * The visual angle of the projectile.
  *
  * @param delay
- * The delay before the projectile is spawned in players' clients, in client time.
+ * The delay before the projectile starts flying, in client cycles (20ms each).
  *
  * @param lifespan
- * The amount of time that the projectile will stay in players' client, in client time.
+ * The projectile's flight time, in client cycles (20ms each). This does *not*
+ * include [delay]: the packet carries the arrival time as `delay + lifespan`, so
+ * folding the delay in here as well makes every shot arrive a whole launch delay
+ * later than it should.
  *
  * @author Tom <rspsmods@gmail.com>
  */
@@ -50,6 +53,16 @@ class Projectile private constructor(
     val lifespan: Int,
 ) : Entity() {
     override val entityType: EntityType = EntityType.PROJECTILE
+
+    /**
+     * The client cycle at which the projectile reaches its target - [delay] plus
+     * [lifespan].
+     *
+     * This is what an impact graphic should be delayed by. Spotanim delays are in the
+     * same 20ms client cycles as projectile times, so timing one off [lifespan] alone
+     * plays it while the projectile is still in the air.
+     */
+    val impactDelay: Int get() = delay + lifespan
 
     override fun toString(): String =
         toStringHelper().add("start", tile).add("targetPawn", targetPawn)

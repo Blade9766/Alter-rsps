@@ -300,6 +300,20 @@ abstract class Pawn(val world: World) : Entity() {
                 hit.damageDelay = Math.max(0, hit.damageDelay - 1)
                 continue
             }
+            /*
+             * A hit lands [Hit.damageDelay] game cycles after it was dealt - immediately
+             * for a melee swing, and when the projectile arrives for a ranged or magic
+             * attack.
+             *
+             * Every combat strategy works this delay out from the distance to the target,
+             * but nothing ever read it back: hits were applied on the first cycle after the
+             * attack no matter how far the projectile still had to fly, so at range the
+             * damage splat appeared while the arrow or spell was still in the air.
+             */
+            if (hit.damageDelay > 0) {
+                hit.damageDelay--
+                continue
+            }
             if (!hit.cancelCondition()) {
                 for (hitmark in hit.hitmarks) {
                     val hp = getCurrentHp()
@@ -348,12 +362,16 @@ abstract class Pawn(val world: World) : Entity() {
                         setCurrentHp(hp - hitmark.damage)
                     }
                     /*
-                     * A player who survives this hit but is left at or below 10% of their max
-                     * hp - the Ring of Life / Defence cape threshold. Real OSRS does not save a
-                     * player from a single hit that takes them from above the threshold straight
-                     * to 0, so this only fires while they are still alive.
+                     * A player who survives this hit but is left low on hp. Real OSRS does not
+                     * save a player from a single hit that takes them from above the threshold
+                     * straight to 0, so this only fires while they are still alive.
+                     *
+                     * The threshold here is the *widest* any listener uses - 20%, the phoenix
+                     * necklace and necklace of faith - not the 10% the Ring of Life and Defence
+                     * cape want. Listeners that want a tighter one re-check their own; the hook
+                     * cannot be the tighter of the two without the 20% items never firing at all.
                      */
-                    if (entityType.isPlayer && getCurrentHp() in 1..(getMaxHp() / 10)) {
+                    if (entityType.isPlayer && getCurrentHp() in 1..(getMaxHp() / 5)) {
                         world.plugins.executePlayerLowHealth(this as Player)
                     }
                     /*

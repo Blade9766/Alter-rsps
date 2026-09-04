@@ -5,6 +5,7 @@ import org.alter.api.ext.NPC_ATTACK_BONUS_INDEX
 import org.alter.api.ext.NPC_MAGIC_DAMAGE_BONUS_INDEX
 import org.alter.api.ext.NPC_RANGED_STRENGTH_BONUS_INDEX
 import org.alter.api.ext.NPC_STRENGTH_BONUS_INDEX
+import org.alter.game.model.combat.CombatStyle
 import org.alter.api.ext.enumSetOf
 import org.alter.game.plugin.KotlinPlugin
 
@@ -41,8 +42,11 @@ object NpcCombatDsl {
             init(builder)
 
             combatBuilder.setAttackSpeed(builder.attackSpeed)
+            builder.combatStyle?.let { combatBuilder.setCombatStyle(it) }
+            combatBuilder.setAttackRange(builder.attackRange)
             combatBuilder.setRespawnDelay(builder.respawnDelay)
             combatBuilder.setPoisonChance(builder.poisonChance)
+            combatBuilder.setPoisonDamage(builder.poisonDamage)
             combatBuilder.setVenomChance(builder.venomChance)
         }
 
@@ -277,15 +281,42 @@ object NpcCombatDsl {
         var attackSpeed = -1
 
         /**
+         * Which melee style this npc attacks with - the one whose defence bonus the player's
+         * armour is read from when it swings. Leave null for STAB, which is what every npc
+         * used before this could be declared.
+         */
+        var combatStyle: CombatStyle? = null
+
+        /**
+         * How far away, in tiles, the npc can attack from. Leave at -1 to use the
+         * default for its combat class - 1 for melee, 7 for ranged, 10 for magic.
+         *
+         * Distance is measured between the closest edges of the two footprints, so a
+         * large npc's own size is already accounted for: a 3x3 dragon with
+         * `attackRange = 1` reaches anything standing next to any of its nine tiles.
+         */
+        var attackRange = -1
+
+        /**
          * The delay to wait to respawn the npc after death, in cycles.
          * If npc should not respawn, this value should be set to 0.
          */
         var respawnDelay: Int = -1
 
         /**
-         * The chance of inflicting poison on damage. Value should vary from
-         * 0 to 100 where 0 means the npc will never inflict poison and 100
-         * meaning the npc will always inflict poison on damage.
+         * Initial poison damage this npc inflicts - the wiki infobox's `poisonous = Yes (N)`.
+         *
+         * This is the field that turns poison on. Setting only [poisonChance] is rejected at build
+         * time, because a chance with no damage poisons nobody.
+         */
+        var poisonDamage = -1
+
+        /**
+         * The chance of inflicting poison, as a percentage from 0 to 100.
+         *
+         * Optional: an npc with [poisonDamage] and no chance takes
+         * [org.alter.game.model.combat.NpcCombatDef.DEFAULT_POISON_CHANCE], since the wiki
+         * publishes a rate for no monster at all. Set it only where a monster is known to differ.
          */
         var poisonChance = -1.0
 
@@ -314,12 +345,22 @@ object NpcCombatDsl {
         /**
          * The delay, in cycles, in which the npc can search for possible
          * targets.
+         *
+         * Left unset this takes [NpcCombatBuilder.DEFAULT_AGGRO_SEARCH_DELAY]. It must end up
+         * `> 0`: [org.alter.plugins.content.mechanics.aggro.NpcAggroPlugin] only installs the
+         * aggro check and schedules the sweep timer for an npc whose delay is positive.
          */
         var searchDelay = -1
 
         /**
          * The time, in cycles, in which the npc will be aggressive to
          * nearby targets.
+         *
+         * Left unset this takes [NpcCombatBuilder.DEFAULT_AGGRO_TIMER]. It must not be left
+         * negative: the default aggro check gives up once
+         * `abs(currentCycle - lastMapBuildTime) > aggressiveTimer`, and no absolute value is
+         * ever `<= -1`, so a negative timer makes the npc silently passive. Use [neverAggro]
+         * to say that deliberately.
          */
         var aggroTimer = -1
 
@@ -327,11 +368,15 @@ object NpcCombatDsl {
          * The time, in minutes, in which the npc will be aggressive to
          * nearby targets. This property is simply an alias for [aggroTimer]
          * and will set [aggroTimer] accordingly.
+         *
+         * The conversion used to be the expression `aggroTimer * 1000`, which computes a value
+         * and discards it - so this set [aggroTimer] to nothing at all and any npc configured
+         * in minutes was left on the unset timer. A cycle is 600ms, so a minute is 100 of them.
          */
         var aggroMinutes: Int = -1
             set(value) {
-                aggroTimer * 1000
                 field = value
+                aggroTimer = value * CYCLES_PER_MINUTE
             }
 
         fun alwaysAggro() {
@@ -341,34 +386,59 @@ object NpcCombatDsl {
         fun neverAggro() {
             aggroTimer = Int.MIN_VALUE
         }
+
+        companion object {
+            /** Game cycles in one minute, at the 600ms cycle. */
+            private const val CYCLES_PER_MINUTE = 100
+        }
     }
 
     @CombatDslMarker
     class StatsBuilder(private val stats: MutableList<Pair<Int, Int>>) {
+        /*
+         * Every setter here has to assign `field` as well as record the pair.
+         *
+         * [Builder.stats] reads these five back as *properties* - `combatBuilder.setAttackLevel(
+         * builder.attack)` - and never looks at the [stats] list at all, so a setter that only
+         * appended to the list left the backing field at its `= 1` initializer. The effect was
+         * that every combat level in every `stats { }` block in the game was silently discarded:
+         * a guard declaring `attack = 21` and a level 13 goblin declaring `attack = 12` both
+         * built a def with attack 1, and `World.setNpcStats` then copied that 1 onto the live
+         * npc for every combat formula to read. Only `hitpoints`, which has no custom setter,
+         * ever worked.
+         *
+         * The list is still populated because its duplicate check - "Stat [n] already set" - is
+         * what catches a block that declares the same stat twice.
+         */
         var hitpoints = 1
 
         var attack: Int = 1
             set(value) {
+                field = value
                 set(Pair(NpcSkills.ATTACK, value))
             }
 
         var strength: Int = 1
             set(value) {
+                field = value
                 set(Pair(NpcSkills.STRENGTH, value))
             }
 
         var defence: Int = 1
             set(value) {
+                field = value
                 set(Pair(NpcSkills.DEFENCE, value))
             }
 
         var magic: Int = 1
             set(value) {
+                field = value
                 set(Pair(NpcSkills.MAGIC, value))
             }
 
         var ranged: Int = 1
             set(value) {
+                field = value
                 set(Pair(NpcSkills.RANGED, value))
             }
 

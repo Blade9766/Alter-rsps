@@ -51,6 +51,11 @@ object Varbit {
     const val DISABLE_XP_TILL_LEVEL_VARBIT = 4181
     const val DISABLE_PRAYER_TOOLTIP_VARBIT = 5711
     const val DISABLE_SPECIAL_ATTACK_TOOLTIP_VARBIT = 5712
+    /**
+     * Deprecated spelling of [SHOW_DATA_ORBS], which is the same varbit. The name is
+     * backwards: 1 shows the orbs, it does not hide them.
+     */
+    @Deprecated("Backwards name for the same varbit", ReplaceWith("SHOW_DATA_ORBS"))
     const val HIDE_DATA_ORBS_VARBIT = 4084
     const val CHATBOX_TRANSPARENT_VARBIT = 4608
     const val CHATBOX_SOLID_VARBIT = 2570
