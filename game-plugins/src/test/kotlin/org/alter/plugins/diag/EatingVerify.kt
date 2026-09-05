@@ -92,7 +92,7 @@ class EatingVerify {
              * and not with the client, and every food was bound to an op no click ever sends.
              */
             val index = def.interfaceOptions.indexOfFirst { it?.lowercase() == food.option.lowercase() }
-            val expected = InventoryOptionOpVerify.INVENTORY_OP_OFFSET + index
+            val expected = InventoryOptionOpVerify.inventoryOpOf(index)
             assertEquals(
                 setOf(expected),
                 opts.keys.toSet(),

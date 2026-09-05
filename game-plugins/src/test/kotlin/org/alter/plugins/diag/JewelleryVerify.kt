@@ -399,7 +399,7 @@ class JewelleryVerify {
                 if (index == -1) {
                     return@forEach
                 }
-                val op = InventoryOptionOpVerify.INVENTORY_OP_OFFSET + index
+                val op = InventoryOptionOpVerify.inventoryOpOf(index)
                 assertNotNull(
                     itemBindings[id]?.get(op),
                     "${perk.item}: inventory '$option' at index $index bound nothing at op $op " +

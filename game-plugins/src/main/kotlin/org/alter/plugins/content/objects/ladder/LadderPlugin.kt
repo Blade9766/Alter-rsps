@@ -92,11 +92,99 @@ class LadderPlugin(
 
         /**Trapdoors.*/
 
+        /*
+         * NOT generically bound - and this is deliberate, after trying it and reverting.
+         *
+         * A cache scan finds **1,504 objects carrying a climb option** (457 named Ladder, 253
+         * Staircase, 214 Stairs) against the twelve ids listed above, so almost every ladder in
+         * the game answers "Nothing interesting happens". The climb helpers below are entirely
+         * generic - one plane up or down on the same tile - so binding them to all 906 named
+         * ladders looked like a one-line win.
+         *
+         * It is not, because **the destination is not derivable from the object**. The Taverley
+         * dungeon ladder (16680, at 2884,3397) goes to 2884,9798 - a different region, not the
+         * tile overhead. Binding it generically put the player one plane up, standing in mid-air
+         * over Taverley with a black minimap.
+         *
+         * A `CollisionFlagMap.canOccupy` guard does **not** save it: collision flags mark
+         * obstacles, not floors, so open sky on an allocated plane reads as perfectly walkable.
+         * There is no "is there ground here" bit to test. That was tried too, and the player
+         * floated again.
+         *
+         * What would actually work is deriving each ladder's real destination from the cache's
+         * map data - a ladder with a counterpart directly above or below it is a genuine vertical
+         * climb; one without needs a hand-written destination. That is a real piece of work and an
+         * offline-generated table, not a runtime scan. Until then, ladders are added to the lists
+         * above one at a time, which is slow but never puts anyone in the void.
+         */
+
         onObjOption("object.trapdoor_14880", option = "climb-down") {
-            player.moveTo(3210, 9616, 0)
+            climbTo(player, Tile(3210, 9616))
         }
+        /*
+         * Taverley Dungeon. The surface ladder is 16680 at (2884,3397); the ladder back up is
+         * 17385 at (2884,9797). Both tiles, and the arrival tiles either side of them, were read
+         * out of the cache's own map data and checked against its collision - see
+         * `gradlew :game-server:locFind` and `:tileCheck` - rather than taken from memory.
+         */
+        onObjOption("object.ladder_16680", option = "climb-down") {
+            climbTo(player, TAVERLEY_DUNGEON_ARRIVAL)
+        }
+
+        /*
+         * **Object 17385 is placed in two different dungeons** - the Lumbridge cellar at
+         * (3209,9616) and Taverley Dungeon at (2884,9797) - so a destination keyed on the id alone
+         * is wrong for one of them. This used to send every climb of it to Lumbridge, which meant
+         * that even once Taverley Dungeon was reachable, climbing out of it teleported you across
+         * the map.
+         *
+         * The branch is on where the player actually is, not on the id. It is also the reason the
+         * generic ladder binding above cannot work: ids are reused, so only a placement has a
+         * destination.
+         */
         onObjOption("object.ladder_17385", option = "climb-up") {
-            player.moveTo(3210, 3216, 0)
+            if (player.tile.isWithinRadius(TAVERLEY_DUNGEON_LADDER, LADDER_MATCH_RADIUS)) {
+                climbTo(player, TAVERLEY_SURFACE_ARRIVAL)
+            } else {
+                climbTo(player, Tile(3210, 3216))
+            }
+        }
+    }
+
+    private companion object {
+        /** 17385's placement inside Taverley Dungeon, as opposed to the Lumbridge cellar one. */
+        val TAVERLEY_DUNGEON_LADDER = Tile(2884, 9797)
+
+        /** Arrival tiles, each verified standable with `gradlew :game-server:tileCheck`. */
+        val TAVERLEY_DUNGEON_ARRIVAL = Tile(2884, 9798)
+        val TAVERLEY_SURFACE_ARRIVAL = Tile(2884, 3398)
+
+        /** Close enough to be *this* placement of a reused id rather than another one. */
+        const val LADDER_MATCH_RADIUS = 4
+    }
+
+    /**
+     * Climb to an explicit destination, with the animation.
+     *
+     * The ladders that go somewhere other than the tile overhead each called `moveTo` directly,
+     * which teleports with no animation - the player simply blinked to the other end. The generic
+     * [climbupladder]/[climbdownladder] helpers had always animated; only the explicit
+     * destinations skipped it, so the more interesting ladders were the ones that looked worst.
+     *
+     * Same shape as those helpers: play the climb, hold the player still for the two ticks it
+     * takes, then move. The lock matters - without it the player can walk out mid-animation and
+     * still be moved when the wait expires.
+     */
+    private fun climbTo(
+        player: Player,
+        destination: Tile,
+    ) {
+        player.queue {
+            player.animate(Animation.CLIMB_UP_LADDER)
+            player.lock()
+            wait(2)
+            player.moveTo(destination.x, destination.z, destination.height)
+            player.unlock()
         }
     }
 

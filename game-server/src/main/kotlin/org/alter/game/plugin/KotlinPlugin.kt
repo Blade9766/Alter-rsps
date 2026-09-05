@@ -131,7 +131,6 @@ abstract class KotlinPlugin(
         active: Boolean = true,
     ) = spawnNpc(npc, Tile(x, z, height), walkRadius, direction, active)
 
-
     /**
      * Spawn an [Npc] on the given [tile].
      */
@@ -266,7 +265,7 @@ abstract class KotlinPlugin(
                 def.interfaceOptions.filterNotNull().filter { it.isNotBlank() }
             }]"
         }
-        r.bindItem(def.id, INVENTORY_OP_OFFSET + index, logic)
+        r.bindItem(def.id, inventoryOpOf(index), logic)
     }
 
     /**
@@ -293,7 +292,6 @@ abstract class KotlinPlugin(
 
         r.bindEquipmentOption(rItem, EQUIPMENT_OP_OFFSET + slot, logic)
     }
-
 
     /**
      * Invoke [logic] when the [option] option is clicked on a
@@ -330,7 +328,6 @@ abstract class KotlinPlugin(
 
         r.bindObject(obj, slot + 1, lineOfSightDistance, logic)
     }
-
 
     fun itemHasGroundOption(
         item: String,
@@ -981,25 +978,43 @@ abstract class KotlinPlugin(
 
     companion object {
         /**
-         * The inventory component's op number for the item's **first** interface option.
+         * The op the client sends for the inventory option at [index].
          *
-         * Item options are not op1..op5. Interface 149's own ops sit in the same numbering -
-         * op7 is Drop and op10 is Examine, which is why `InventoryPlugin` hardcodes those two -
-         * and the item's five options start at op2. So the item's option at index `i` arrives
-         * as op `2 + i`: Eat and Drink (index 0) as op2, Wield and Wear (index 1) as op3 -
-         * which is exactly the op `InventoryPlugin` hands to `EquipAction` - and Empty and Rub
-         * (index 3) as op5.
+         * **Op 5 is skipped.** The first three options arrive as ops 2, 3 and 4, and then the
+         * numbering jumps: index 3 arrives as op **6** and index 4 as op **7**. Binding was a
+         * flat `2 + index`, so every option at index 3 or 4 sat one op below the one the client
+         * actually sends and could never fire.
          *
-         * This was `index + 1`, one too low, so every option bound here by name was registered
-         * against an op the client never sends and did nothing at all when clicked. The two
-         * places that bind an item op by raw number rather than by name - the mystery box at
-         * op2 for its index-0 "Open" - were already written against the real numbering, which
-         * is what made the off-by-one visible.
+         * Measured, not derived - the cache says what an option *is*, never which op carries it.
+         * Two items, all five indices, from live packet logs:
          *
-         * Objects are **not** the same: `onObjOption` binds `index + 1` and that is correct,
-         * as an object's ops are its actions and nothing else.
+         * ```
+         * Amulet of glory(5)  Wear(1)=3            Rub(3)=6      Drop(4)=7      Examine=10
+         * Looting bag         Open(0)=2 Check(1)=3 Deposit(2)=4  Settings(3)=6  Destroy(4)=7
+         * ```
+         *
+         * What it cost while wrong: every option at index 3 or 4 in the game. "Rub" on all the
+         * charged teleport jewellery, the looting bag's Settings and Destroy, the ring of
+         * recoil's "Break", Karamjan rum's "Drink", and every container's "Empty". Ordinary food
+         * was unaffected only because "Eat" sits at index 0, which is why a flat offset of 2
+         * looked right for so long.
+         *
+         * Op 5 is presumed reserved for "Use", which the client sends as a target packet
+         * (`Item on object` / `Item on npc`) rather than a button op - but that is an inference.
+         * Only the mapping above is measured.
          */
-        private const val INVENTORY_OP_OFFSET = 2
+        fun inventoryOpOf(index: Int): Int =
+            if (index < INVENTORY_OP_SKIPPED_INDEX) {
+                INVENTORY_OP_OFFSET + index
+            } else {
+                INVENTORY_OP_OFFSET + index + 1
+            }
+
+        /** The op the *first* inventory option arrives as. See [inventoryOpOf]. */
+        const val INVENTORY_OP_OFFSET = 2
+
+        /** The first index whose op is shifted by the skipped op 5 - see [inventoryOpOf]. */
+        const val INVENTORY_OP_SKIPPED_INDEX = 3
 
         /**
          * The worn-equipment component's op number for the item's **first** equipment option.

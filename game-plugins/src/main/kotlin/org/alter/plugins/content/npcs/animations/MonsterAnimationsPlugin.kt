@@ -62,7 +62,33 @@ class MonsterAnimationsPlugin(
                     death = npc.combatDef.deathAnimation.firstOrNull() ?: return,
                 )
             }
-        val attackSound = named?.attackSound?.let(::localSound) ?: soundFor(resolved.attack) ?: weaponSoundFor(resolved.attack)
+        /*
+         * A named attack sound belongs to the named *animation*, not to the npc.
+         *
+         * `named` is keyed on the cache name, and a name can cover a whole group carrying
+         * different weapons. `BARBARIAN` is the case that showed it: the entry describes an
+         * unarmed barbarian (attack animation 422, `HUMAN_PUNCH`, sound 2564, `HUMAN_ATTACK`),
+         * but `BarbarianPlugin` declares its own per-variant animations - a hammer barbarian
+         * swings 401, `HUMAN_BLUNT_SWING`. The animation was therefore right and the sound was
+         * the punch, on every barbarian in the game, because the named sound is taken first and
+         * [weaponSoundFor] - whose own comment claims it is what catches barbarians - could never
+         * be reached for them.
+         *
+         * So when the npc swings something other than the animation the entry describes, the
+         * weapon-derived clip is preferred, and the named sound is kept only as a last resort.
+         * That last resort matters: a monster animation returns null from both paths below, and
+         * dropping to -1 there would silence npcs that make a noise today.
+         *
+         * Only the attack sound is treated this way. Block and death clips are the creature
+         * grunting, not the weapon, so they stay keyed on the name for every variant of it.
+         */
+        val namedAttackSound = named?.attackSound?.let(::localSound)
+        val attackSound =
+            if (named != null && named.attackAnimation != resolved.attack) {
+                soundFor(resolved.attack) ?: weaponSoundFor(resolved.attack) ?: namedAttackSound
+            } else {
+                namedAttackSound ?: soundFor(resolved.attack) ?: weaponSoundFor(resolved.attack)
+            }
         val blockSound = named?.blockSound?.let(::localSound) ?: soundFor(resolved.block)
         val deathSound = named?.deathSound?.let(::localSound) ?: soundFor(resolved.death)
         val current = npc.combatDef

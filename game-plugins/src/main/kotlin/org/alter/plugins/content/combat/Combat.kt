@@ -9,6 +9,7 @@ import org.alter.game.model.attr.LAST_HIT_ATTR
 import org.alter.game.model.attr.LAST_HIT_BY_ATTR
 import org.alter.game.model.collision.rayCast
 import org.alter.game.model.combat.CombatClass
+import org.alter.api.cfg.Sound
 import org.alter.game.model.entity.AreaSound
 import org.alter.game.model.entity.Npc
 import org.alter.game.model.entity.Pawn
@@ -214,6 +215,26 @@ object Combat {
                         (pawn as? Player)?.playSound(npcDefs.defaultBlockSound, npcDefs.defaultBlockSoundVolume)
                     }
                 }
+            } else if (target is Player) {
+                /*
+                 * A player being hit made no sound at all.
+                 *
+                 * Only the npc half of this branch existed, so the whole of combat audio was
+                 * one-directional: hitting an npc played that npc's block clip to the attacker,
+                 * and being hit by one played nothing. What a player actually heard in a fight
+                 * was the attacker's swing and then silence on the landing, whether it hit or
+                 * missed - which is why the audio reads as not matching the fight rather than as
+                 * missing. It is the same for every monster in the game; the dwarf is only where
+                 * it was noticed, and its own ids are correct (417/419/418 are DWARF_ATTACK,
+                 * DWARF_HIT and DWARF_DEATH).
+                 *
+                 * The npc side keys its clip off the npc's own combat def. A player has no such
+                 * def, and this is the same generic human block the human npcs in
+                 * `named-combat-media.json` already use (MAN, WOMAN and BARBARIAN all carry
+                 * `blockSound` 511), so it stays consistent with what a player hears when hitting
+                 * one of them.
+                 */
+                target.playSound(Sound.HUMAN_BLOCK_1)
             }
         }
 

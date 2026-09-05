@@ -61,9 +61,21 @@ class InventoryPlugin(
                         }
                     }
                     3 -> {
-                        val result = EquipAction.equip(player, item, slot)
-                        if (result == EquipAction.Result.UNHANDLED && world.devContext.debugItemActions) {
-                            player.message("Unhandled item action: [item=${item.id}, slot=$slot, option=$option]")
+                        /*
+                         * Op 3 is the item's *second* option, which is only "Wear"/"Wield" on
+                         * equipment. On anything else it is that item's own second action - the
+                         * looting bag keeps "Check" there - and this branch equipped
+                         * unconditionally, so a plugin bound to it was never consulted and the
+                         * click was answered with an equip that could not happen.
+                         *
+                         * Bindings get first refusal now, exactly as the drop branch below has
+                         * always done; equipping is the fallback when nothing claims it.
+                         */
+                        if (!world.plugins.executeItem(player, item.id, option)) {
+                            val result = EquipAction.equip(player, item, slot)
+                            if (result == EquipAction.Result.UNHANDLED && world.devContext.debugItemActions) {
+                                player.message("Unhandled item action: [item=${item.id}, slot=$slot, option=$option]")
+                            }
                         }
                     }
                     10 -> {

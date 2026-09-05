@@ -2,6 +2,7 @@ package org.alter.plugins.diag
 
 import dev.openrune.cache.CacheManager
 import org.alter.rscm.RSCM
+import org.alter.game.plugin.KotlinPlugin
 import org.alter.rscm.RSCM.getRSCM
 import org.junit.BeforeClass
 import java.nio.file.Paths
@@ -33,8 +34,18 @@ class InventoryOptionOpVerify {
             RSCM.init()
         }
 
-        /** Mirrors `KotlinPlugin.INVENTORY_OP_OFFSET`. */
-        const val INVENTORY_OP_OFFSET = 2
+        /**
+         * Delegates to `KotlinPlugin.inventoryOpOf` rather than restating the formula.
+         *
+         * This constant used to be a local copy of a flat `2 + index`, which is wrong for
+         * indices 3 and 4 - op 5 is skipped, so they arrive as 6 and 7. The copy meant the test
+         * agreed with the binding code and both disagreed with the client, so every option at
+         * those indices was dead and nothing failed. Measured against two items across all five
+         * indices; see the mapping table on `KotlinPlugin.inventoryOpOf`.
+         */
+        fun inventoryOpOf(index: Int) = KotlinPlugin.inventoryOpOf(index)
+
+        const val INVENTORY_OP_OFFSET = KotlinPlugin.INVENTORY_OP_OFFSET
 
         /** The op `InventoryPlugin` hands to `EquipAction`. */
         const val EQUIP_OP = 3
@@ -50,7 +61,7 @@ class InventoryOptionOpVerify {
         val def = CacheManager.getItem(getRSCM(item))!!
         val index = def.interfaceOptions.indexOfFirst { it.equals(option, ignoreCase = true) }
         assertEquals(true, index != -1, "$item has no '$option' option [${def.interfaceOptions.toList()}]")
-        return INVENTORY_OP_OFFSET + index
+        return inventoryOpOf(index)
     }
 
     @Test
@@ -65,19 +76,29 @@ class InventoryOptionOpVerify {
     }
 
     /**
-     * Every container's "Empty" sits at index 3, so it needs op5 - the op the login mask was
-     * missing, which is what made emptying a bucket do nothing even once the binding was
-     * right.
+     * Every container's "Empty" sits at index 3, which the client sends as op **6** - op 5 is
+     * skipped. This asserted op5 while the binding code also computed 5, so the two agreed with
+     * each other and neither agreed with the client, and emptying a container did nothing.
+     * Measured; see the mapping table on `KotlinPlugin.inventoryOpOf`.
      */
     @Test
-    fun `every container empties on op5`() {
+    fun `every container empties on op6`() {
         listOf(
             "item.bucket_of_water",
             "item.bucket_of_milk",
             "item.jug_of_water",
             "item.bowl_of_water",
             "item.vial_of_water",
-        ).forEach { assertEquals(5, opOf(it, "Empty"), "$it does not empty on op5") }
+        ).forEach { assertEquals(6, opOf(it, "Empty"), "$it does not empty on op6") }
+    }
+
+    /**
+     * The measured mapping itself, pinned directly. Index 3 and 4 are the two that were wrong,
+     * and they are the reason "Rub", "Empty", "Settings", "Destroy" and "Break" were all dead.
+     */
+    @Test
+    fun `the inventory op mapping skips op5`() {
+        assertEquals(listOf(2, 3, 4, 6, 7), (0..4).map { inventoryOpOf(it) })
     }
 
     @Test

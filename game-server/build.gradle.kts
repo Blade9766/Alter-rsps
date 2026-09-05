@@ -318,6 +318,54 @@ tasks.register<JavaExec>("duelDiag") {
 }
 
 // TEMPORARY diagnostic task - remove after use.
+tasks.register<JavaExec>("tileCheck") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.TileCheck")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("locFind") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.LocFind")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("climbObjScan") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.ClimbObjScan")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("scriptIdDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.ScriptIdDump")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("varbitDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.VarbitDump")
+    workingDir = rootDir
+}
+
+tasks.register<JavaExec>("interfaceRawDump") {
+    group = "diagnostics"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+    classpath = sourceSets["main"].output + sourceSets["main"].compileClasspath + locDumpRuntime
+    mainClass.set("org.alter.tools.InterfaceRawDump")
+    workingDir = rootDir
+}
+
 tasks.register<JavaExec>("interfaceTextDump") {
     group = "diagnostics"
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })

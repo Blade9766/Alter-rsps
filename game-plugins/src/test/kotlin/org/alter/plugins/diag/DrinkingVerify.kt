@@ -169,7 +169,7 @@ class DrinkingVerify {
                 val index = def.interfaceOptions.indexOfFirst { it?.lowercase() == "drink" }
                 assertTrue(index >= 0, "$dose (${def.name}) has no Drink option in the cache")
                 assertEquals(
-                    setOf(INVENTORY_OP_OFFSET + index),
+                    setOf(InventoryOptionOpVerify.inventoryOpOf(index)),
                     opts.keys.toSet(),
                     "$dose (${def.name}) bound the wrong option; " +
                         "interfaceOptions=${def.interfaceOptions.filterNotNull().filter { it.isNotBlank() }}",

@@ -40,7 +40,7 @@ class LoginWorker(private val boss: LoginService, private val verificationServic
 
                         if (interceptedLoginResult != null) {
                             request.responseHandler.writeFailedResponse(interceptedLoginResult)
-                            logger.info { "${"User '{}' login denied with code {}."} ${client.username} $interceptedLoginResult" }
+                            logger.info { "User '${client.username}' login denied with code $interceptedLoginResult." }
                         } else if (client.register()) {
                             request.responseHandler.writeSuccessfulResponse(
                                 LoginResponse.Ok(
@@ -71,7 +71,7 @@ class LoginWorker(private val boss: LoginService, private val verificationServic
                             }
                         } else {
                             request.responseHandler.writeFailedResponse(LoginResponse.InvalidSave)
-                            logger.info { "${"User '{}' login denied with code {}."} ${client.username} ${LoginResponse.InvalidSave}" }
+                            logger.info { "User '${client.username}' login denied with code ${LoginResponse.InvalidSave}." }
                         }
                     }
                 } else {
@@ -83,7 +83,7 @@ class LoginWorker(private val boss: LoginService, private val verificationServic
                             else -> LoginResponse.InvalidSave
                         }
                     request.responseHandler.writeFailedResponse(errorCode)
-                    logger.info { "${"User '{}' login denied with code {}."} ${client.username} $loadResult" }
+                    logger.info { "User '${client.username}' login denied with code $loadResult." }
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Error when handling request from ${request.block.username}." }

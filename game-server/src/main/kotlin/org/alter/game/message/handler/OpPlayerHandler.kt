@@ -42,26 +42,39 @@ class OpPlayerHandler : MessageHandler<OpPlayer> {
         client.attr[INTERACTING_OPT_ATTR] = option
 
         /*
-         * Attacking is the one player option that must not walk to the target first.
+         * Attack and Follow are the player options that must not be walked to the target first.
          *
          * [PawnPathAction.walkPlugin] routes all the way to the other player's tile and then
          * waits out `while (pawn.hasMoveDestination())` before running the option, so every
-         * option it carries is resolved from an adjacent tile. That is right for Follow and
-         * Trade with, and wrong for Attack: a ranged or magic attacker was walked into melee
-         * distance before the first shot, because the range the attack actually needs is only
-         * known to the combat loop, which had not started yet.
+         * option it carries is resolved from an adjacent tile. That is right for Trade with and
+         * Challenge, which are one-shot interactions that need to happen face to face.
          *
-         * Combat is handed straight to the option instead, exactly as [OpNpcHandler] does for
-         * an npc's Attack (which is always op2 - checked against the cache, monsters carry it
-         * in the second slot). `Pawn.attack` faces the target and starts the combat loop, and
-         * that loop does its own approach against `CombatStrategy.getAttackRange`, stopping as
-         * soon as the target is in range with line of sight.
+         * It is wrong for Attack: a ranged or magic attacker was walked into melee distance
+         * before the first shot, because the range the attack actually needs is only known to
+         * the combat loop, which had not started yet.
          *
-         * Keeping the approach in the combat loop also keeps it honest about freezes and stuns,
-         * which `walkRoute` now refuses outright - see `Pawn.isRooted`.
+         * It is wrong for Follow too, for two reasons. The walk is one-shot - it routes to the
+         * tile the target stood on when the option was clicked and never re-routes, because the
+         * `if (!other.tile.sameAs(other.tile))` re-walk guard in [PawnPathAction] compares a tile
+         * to itself and so can never fire - which is fine for an interaction that ends on arrival
+         * and useless for one whose whole job is to keep up with a moving player. And on the way
+         * out, [PawnPathAction] calls `resetFacePawn()` on any option that did not leave combat
+         * focus set; the follow loop reads exactly that facing as its "still following" signal,
+         * so a followed-through-walkPlugin follow would be cancelled the tick after it started.
+         *
+         * Both are handed straight to the option instead, exactly as [OpNpcHandler] does for an
+         * npc's Attack (which is always op2 - checked against the cache, monsters carry it in the
+         * second slot). `Pawn.attack` faces the target and starts the combat loop, and that loop
+         * does its own approach against `CombatStrategy.getAttackRange`, stopping as soon as the
+         * target is in range with line of sight; `Follow.start` does the same against a fixed
+         * range of one tile.
+         *
+         * Keeping the approach in the option also keeps it honest about freezes and stuns, which
+         * `walkRoute` now refuses outright - see `Pawn.isRooted`.
          */
-        if (client.options[optionIndex].equals(ATTACK_OPTION, ignoreCase = true)) {
-            client.world.plugins.executePlayerOption(client, ATTACK_OPTION)
+        val selfApproaching = SELF_APPROACHING_OPTIONS.firstOrNull { it.equals(client.options[optionIndex], ignoreCase = true) }
+        if (selfApproaching != null) {
+            client.world.plugins.executePlayerOption(client, selfApproaching)
             return
         }
 
@@ -76,5 +89,19 @@ class OpPlayerHandler : MessageHandler<OpPlayer> {
          * so it is matched by name rather than by op number.
          */
         const val ATTACK_OPTION = "Attack"
+
+        /**
+         * The option name following is bound to, by
+         * `org.alter.plugins.content.mechanics.follow.FollowPlugin`. Sent on slot 3 by
+         * `OSRSPlugin`, but matched by name for the same reason [ATTACK_OPTION] is.
+         */
+        const val FOLLOW_OPTION = "Follow"
+
+        /**
+         * The options that walk themselves. Matched case-insensitively against what the client
+         * was sent, but dispatched under the constant, because `executePlayerOption` looks its
+         * binding up by exact name.
+         */
+        val SELF_APPROACHING_OPTIONS = arrayOf(ATTACK_OPTION, FOLLOW_OPTION)
     }
 }

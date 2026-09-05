@@ -143,10 +143,12 @@ object DuelArena {
     /**
      * The slot "Attack" is sent on for the duration of a fight, as a left-click option.
      *
-     * Nothing else on this server ever sends one: in the wilderness the client decides to offer
-     * Attack by itself, so the option only has to be supplied where the client has no idea it is
-     * standing somewhere player-versus-player is allowed - which is exactly an arena. Without it
-     * the duel starts, both players are unlocked, and neither has any way to hit the other.
+     * The client does NOT offer Attack by itself anywhere - this comment used to claim it did in
+     * the Wilderness, and that assumption is why nothing sent the option there and PvP was
+     * unreachable even with `inWilderness()` reading the tile correctly. `WildernessPlugin` now
+     * sends its own on this same slot; the two never overlap, since a duel is fought inside the
+     * arena and the arena is not Wilderness. Without an option in the slot the duel starts, both
+     * players are unlocked, and neither has any way to hit the other.
      */
     const val ATTACK_OPTION_SLOT = 1
 

@@ -59,10 +59,14 @@ class OSRSPlugin(
                 sendWeaponComponentInformation()
                 sendCombatLevelText()
                 /*
-                 * The inventory's ops. Item options 1-4 arrive as op2..op5, then op6 is Use,
-                 * op7 Drop and op10 Examine. ClickOp5 was missing, so the item's fourth option
-                 * was not clickable at all - that is where every container keeps "Empty" and
-                 * an amulet of glory keeps "Rub".
+                 * The inventory's ops. An item's five options do NOT map to ops 2..6 - **op 5 is
+                 * skipped**, so they arrive as ops 2, 3, 4, 6, 7, with op10 for Examine. Measured
+                 * from live packet logs against two items across all five indices; the mapping and
+                 * the evidence live on `KotlinPlugin.inventoryOpOf`, which binds against it.
+                 *
+                 * ClickOp5 is kept in the mask even though no item option lands there, because it
+                 * costs nothing and the op is only presumed - not proven - to be reserved for Use.
+                 * Ops 1, 8 and 9 are deliberately absent: no item option can reach them.
                  */
                 setInterfaceEvents(
                     interfaceId = 149,

@@ -1,12 +1,10 @@
 package org.alter.plugins.content.areas.wilderness
 
-import org.alter.api.InterfaceDestination
 import org.alter.api.ext.getWildernessLevel
-import org.alter.api.ext.closeInterface
 import org.alter.api.ext.message
-import org.alter.api.ext.openInterface
-import org.alter.api.ext.setComponentHidden
-import org.alter.api.ext.setComponentText
+import org.alter.api.ext.removeOption
+import org.alter.api.ext.sendOption
+import org.alter.api.ext.setVarbit
 import org.alter.api.ext.pawn
 import org.alter.api.ext.player
 import org.alter.game.Server
@@ -24,17 +22,26 @@ import org.alter.game.plugin.PluginRepository
  *
  * ## The overlay
  *
- * Interface **481** is the wilderness overlay, found by scanning every interface archive in the
- * cache for embedded text (`gradlew :game-server:interfaceTextDump`): it is the only one carrying
- * `Level: 0`, on component 42. Component 46 holds a `00:00` timer, which in the real game is the
- * Tele Block countdown - there is no Tele Block here, so it is hidden rather than left sitting at
- * zero.
+ * **The server opens no interface for it.** It sets [IN_WILDERNESS_VARBIT] and the client draws
+ * and updates the skull and level itself.
  *
- * The overlay is put in [InterfaceDestination.OVERLAY], which nothing had ever used. That slot
- * being permanently empty is what made `Player.inWilderness()` - defined as "the overlay slot has
- * something in it" - permanently false, and with it PvP, the looting bag and wilderness-only
- * drops. That check reads the tile now, so the two can no longer drift apart; this plugin only
- * has to keep the *display* in step.
+ * Two interfaces were opened here before, and both were wrong. **481** is `InterfaceID.TOA_HUD`,
+ * the Tombs of Amascut raid HUD - picked by scanning every interface archive for the embedded text
+ * `Level: 0` and taking the only hit, which was the *raid* level. It drew in the right place and
+ * showed `Level: 0` forever, along with four counters nothing here writes to, because the client
+ * repopulates the raid HUD from raid state. **90** is RuneLite's `PVP_ICONS`, but in this
+ * revision's cache it holds Last Man Standing (`Pile-jumping immunity`, `Players Remaining`,
+ * `Final Safe Area`) and drew nothing at all - interface ids get recycled between revisions, the
+ * same trap the duel screens have.
+ *
+ * The lesson, paid for twice: the overlay carries **no embedded string** for the level, because
+ * client scripts build it. A text scan can never find it, and an interface that merely *contains*
+ * the words is not evidence.
+ *
+ * `Player.inWilderness()` used to be defined as "the overlay slot has something in it", and
+ * nothing ever filled that slot, so it was permanently false - taking PvP, the looting bag and
+ * wilderness-only drops down with it. It reads the tile now, and is deliberately independent of
+ * anything on screen, so no display problem can disable game logic again.
  *
  * ## Multi-combat
  *
@@ -96,38 +103,37 @@ class WildernessPlugin(
     private fun refresh(player: Player) {
         val level = player.tile.getWildernessLevel()
         val previous = player.attr[WILDERNESS_LEVEL_ATTR]
-        if (previous == level) {
-            return
-        }
-        player.attr[WILDERNESS_LEVEL_ATTR] = level
 
-        if (level == 0) {
-            // `previous == null` is a fresh login outside the Wilderness: nothing to close.
-            if (previous != null) {
-                leave(player)
+        if (previous != level) {
+            player.attr[WILDERNESS_LEVEL_ATTR] = level
+
+            if (level == 0) {
+                // `previous == null` is a fresh login outside the Wilderness: nothing to close.
+                if (previous != null) {
+                    leave(player)
+                }
+                return
             }
-            return
-        }
 
-        if (previous == null || previous == 0) {
-            enter(player)
-        }
+            if (previous == null || previous == 0) {
+                enter(player)
+            }
 
-        player.setComponentText(OVERLAY_INTERFACE, LEVEL_COMPONENT, "Level: $level")
-
-        if (previous != null && previous > 0) {
-            announceFence(player, from = previous, to = level)
+            if (previous != null && previous > 0) {
+                announceFence(player, from = previous, to = level)
+            }
         }
     }
 
     private fun enter(player: Player) {
-        player.openInterface(OVERLAY_INTERFACE, InterfaceDestination.OVERLAY)
-        player.setComponentHidden(OVERLAY_INTERFACE, TIMER_COMPONENT, true)
+        player.setVarbit(IN_WILDERNESS_VARBIT, 1)
+        player.sendOption(ATTACK_OPTION, ATTACK_OPTION_SLOT, leftClick = true)
         player.message("<col=4f006f>You have entered the Wilderness. Beware of other players.</col>")
     }
 
     private fun leave(player: Player) {
-        player.closeInterface(InterfaceDestination.OVERLAY)
+        player.setVarbit(IN_WILDERNESS_VARBIT, 0)
+        player.removeOption(ATTACK_OPTION_SLOT)
         player.message("<col=4f006f>You are no longer in the Wilderness.</col>")
     }
 
@@ -146,12 +152,42 @@ class WildernessPlugin(
     }
 
     private companion object {
-        /** Found by scanning the cache's interface archives for the text `Level: 0`. */
-        const val OVERLAY_INTERFACE = 481
-        const val LEVEL_COMPONENT = 42
 
-        /** The real game's Tele Block countdown; nothing here drives it, so it stays hidden. */
-        const val TIMER_COMPONENT = 46
+        /**
+         * The client's own "am I in the Wilderness" flag - `Varbits.IN_WILDERNESS` in RuneLite,
+         * 0 outside and 1 inside. Packed into varp 1105 (`WILDERNESS_STATISTICS`) at bit 22.
+         *
+         * **The client owns the overlay entirely.** The server's only job is this flag; the client
+         * is expected to open, draw and update the skull and level itself.
+         *
+         * **Unverified in this revision, and currently nothing draws.** Setting the flag alone
+         * produces no overlay, so either the client here wants more than this or it does not drive
+         * the overlay from it at all. The flag is kept because it is semantically correct and
+         * costs nothing, but the on-screen level is a known gap - parked 2026-09-04. Everything
+         * functional is unaffected: `inWilderness()` reads the tile, so PvP, the looting bag,
+         * wilderness drops, risk and multi-combat all work with no overlay at all.
+         *
+         * Sourced from RuneLite's `Varbits.java`, the same external-source rule the combat sound
+         * ids follow: this cache decodes varbits but nothing names them, and guessing at ids has
+         * been expensive here.
+         */
+        const val IN_WILDERNESS_VARBIT = 5963
+
+        /**
+         * "Attack", sent as a left-click option for as long as the player is in the Wilderness.
+         *
+         * The server has to send this. `DuelArena` assumed the opposite - its comment said the
+         * client "decides to offer Attack by itself" in the Wilderness, and so only the arena ever
+         * sent one. It does not: with no option in the slot there is nothing to click, which is
+         * why PvP was unreachable even after `inWilderness()` was fixed to read the tile. The
+         * option is only half of it - `Combat.inPvpArea` still gates the attack itself, so this
+         * cannot be used to hit someone outside.
+         *
+         * Slot 1 is the same slot the arena uses. The two are mutually exclusive - a duel is
+         * fought inside the arena, which is not Wilderness - so they cannot fight over it.
+         */
+        const val ATTACK_OPTION = "Attack"
+        const val ATTACK_OPTION_SLOT = 1
 
         const val CHUNK_SIZE = 8
 

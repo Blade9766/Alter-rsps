@@ -120,10 +120,38 @@ class InterfaceSet(private val listener: InterfaceListener) {
     private fun closeByHash(hash: Int): Int {
         val found = visible.remove(hash)
         if (found != visible.defaultReturnValue()) {
+            /*
+             * [currentModal] names an interface in [visible], and every close funnels through
+             * here, so this is the one place that can keep the two from drifting apart.
+             *
+             * Only [Player.closeInterface] (the one that takes an interface id) used to clear it,
+             * and that is not how a modal is usually closed. Closing by destination - which is
+             * what the trade screens, the duel screens and `finalise`/`decline` all do - routes
+             * to `close(parent, child)` and never looked at the modal pointer, so the modal was
+             * removed from [visible] while [currentModal] went on naming it.
+             *
+             * What that left behind: `OSRSPlugin`'s modal-close logic runs on very nearly every
+             * click, reads the stale id, and asks to close an interface that is not there -
+             * "Interface 334 is not visible and cannot be closed." in the log, once per click,
+             * after any trade. Worse than the noise, `Combat` reads the same pointer to decide
+             * whether an attacked player has a screen to close, so for as long as it lied the
+             * screen the player *did* have open was not the one being closed.
+             *
+             * `openModal` sets [currentModal] immediately after `open` calls through to here, so
+             * clearing it on the replace path does not fight it.
+             */
+            if (found == currentModal) {
+                currentModal = -1
+            }
             listener.onInterfaceClose(found)
             return found
         }
-        logger.warn { "${"No interface visible in pane ({}, {})."} ${hash shr 16} ${hash and 0xFFFF}" }
+        /*
+         * The `{}` placeholders here were never substituted - this is a Kotlin string template
+         * inside a lambda, not an slf4j format call, so the braces printed literally and the two
+         * numbers trailed after them: "No interface visible in pane ({}, {}). 162 566".
+         */
+        logger.warn { "No interface visible in pane (${hash shr 16}, ${hash and 0xFFFF})." }
         return -1
     }
 

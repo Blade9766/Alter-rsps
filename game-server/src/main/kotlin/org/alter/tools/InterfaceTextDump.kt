@@ -43,6 +43,9 @@ object InterfaceTextDump {
             val files = runCatching { CacheManager.cache.files(INTERFACES, archive) }.getOrNull() ?: continue
             if (files.isEmpty()) continue
             archives++
+            if (archiveFilter != null) {
+                println("interface=$archive componentCount=${files.size} componentIds=${files.sorted()}")
+            }
             for (file in files) {
                 val data = runCatching { CacheManager.cache.data(INTERFACES, archive, file) }.getOrNull() ?: continue
                 for (text in strings(data)) {
